@@ -49,6 +49,8 @@ Diseñar e implementar una base de datos relacional normalizada (3FN) que optimi
 El proyecto abarcará el análisis de requerimientos, el modelado conceptual (Diagrama Chen), el diseño lógico (3FN), la implementación en script DDL/DML de MySQL, y la creación de una interfaz web funcional para la interacción con la base de datos.
 
 
+
+
 # Propuesta del Proyecto: Sistema de Gestión de Ventas, Compras e Inventario
 *Empresa:* Comercial Estuardo  
 *Documento:* Entrega 1 - Propuesta Técnica, Ficha Comercial y Definición del Problema  
