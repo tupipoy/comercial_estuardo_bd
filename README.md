@@ -6,7 +6,7 @@
 * **SGBD:** MySQL
 * **Integrantes:**
   * [Elvin Guillermo Miranda Gomez] - [2690-24-16072]
-  * [Nombre Integrante 2] - [Carné 2]
+  * [Juan Carlos Ochoa Samayoa] - [2690-23-7592] 
   
 
 ## Documentación - Entrega 1
