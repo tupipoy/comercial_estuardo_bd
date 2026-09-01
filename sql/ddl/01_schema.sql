@@ -1,8 +1,5 @@
--- =============================================================================
+
 -- SISTEMA DE GESTIÓN DE VENTAS, COMPRAS E INVENTARIO - COMERCIAL ESTUARDO
--- Script: 01_schema.sql (Definición DDL y Restricciones de Integridad)
--- Motor: MySQL 8.0+ (InnoDB)
--- =============================================================================
 
 DROP DATABASE IF EXISTS comercial_estuardo_db;
 CREATE DATABASE comercial_estuardo_db 
@@ -11,9 +8,7 @@ CREATE DATABASE comercial_estuardo_db
 
 USE comercial_estuardo_db;
 
--- -----------------------------------------------------------------------------
--- 1. TABLA: SUCURSAL
--- -----------------------------------------------------------------------------
+
 CREATE TABLE SUCURSAL (
     id_sucursal INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
@@ -25,9 +20,7 @@ CREATE TABLE SUCURSAL (
     CONSTRAINT chk_sucursal_estado CHECK (estado IN (0, 1))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 2. TABLA: EMPLEADO
--- -----------------------------------------------------------------------------
+
 CREATE TABLE EMPLEADO (
     id_empleado INT AUTO_INCREMENT PRIMARY KEY,
     cui VARCHAR(13) NOT NULL UNIQUE,
@@ -47,9 +40,7 @@ CREATE TABLE EMPLEADO (
     CONSTRAINT chk_empleado_estado CHECK (estado IN (0, 1))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 3. TABLA: CLIENTE
--- -----------------------------------------------------------------------------
+
 CREATE TABLE CLIENTE (
     id_cliente INT AUTO_INCREMENT PRIMARY KEY,
     nit VARCHAR(15) NOT NULL UNIQUE,
@@ -64,9 +55,7 @@ CREATE TABLE CLIENTE (
     CONSTRAINT chk_cliente_estado CHECK (estado IN (0, 1))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 4. TABLA: CATEGORIA
--- -----------------------------------------------------------------------------
+
 CREATE TABLE CATEGORIA (
     id_categoria INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
@@ -75,9 +64,7 @@ CREATE TABLE CATEGORIA (
     CONSTRAINT chk_categoria_estado CHECK (estado IN (0, 1))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 5. TABLA: PRODUCTO
--- -----------------------------------------------------------------------------
+
 CREATE TABLE PRODUCTO (
     id_producto INT AUTO_INCREMENT PRIMARY KEY,
     codigo_barra VARCHAR(50) NULL UNIQUE,
@@ -98,9 +85,7 @@ CREATE TABLE PRODUCTO (
     CONSTRAINT chk_producto_estado CHECK (estado IN (0, 1))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 6. TABLA: PROVEEDOR
--- -----------------------------------------------------------------------------
+
 CREATE TABLE PROVEEDOR (
     id_proveedor INT AUTO_INCREMENT PRIMARY KEY,
     nit VARCHAR(15) NOT NULL UNIQUE,
@@ -113,9 +98,7 @@ CREATE TABLE PROVEEDOR (
     CONSTRAINT chk_proveedor_estado CHECK (estado IN (0, 1))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 7. TABLA: COMPRA
--- -----------------------------------------------------------------------------
+
 CREATE TABLE COMPRA (
     id_compra INT AUTO_INCREMENT PRIMARY KEY,
     numero_orden VARCHAR(30) NOT NULL UNIQUE,
@@ -136,9 +119,7 @@ CREATE TABLE COMPRA (
     CONSTRAINT chk_compra_estado CHECK (estado_recepcion IN ('Pendiente', 'Recibido', 'Cancelado'))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 8. TABLA: DETALLE_COMPRA (Relación DETALLA)
--- -----------------------------------------------------------------------------
+
 CREATE TABLE DETALLE_COMPRA (
     id_detalle_compra INT AUTO_INCREMENT PRIMARY KEY,
     id_compra INT NOT NULL,
@@ -159,9 +140,7 @@ CREATE TABLE DETALLE_COMPRA (
     CONSTRAINT chk_detcompra_subtotal CHECK (subtotal >= 0)
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 9. TABLA: VENTA
--- -----------------------------------------------------------------------------
+
 CREATE TABLE VENTA (
     id_venta INT AUTO_INCREMENT PRIMARY KEY,
     serie_factura VARCHAR(10) NOT NULL,
@@ -191,9 +170,7 @@ CREATE TABLE VENTA (
     CONSTRAINT chk_venta_estado CHECK (estado IN ('Emitida', 'Anulada'))
 ) ENGINE=InnoDB;
 
--- -----------------------------------------------------------------------------
--- 10. TABLA: DETALLE_VENTA (Relación CONTIENE y trazabilidad VIN/Motor)
--- -----------------------------------------------------------------------------
+
 CREATE TABLE DETALLE_VENTA (
     id_detalle_venta INT AUTO_INCREMENT PRIMARY KEY,
     id_venta INT NOT NULL,
