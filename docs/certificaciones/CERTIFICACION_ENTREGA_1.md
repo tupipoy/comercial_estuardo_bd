@@ -9,4 +9,4 @@ Los integrantes del equipo declaramos y certificamos que:
 
 ### Firmas del Equipo
 1. Nombre: [Elvin Guillermo Miranda Gomez] — Carne: [2690-24-16072]
-2. Nombre: [Nombre Integrante 2] — Carne: [Carné 2]
+2. Nombre: [Juan Carlos Ochoa Samayoa] — Carne: [2690-23-7592]
