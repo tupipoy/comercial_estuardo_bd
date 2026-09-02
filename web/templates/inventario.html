@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comercial Estuardo - Inventario y Catálogo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Comercial Estuardo</h1>
+        <p>Sistema de Gestión de Ventas, Compras e Inventario — Avance 30%</p>
+    </header>
+
+    <main>
+        <section class="toolbar">
+            <h2>Catálogo de Productos y Existencias</h2>
+            <div class="actions">
+                <a href="/" class="btn {% if solo_stock_bajo != '1' %}active{% endif %}">Todos los Productos</a>
+                <a href="/?stock_bajo=1" class="btn btn-warning {% if solo_stock_bajo == '1' %}active{% endif %}">Alerta: Stock Mínimo</a>
+            </div>
+        </section>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Código / SKU</th>
+                    <th>Categoría</th>
+                    <th>Descripción del Producto</th>
+                    <th>Precio de Venta</th>
+                    <th>Stock Actual</th>
+                    <th>Stock Mínimo</th>
+                    <th>Estado de Alerta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prod in productos %}
+                <tr>
+                    <td>{{ prod.codigo_barra if prod.codigo_barra else 'N/A' }}</td>
+                    <td>{{ prod.categoria }}</td>
+                    <td><strong>{{ prod.nombre }}</strong></td>
+                    <td>Q {{ "%.2f"|format(prod.precio_venta) }}</td>
+                    <td>{{ prod.stock_actual }}</td>
+                    <td>{{ prod.stock_minimo }}</td>
+                    <td>
+                        {% if prod.stock_actual <= prod.stock_minimo %}
+                            <span class="badge badge-danger">Reordenar</span>
+                        {% else %}
+                            <span class="badge badge-success">Óptimo</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No hay productos registrados o no se encontraron coincidencias.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
