@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comercial Estuardo - Iniciar Sesión</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Fuente moderna Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-badge">CE</div>
+                <h1>Comercial Estuardo</h1>
+                <p class="subtitle">Sistema de Control de Inventario y Ventas</p>
+            </div>
+
+            {% if error %}
+                <div class="alert alert-danger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="POST" action="/" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuario, Correo o CUI</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="ej. admin@comercialestuardo.com" 
+                        required 
+                        autofocus
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••" 
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    Ingresar al Sistema
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>&copy; 2026 Comercial Estuardo &bull; Módulo de Acceso</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
