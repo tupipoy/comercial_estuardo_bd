@@ -1,0 +1,25 @@
+# VARIABLES DE ENTORNO
+.env
+.env.*
+!.env.example
+
+# PYTHON
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+
+# EDITORES / IDE
+.vscode/
+.idea/
+
+
+# ARCHIVOS TEMPORALES
+
+*.log
+*.tmp
