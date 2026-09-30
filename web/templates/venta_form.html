@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva venta - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand">
+            <h1>Comercial Estuardo</h1>
+            <p>Registro de venta</p>
+        </div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="{{ url_for('inventario') }}">Inventario</a>
+            <a href="{{ url_for('clientes') }}">Clientes</a>
+            <a class="active" href="{{ url_for('ventas') }}">Ventas</a>
+        </nav>
+        <div class="nav-user">
+            <span>{{ session.get('user_name', '') }}</span>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="product-form-page">
+            <h2>Nueva venta</h2>
+
+            {% if errores %}
+            <div class="alert-danger" role="alert">
+                <ul>
+                    {% for error in errores %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if not triggers_disponibles and not errores %}
+            <p class="alert-warning" role="status">
+                Para proteger el inventario, el registro se habilitará cuando estén instalados
+                los triggers de venta definidos en <code>sql/triggers/01_triggers.sql</code>.
+            </p>
+            {% endif %}
+
+            <form class="product-form" method="POST" action="{{ url_for('nueva_venta') }}">
+                <div class="form-group">
+                    <label for="id_cliente">Cliente</label>
+                    <select id="id_cliente" name="id_cliente" required>
+                        <option value="">Selecciona un cliente</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id_cliente }}" {% if datos.id_cliente|string == cliente.id_cliente|string %}selected{% endif %}>
+                            {{ cliente.nombres }} {{ cliente.apellidos or '' }} — NIT {{ cliente.nit }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not clientes %}<small>No hay clientes activos para seleccionar.</small>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_producto">Producto</label>
+                    <select id="id_producto" name="id_producto" required>
+                        <option value="">Selecciona un producto</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id_producto }}" {% if datos.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                            {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — Q {{ "%.2f"|format(producto.precio_venta) }}, stock {{ producto.stock_actual }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not productos %}<small>No hay productos activos con existencias.</small>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="cantidad">Cantidad</label>
+                    <input id="cantidad" name="cantidad" type="number" min="1" step="1" required value="{{ datos.cantidad }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo_pago">Tipo de pago</label>
+                    <select id="tipo_pago" name="tipo_pago" required>
+                        {% for pago in ['Efectivo', 'Transferencia', 'Depósito Bancario'] %}
+                        <option value="{{ pago }}" {% if datos.tipo_pago == pago %}selected{% endif %}>{{ pago }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button class="btn-submit" type="submit" {% if not triggers_disponibles or not clientes or not productos %}disabled{% endif %}>
+                    Registrar venta
+                </button>
+                <a class="btn" href="{{ url_for('ventas') }}">Cancelar</a>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -2,7 +2,7 @@ import os
 from decimal import Decimal, InvalidOperation
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, flash, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
 
 from db import get_db_connection
@@ -496,6 +496,208 @@ def desactivar_cliente(id_cliente):
         connection.close()
 
     return redirect(url_for("clientes"))
+
+
+def cargar_opciones_venta(cursor):
+    cursor.execute("""
+        SELECT id_cliente, nit, nombres, apellidos
+        FROM CLIENTE
+        WHERE estado = 1
+        ORDER BY nombres, apellidos;
+    """)
+    clientes_activos = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT id_producto, codigo_barra, nombre, precio_venta, stock_actual
+        FROM PRODUCTO
+        WHERE estado = 1 AND stock_actual > 0
+        ORDER BY nombre;
+    """)
+    productos_disponibles = cursor.fetchall()
+    return clientes_activos, productos_disponibles
+
+
+def faltan_triggers_venta(cursor):
+    cursor.execute("""
+        SELECT COUNT(*) AS cantidad
+        FROM information_schema.TRIGGERS
+        WHERE TRIGGER_SCHEMA = DATABASE()
+          AND TRIGGER_NAME IN (
+              'trg_validar_stock_venta',
+              'trg_descontar_stock_venta'
+          );
+    """)
+    return cursor.fetchone()["cantidad"] != 2
+
+
+@app.route("/ventas")
+@requiere_rol("Administrador", "Vendedor")
+def ventas():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    v.id_venta,
+                    v.serie_factura,
+                    v.numero_factura,
+                    v.fecha_venta,
+                    v.total_venta,
+                    v.tipo_pago,
+                    v.estado,
+                    CONCAT_WS(' ', c.nombres, c.apellidos) AS cliente,
+                    CONCAT(e.nombres, ' ', e.apellidos) AS empleado,
+                    s.nombre AS sucursal
+                FROM VENTA AS v
+                INNER JOIN CLIENTE AS c ON c.id_cliente = v.id_cliente
+                INNER JOIN EMPLEADO AS e ON e.id_empleado = v.id_empleado
+                INNER JOIN SUCURSAL AS s ON s.id_sucursal = v.id_sucursal
+                ORDER BY v.fecha_venta DESC, v.id_venta DESC
+                LIMIT 200;
+            """)
+            lista_ventas = cursor.fetchall()
+    finally:
+        connection.close()
+
+    return render_template("ventas.html", ventas=lista_ventas)
+
+
+@app.route("/ventas/nueva", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Vendedor")
+def nueva_venta():
+    errores = []
+    datos = {
+        "id_cliente": "",
+        "id_producto": "",
+        "cantidad": "1",
+        "tipo_pago": "Efectivo",
+    }
+    lock_name = "comercial_estuardo_web_venta_numero"
+    lock_acquired = False
+    connection = None
+    clientes_activos = []
+    productos_disponibles = []
+    triggers_disponibles = False
+
+    if request.method == "POST":
+        datos.update({
+            "id_cliente": request.form.get("id_cliente", "").strip(),
+            "id_producto": request.form.get("id_producto", "").strip(),
+            "cantidad": request.form.get("cantidad", "").strip(),
+            "tipo_pago": request.form.get("tipo_pago", "").strip(),
+        })
+        try:
+            datos["id_cliente"] = int(datos["id_cliente"])
+        except (TypeError, ValueError):
+            errores.append("Selecciona un cliente válido.")
+        try:
+            datos["id_producto"] = int(datos["id_producto"])
+        except (TypeError, ValueError):
+            errores.append("Selecciona un producto válido.")
+        try:
+            datos["cantidad"] = int(datos["cantidad"])
+            if datos["cantidad"] <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            errores.append("La cantidad debe ser un entero mayor que cero.")
+
+        tipos_pago = {"Efectivo", "Transferencia", "Depósito Bancario"}
+        if datos["tipo_pago"] not in tipos_pago:
+            errores.append("Selecciona un tipo de pago válido.")
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            clientes_activos, productos_disponibles = cargar_opciones_venta(cursor)
+            triggers_disponibles = not faltan_triggers_venta(cursor)
+
+            if request.method == "POST" and not errores:
+                if not triggers_disponibles:
+                    errores.append(
+                        "No se puede registrar la venta: instala primero los triggers "
+                        "de control de inventario desde sql/triggers/01_triggers.sql."
+                    )
+
+                cliente_ids = {c["id_cliente"] for c in clientes_activos}
+                producto_por_id = {p["id_producto"]: p for p in productos_disponibles}
+                if datos["id_cliente"] not in cliente_ids:
+                    errores.append("El cliente seleccionado no existe o está inactivo.")
+                producto = producto_por_id.get(datos["id_producto"])
+                if not producto:
+                    errores.append("El producto seleccionado no existe, está inactivo o no tiene stock.")
+
+                cursor.execute("""
+                    SELECT id_sucursal
+                    FROM EMPLEADO
+                    WHERE id_empleado = %s AND estado = 1;
+                """, (session["user_id"],))
+                empleado = cursor.fetchone()
+                if not empleado:
+                    errores.append("El empleado de la sesión ya no está activo.")
+
+                if not errores:
+                    cursor.execute("SELECT GET_LOCK(%s, 10) AS adquirido", (lock_name,))
+                    lock_acquired = cursor.fetchone()["adquirido"] == 1
+                    if not lock_acquired:
+                        errores.append("No se pudo reservar un número de factura. Inténtalo de nuevo.")
+                    else:
+                        serie_factura = "WEB"
+                        cursor.execute("""
+                            SELECT COALESCE(MAX(numero_factura), 0) + 1 AS siguiente
+                            FROM VENTA
+                            WHERE serie_factura = %s;
+                        """, (serie_factura,))
+                        numero_factura = cursor.fetchone()["siguiente"]
+
+                        cursor.execute("""
+                            CALL sp_registrar_venta(
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                            );
+                        """, (
+                            serie_factura,
+                            numero_factura,
+                            datos["tipo_pago"],
+                            datos["id_cliente"],
+                            session["user_id"],
+                            empleado["id_sucursal"],
+                            datos["id_producto"],
+                            datos["cantidad"],
+                            producto["precio_venta"],
+                            Decimal("0.00"),
+                        ))
+                        while cursor.nextset():
+                            pass
+                        flash(
+                            f"Venta WEB-{numero_factura} registrada correctamente.",
+                            "success",
+                        )
+                        return redirect(url_for("ventas"))
+    except Exception as exc:
+        if connection:
+            connection.rollback()
+        app.logger.exception("No se pudo registrar la venta")
+        mensaje_db = str(exc.args[1]) if len(getattr(exc, "args", ())) > 1 else ""
+        if "Stock insuficiente" in mensaje_db:
+            errores.append("Stock insuficiente para realizar la venta.")
+        else:
+            errores.append("No se pudo registrar la venta. Revisa los datos y la configuración de MySQL.")
+    finally:
+        if connection:
+            try:
+                if lock_acquired:
+                    with connection.cursor() as cursor:
+                        cursor.execute("SELECT RELEASE_LOCK(%s)", (lock_name,))
+            finally:
+                connection.close()
+
+    return render_template(
+        "venta_form.html",
+        clientes=clientes_activos,
+        productos=productos_disponibles,
+        datos=datos,
+        errores=errores,
+        triggers_disponibles=triggers_disponibles,
+    )
 
 
 @app.route("/logout")
