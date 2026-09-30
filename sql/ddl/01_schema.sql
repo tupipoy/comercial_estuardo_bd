@@ -29,6 +29,7 @@ CREATE TABLE EMPLEADO (
     cargo VARCHAR(50) NOT NULL,
     telefono VARCHAR(15) NOT NULL,
     correo VARCHAR(100) NULL UNIQUE,
+    password_hash VARCHAR(255) NULL,
     fecha_ingreso DATE NOT NULL,
     id_sucursal INT NOT NULL,
     estado TINYINT(1) NOT NULL DEFAULT 1,

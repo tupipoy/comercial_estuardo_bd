@@ -1,5 +1,8 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
+
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import check_password_hash
+
 from db import get_db_connection
 from dotenv import load_dotenv
 
@@ -12,31 +15,59 @@ app.secret_key = os.getenv("SECRET_KEY", "supersecretkey_comercial_estuardo")
 def login():
     error = None
     if request.method == "POST":
-        identificador = request.form.get("username")  # Correo o CUI
+        identificador = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
 
-        connection = get_db_connection()
         try:
-            with connection.cursor() as cursor:
-                sql = """
-                    SELECT e.id_empleado, e.nombres, e.apellidos, e.cargo, s.nombre AS sucursal
-                    FROM EMPLEADO e
-                    INNER JOIN SUCURSAL s ON e.id_sucursal = s.id_sucursal
-                    WHERE (e.correo = %s OR e.cui = %s) AND e.estado = 1;
-                """
-                cursor.execute(sql, (identificador, identificador))
-                empleado = cursor.fetchone()
+            connection = get_db_connection()
+            try:
+                with connection.cursor() as cursor:
+                    sql = """
+                        SELECT
+                            e.id_empleado,
+                            e.nombres,
+                            e.apellidos,
+                            e.cargo,
+                            e.password_hash,
+                            s.nombre AS sucursal
+                        FROM EMPLEADO e
+                        INNER JOIN SUCURSAL s
+                            ON e.id_sucursal = s.id_sucursal
+                        WHERE
+                            (e.correo = %s OR e.cui = %s)
+                            AND e.estado = 1;
+                    """
+                    cursor.execute(sql, (identificador, identificador))
+                    empleado = cursor.fetchone()
+            finally:
+                connection.close()
 
-                if empleado:
-                    return redirect(url_for("inventario"))
-                else:
-                    error = "Empleado no encontrado o inactivo en el sistema."
-        finally:
-            connection.close()
+            if (
+                empleado
+                and empleado["password_hash"]
+                and check_password_hash(empleado["password_hash"], password)
+            ):
+                session.clear()
+                session["user_id"] = empleado["id_empleado"]
+                session["user_name"] = (
+                    f'{empleado["nombres"]} {empleado["apellidos"]}'
+                )
+                session["user_role"] = empleado["cargo"]
+                session["user_branch"] = empleado["sucursal"]
+                return redirect(url_for("inventario"))
+
+            error = "Usuario o contraseña incorrectos."
+        except Exception:
+            app.logger.exception("Error al autenticar empleado")
+            error = "No fue posible iniciar sesión. Inténtalo de nuevo."
 
     return render_template("login.html", error=error)
 
 @app.route("/inventario")
 def inventario():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     solo_stock_bajo = request.args.get("stock_bajo", "0")
     connection = get_db_connection()
     try:
@@ -66,6 +97,12 @@ def inventario():
         connection.close()
 
     return render_template("inventario.html", productos=productos, solo_stock_bajo=solo_stock_bajo)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5050))
