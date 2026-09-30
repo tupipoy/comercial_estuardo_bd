@@ -14,7 +14,9 @@
         </div>
         <nav class="nav-links" aria-label="Navegación principal">
             <a href="{{ url_for('inventario') }}">Inventario</a>
+            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
             <a href="{{ url_for('productos') }}">Productos</a>
+            {% endif %}
             <a class="active" href="{{ url_for('clientes') }}">Clientes</a>
         </nav>
         <div class="nav-user">

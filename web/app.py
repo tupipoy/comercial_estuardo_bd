@@ -1,5 +1,6 @@
 import os
 from decimal import Decimal, InvalidOperation
+from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
@@ -11,6 +12,27 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "supersecretkey_comercial_estuardo")
+
+
+def requiere_rol(*roles):
+    roles_permitidos = {rol.strip().casefold() for rol in roles}
+
+    def decorador(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if "user_id" not in session:
+                return redirect(url_for("login"))
+
+            rol_usuario = str(session.get("user_role", "")).strip().casefold()
+            if rol_usuario not in roles_permitidos:
+                return "Acceso no autorizado", 403
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorador
+
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -65,10 +87,8 @@ def login():
     return render_template("login.html", error=error)
 
 @app.route("/inventario")
+@requiere_rol("Administrador", "Vendedor", "Bodega")
 def inventario():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     solo_stock_bajo = request.args.get("stock_bajo", "0")
     connection = get_db_connection()
     try:
@@ -164,10 +184,8 @@ def validar_datos_producto(form):
 
 
 @app.route("/productos")
+@requiere_rol("Administrador", "Bodega")
 def productos():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -198,10 +216,8 @@ def productos():
 
 
 @app.route("/productos/nuevo", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Bodega")
 def nuevo_producto():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     errores = []
     datos = None
     connection = get_db_connection()
@@ -245,10 +261,8 @@ def nuevo_producto():
 
 
 @app.route("/productos/editar/<int:id_producto>", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Bodega")
 def editar_producto(id_producto):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     errores = []
     producto = None
     connection = get_db_connection()
@@ -305,10 +319,8 @@ def editar_producto(id_producto):
 
 
 @app.route("/productos/desactivar/<int:id_producto>", methods=["POST"])
+@requiere_rol("Administrador", "Bodega")
 def desactivar_producto(id_producto):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -366,10 +378,8 @@ def validar_datos_cliente(form):
 
 
 @app.route("/clientes")
+@requiere_rol("Administrador", "Vendedor")
 def clientes():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -389,10 +399,8 @@ def clientes():
 
 
 @app.route("/clientes/nuevo", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Vendedor")
 def nuevo_cliente():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     cliente = None
     errores = []
     if request.method == "POST":
@@ -426,10 +434,8 @@ def nuevo_cliente():
 
 
 @app.route("/clientes/editar/<int:id_cliente>", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Vendedor")
 def editar_cliente(id_cliente):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     errores = []
     connection = get_db_connection()
     try:
@@ -475,10 +481,8 @@ def editar_cliente(id_cliente):
 
 
 @app.route("/clientes/desactivar/<int:id_cliente>", methods=["POST"])
+@requiere_rol("Administrador", "Vendedor")
 def desactivar_cliente(id_cliente):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
