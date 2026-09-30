@@ -16,6 +16,7 @@
             <a href="{{ url_for('inventario') }}">Inventario</a>
             <a class="active" href="{{ url_for('productos') }}">Productos</a>
             {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
+            <a href="{{ url_for('proveedores') }}">Proveedores</a>
             <a href="{{ url_for('compras') }}">Compras</a>
             {% endif %}
             {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}

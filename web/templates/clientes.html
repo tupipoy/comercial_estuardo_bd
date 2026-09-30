@@ -20,6 +20,7 @@
             <a class="active" href="{{ url_for('clientes') }}">Clientes</a>
             <a href="{{ url_for('ventas') }}">Ventas</a>
             {% if session.get('user_role') == 'Administrador' %}
+            <a href="{{ url_for('proveedores') }}">Proveedores</a>
             <a href="{{ url_for('compras') }}">Compras</a>
             {% endif %}
         </nav>

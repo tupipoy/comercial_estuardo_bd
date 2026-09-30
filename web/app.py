@@ -855,6 +855,181 @@ def nueva_compra():
     )
 
 
+def datos_formulario_proveedor(formulario):
+    return {
+        "nit": formulario.get("nit", "").strip(),
+        "razon_social": formulario.get("razon_social", "").strip(),
+        "contacto": formulario.get("contacto", "").strip(),
+        "telefono": formulario.get("telefono", "").strip(),
+        "correo": formulario.get("correo", "").strip(),
+        "direccion": formulario.get("direccion", "").strip(),
+    }
+
+
+def validar_datos_proveedor(datos):
+    errores = []
+    for campo, etiqueta, maximo in (
+        ("nit", "NIT", 15),
+        ("razon_social", "La razón social", 150),
+        ("contacto", "El contacto", 100),
+        ("telefono", "El teléfono", 15),
+        ("correo", "El correo", 100),
+        ("direccion", "La dirección", 200),
+    ):
+        if len(datos[campo]) > maximo:
+            errores.append(f"{etiqueta} no puede superar {maximo} caracteres.")
+
+    for campo, etiqueta in (("nit", "El NIT"), ("razon_social", "La razón social"), ("telefono", "El teléfono")):
+        if not datos[campo]:
+            errores.append(f"{etiqueta} es obligatorio.")
+
+    if datos["correo"] and ("@" not in datos["correo"] or " " in datos["correo"]):
+        errores.append("Ingresa un correo válido.")
+    return errores
+
+
+@app.route("/proveedores")
+@requiere_rol("Administrador", "Bodega")
+def proveedores():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    id_proveedor,
+                    nit,
+                    razon_social,
+                    contacto,
+                    telefono,
+                    correo,
+                    direccion
+                FROM PROVEEDOR
+                WHERE estado = 1
+                ORDER BY razon_social;
+            """)
+            lista_proveedores = cursor.fetchall()
+    finally:
+        connection.close()
+
+    return render_template("proveedores.html", proveedores=lista_proveedores)
+
+
+@app.route("/proveedores/nuevo", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Bodega")
+def nuevo_proveedor():
+    proveedor = {"nit": "", "razon_social": "", "contacto": "", "telefono": "", "correo": "", "direccion": ""}
+    errores = []
+
+    if request.method == "POST":
+        proveedor = datos_formulario_proveedor(request.form)
+        errores = validar_datos_proveedor(proveedor)
+        if not errores:
+            connection = get_db_connection()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO PROVEEDOR (
+                            nit, razon_social, contacto, telefono, correo, direccion, estado
+                        ) VALUES (%s, %s, %s, %s, %s, %s, 1);
+                    """, (
+                        proveedor["nit"],
+                        proveedor["razon_social"],
+                        proveedor["contacto"] or None,
+                        proveedor["telefono"],
+                        proveedor["correo"] or None,
+                        proveedor["direccion"] or None,
+                    ))
+                connection.commit()
+                flash("Proveedor creado correctamente.", "success")
+                return redirect(url_for("proveedores"))
+            except Exception as exc:
+                connection.rollback()
+                app.logger.exception("No se pudo crear el proveedor")
+                if getattr(exc, "args", (None,))[0] == 1062:
+                    errores.append("Ya existe un proveedor con ese NIT.")
+                else:
+                    errores.append("No se pudo guardar el proveedor. Revisa los datos.")
+            finally:
+                connection.close()
+
+    return render_template("proveedor_form.html", proveedor=proveedor, errores=errores)
+
+
+@app.route("/proveedores/editar/<int:id_proveedor>", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Bodega")
+def editar_proveedor(id_proveedor):
+    errores = []
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT id_proveedor, nit, razon_social, contacto, telefono, correo, direccion
+                FROM PROVEEDOR
+                WHERE id_proveedor = %s AND estado = 1;
+            """, (id_proveedor,))
+            proveedor = cursor.fetchone()
+            if not proveedor:
+                return "Proveedor no encontrado", 404
+
+            if request.method == "POST":
+                datos = datos_formulario_proveedor(request.form)
+                errores = validar_datos_proveedor(datos)
+                if not errores:
+                    try:
+                        cursor.execute("""
+                            UPDATE PROVEEDOR
+                            SET nit = %s,
+                                razon_social = %s,
+                                contacto = %s,
+                                telefono = %s,
+                                correo = %s,
+                                direccion = %s
+                            WHERE id_proveedor = %s AND estado = 1;
+                        """, (
+                            datos["nit"],
+                            datos["razon_social"],
+                            datos["contacto"] or None,
+                            datos["telefono"],
+                            datos["correo"] or None,
+                            datos["direccion"] or None,
+                            id_proveedor,
+                        ))
+                        connection.commit()
+                        flash("Proveedor actualizado correctamente.", "success")
+                        return redirect(url_for("proveedores"))
+                    except Exception as exc:
+                        connection.rollback()
+                        app.logger.exception("No se pudo actualizar el proveedor")
+                        if getattr(exc, "args", (None,))[0] == 1062:
+                            errores.append("Ya existe un proveedor con ese NIT.")
+                        else:
+                            errores.append("No se pudo guardar el proveedor. Revisa los datos.")
+                proveedor = {**proveedor, **datos}
+    finally:
+        connection.close()
+
+    return render_template("proveedor_form.html", proveedor=proveedor, errores=errores)
+
+
+@app.route("/proveedores/desactivar/<int:id_proveedor>", methods=["POST"])
+@requiere_rol("Administrador", "Bodega")
+def desactivar_proveedor(id_proveedor):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE PROVEEDOR
+                SET estado = 0
+                WHERE id_proveedor = %s AND estado = 1;
+            """, (id_proveedor,))
+        connection.commit()
+        flash("Proveedor desactivado.", "success")
+    finally:
+        connection.close()
+
+    return redirect(url_for("proveedores"))
+
+
 @app.route("/logout")
 def logout():
     session.clear()

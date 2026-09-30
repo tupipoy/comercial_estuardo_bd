@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedores - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand">
+            <h1>Comercial Estuardo</h1>
+            <p>Gestión de proveedores</p>
+        </div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="{{ url_for('inventario') }}">Inventario</a>
+            <a href="{{ url_for('productos') }}">Productos</a>
+            <a class="active" href="{{ url_for('proveedores') }}">Proveedores</a>
+            <a href="{{ url_for('compras') }}">Compras</a>
+            {% if session.get('user_role') == 'Administrador' %}
+            <a href="{{ url_for('clientes') }}">Clientes</a>
+            <a href="{{ url_for('ventas') }}">Ventas</a>
+            {% endif %}
+        </nav>
+        <div class="nav-user">
+            <span>{{ session.get('user_name', '') }}</span>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
+    </header>
+
+    <main>
+        {% with mensajes = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensaje in mensajes %}
+            <div class="alert-{{ categoria }}">{{ mensaje }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="toolbar">
+            <h2>Proveedores activos</h2>
+            <a href="{{ url_for('nuevo_proveedor') }}" class="btn active">Nuevo proveedor</a>
+        </section>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>NIT</th>
+                    <th>Razón social</th>
+                    <th>Contacto</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proveedor in proveedores %}
+                <tr>
+                    <td>{{ proveedor.nit }}</td>
+                    <td>{{ proveedor.razon_social }}</td>
+                    <td>{{ proveedor.contacto or '-' }}</td>
+                    <td>{{ proveedor.telefono }}</td>
+                    <td>{{ proveedor.correo or '-' }}</td>
+                    <td>{{ proveedor.direccion or '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_proveedor', id_proveedor=proveedor.id_proveedor) }}">Editar</a>
+                        <form method="POST"
+                              action="{{ url_for('desactivar_proveedor', id_proveedor=proveedor.id_proveedor) }}"
+                              style="display:inline"
+                              onsubmit="return confirm('¿Desactivar este proveedor?');">
+                            <button type="submit">Desactivar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center">No hay proveedores activos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

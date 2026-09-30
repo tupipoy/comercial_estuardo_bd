@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if proveedor.id_proveedor %}Editar proveedor{% else %}Nuevo proveedor{% endif %} - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand">
+            <h1>Comercial Estuardo</h1>
+            <p>Registro de proveedor</p>
+        </div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="{{ url_for('inventario') }}">Inventario</a>
+            <a href="{{ url_for('productos') }}">Productos</a>
+            <a class="active" href="{{ url_for('proveedores') }}">Proveedores</a>
+            <a href="{{ url_for('compras') }}">Compras</a>
+        </nav>
+        <div class="nav-user">
+            <span>{{ session.get('user_name', '') }}</span>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="product-form-page">
+            <h2>{% if proveedor.id_proveedor %}Editar proveedor{% else %}Nuevo proveedor{% endif %}</h2>
+
+            {% if errores %}
+            <div class="alert-danger" role="alert">
+                <ul>{% for error in errores %}<li>{{ error }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+
+            <form class="product-form" method="POST">
+                <div class="form-group">
+                    <label for="nit">NIT</label>
+                    <input id="nit" name="nit" type="text" maxlength="15" required value="{{ proveedor.nit or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="razon_social">Razón social</label>
+                    <input id="razon_social" name="razon_social" type="text" maxlength="150" required value="{{ proveedor.razon_social or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="contacto">Contacto</label>
+                    <input id="contacto" name="contacto" type="text" maxlength="100" value="{{ proveedor.contacto or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input id="telefono" name="telefono" type="text" maxlength="15" required value="{{ proveedor.telefono or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="correo">Correo</label>
+                    <input id="correo" name="correo" type="email" maxlength="100" value="{{ proveedor.correo or '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="direccion">Dirección</label>
+                    <input id="direccion" name="direccion" type="text" maxlength="200" value="{{ proveedor.direccion or '' }}">
+                </div>
+                <button class="btn-submit" type="submit">Guardar proveedor</button>
+                <a class="btn" href="{{ url_for('proveedores') }}">Cancelar</a>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
