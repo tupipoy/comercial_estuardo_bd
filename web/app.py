@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal, InvalidOperation
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
@@ -97,6 +98,400 @@ def inventario():
         connection.close()
 
     return render_template("inventario.html", productos=productos, solo_stock_bajo=solo_stock_bajo)
+
+
+def cargar_categorias(cursor):
+    cursor.execute("""
+        SELECT id_categoria, nombre
+        FROM CATEGORIA
+        WHERE estado = 1
+        ORDER BY nombre;
+    """)
+    return cursor.fetchall()
+
+
+def validar_datos_producto(form):
+    datos = {
+        "codigo_barra": form.get("codigo_barra", "").strip() or None,
+        "nombre": form.get("nombre", "").strip(),
+        "descripcion": form.get("descripcion", "").strip() or None,
+        "precio_costo": form.get("precio_costo", "").strip(),
+        "precio_venta": form.get("precio_venta", "").strip(),
+        "stock_actual": form.get("stock_actual", "").strip(),
+        "stock_minimo": form.get("stock_minimo", "").strip(),
+        "id_categoria": form.get("id_categoria", "").strip(),
+    }
+    errores = []
+
+    if not datos["nombre"]:
+        errores.append("El nombre del producto es obligatorio.")
+    elif len(datos["nombre"]) > 150:
+        errores.append("El nombre no puede exceder 150 caracteres.")
+
+    if datos["codigo_barra"] and len(datos["codigo_barra"]) > 50:
+        errores.append("El código de barras no puede exceder 50 caracteres.")
+
+    for campo, etiqueta, permitir_cero in (
+        ("precio_costo", "costo", True),
+        ("precio_venta", "venta", False),
+    ):
+        try:
+            precio = Decimal(datos[campo])
+            if not precio.is_finite() or precio < 0 or (not permitir_cero and precio == 0):
+                raise InvalidOperation
+            if precio.as_tuple().exponent < -2:
+                raise InvalidOperation
+            datos[campo] = precio
+        except (InvalidOperation, ValueError):
+            limite = "igual o mayor que cero" if permitir_cero else "mayor que cero"
+            errores.append(f"El precio de {etiqueta} debe ser un número {limite} con máximo dos decimales.")
+
+    for campo, etiqueta in (("stock_actual", "stock actual"), ("stock_minimo", "stock mínimo")):
+        try:
+            valor = int(datos[campo])
+            if valor < 0:
+                raise ValueError
+            datos[campo] = valor
+        except (TypeError, ValueError):
+            errores.append(f"El {etiqueta} debe ser un entero igual o mayor que cero.")
+
+    try:
+        datos["id_categoria"] = int(datos["id_categoria"])
+    except (TypeError, ValueError):
+        errores.append("Selecciona una categoría válida.")
+
+    return datos, errores
+
+
+@app.route("/productos")
+def productos():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    p.id_producto,
+                    p.codigo_barra,
+                    p.nombre,
+                    p.descripcion,
+                    p.precio_costo,
+                    p.precio_venta,
+                    p.stock_actual,
+                    p.stock_minimo,
+                    p.id_categoria,
+                    c.nombre AS categoria
+                FROM PRODUCTO p
+                INNER JOIN CATEGORIA c
+                    ON p.id_categoria = c.id_categoria
+                WHERE p.estado = 1
+                ORDER BY p.nombre;
+            """)
+            lista_productos = cursor.fetchall()
+
+    finally:
+        connection.close()
+
+    return render_template("productos.html", productos=lista_productos)
+
+
+@app.route("/productos/nuevo", methods=["GET", "POST"])
+def nuevo_producto():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    errores = []
+    datos = None
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            categorias = cargar_categorias(cursor)
+            if request.method == "POST":
+                datos, errores = validar_datos_producto(request.form)
+                if not categorias:
+                    errores.append("Debes crear una categoría activa antes de registrar productos.")
+                if datos["id_categoria"] not in {c["id_categoria"] for c in categorias}:
+                    errores.append("La categoría seleccionada no está activa.")
+
+                if not errores:
+                    try:
+                        cursor.execute("""
+                            INSERT INTO PRODUCTO (
+                                codigo_barra, nombre, descripcion, precio_costo, precio_venta,
+                                stock_actual, stock_minimo, id_categoria, estado
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1);
+                        """, (
+                            datos["codigo_barra"], datos["nombre"], datos["descripcion"],
+                            datos["precio_costo"], datos["precio_venta"], datos["stock_actual"],
+                            datos["stock_minimo"], datos["id_categoria"],
+                        ))
+                        connection.commit()
+                        return redirect(url_for("productos"))
+                    except Exception as exc:
+                        connection.rollback()
+                        if getattr(exc, "args", [None])[0] == 1062:
+                            errores.append("Ese código de barras ya está registrado.")
+                        else:
+                            raise
+    finally:
+        connection.close()
+
+    return render_template(
+        "producto_form.html", producto=datos, categorias=categorias,
+        errores=errores, titulo="Nuevo producto",
+    )
+
+
+@app.route("/productos/editar/<int:id_producto>", methods=["GET", "POST"])
+def editar_producto(id_producto):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    errores = []
+    producto = None
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT * FROM PRODUCTO
+                WHERE id_producto = %s AND estado = 1;
+            """, (id_producto,))
+            producto = cursor.fetchone()
+            if not producto:
+                return redirect(url_for("productos"))
+
+            categorias = cargar_categorias(cursor)
+            if request.method == "POST":
+                datos, errores = validar_datos_producto(request.form)
+                if datos["id_categoria"] not in {c["id_categoria"] for c in categorias}:
+                    errores.append("La categoría seleccionada no está activa.")
+
+                if not errores:
+                    try:
+                        cursor.execute("""
+                            UPDATE PRODUCTO
+                            SET codigo_barra = %s,
+                                nombre = %s,
+                                descripcion = %s,
+                                precio_costo = %s,
+                                precio_venta = %s,
+                                stock_actual = %s,
+                                stock_minimo = %s,
+                                id_categoria = %s
+                            WHERE id_producto = %s AND estado = 1;
+                        """, (
+                            datos["codigo_barra"], datos["nombre"], datos["descripcion"],
+                            datos["precio_costo"], datos["precio_venta"], datos["stock_actual"],
+                            datos["stock_minimo"], datos["id_categoria"], id_producto,
+                        ))
+                        connection.commit()
+                        return redirect(url_for("productos"))
+                    except Exception as exc:
+                        connection.rollback()
+                        if getattr(exc, "args", [None])[0] == 1062:
+                            errores.append("Ese código de barras ya está registrado.")
+                        else:
+                            raise
+                producto = {**producto, **datos}
+    finally:
+        connection.close()
+
+    return render_template(
+        "producto_form.html", producto=producto, categorias=categorias,
+        errores=errores, titulo="Editar producto",
+    )
+
+
+@app.route("/productos/desactivar/<int:id_producto>", methods=["POST"])
+def desactivar_producto(id_producto):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE PRODUCTO
+                SET estado = 0
+                WHERE id_producto = %s AND estado = 1;
+            """, (id_producto,))
+            connection.commit()
+    finally:
+        connection.close()
+
+    return redirect(url_for("productos"))
+
+
+def validar_datos_cliente(form):
+    datos = {
+        "nit": form.get("nit", "").strip(),
+        "cui": form.get("cui", "").strip() or None,
+        "nombres": form.get("nombres", "").strip(),
+        "apellidos": form.get("apellidos", "").strip() or None,
+        "telefono": form.get("telefono", "").strip(),
+        "correo": form.get("correo", "").strip() or None,
+        "direccion": form.get("direccion", "").strip(),
+    }
+    errores = []
+
+    limites = {
+        "nit": (15, "El NIT"),
+        "cui": (13, "El CUI"),
+        "nombres": (100, "Los nombres"),
+        "apellidos": (100, "Los apellidos"),
+        "telefono": (15, "El teléfono"),
+        "correo": (100, "El correo"),
+        "direccion": (200, "La dirección"),
+    }
+    for campo, (limite, etiqueta) in limites.items():
+        valor = datos[campo]
+        if valor and len(valor) > limite:
+            errores.append(f"{etiqueta} no puede exceder {limite} caracteres.")
+
+    for campo, etiqueta in (("nit", "El NIT"), ("nombres", "Los nombres"),
+                            ("telefono", "El teléfono"), ("direccion", "La dirección")):
+        if not datos[campo]:
+            errores.append(f"{etiqueta} es obligatorio.")
+
+    if datos["cui"] and len(datos["cui"]) != 13:
+        errores.append("El CUI debe tener exactamente 13 caracteres.")
+    if datos["telefono"] and len(datos["telefono"]) < 8:
+        errores.append("El teléfono debe tener al menos 8 caracteres.")
+    if datos["correo"] and ("@" not in datos["correo"] or datos["correo"].startswith("@") or datos["correo"].endswith("@")):
+        errores.append("Ingresa un correo válido.")
+
+    return datos, errores
+
+
+@app.route("/clientes")
+def clientes():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    id_cliente, nit, cui, nombres, apellidos,
+                    telefono, correo, direccion, estado
+                FROM CLIENTE
+                WHERE estado = 1
+                ORDER BY nombres, apellidos;
+            """)
+            lista_clientes = cursor.fetchall()
+    finally:
+        connection.close()
+
+    return render_template("clientes.html", clientes=lista_clientes)
+
+
+@app.route("/clientes/nuevo", methods=["GET", "POST"])
+def nuevo_cliente():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    cliente = None
+    errores = []
+    if request.method == "POST":
+        cliente, errores = validar_datos_cliente(request.form)
+        if not errores:
+            connection = get_db_connection()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO CLIENTE (
+                            nit, cui, nombres, apellidos, telefono,
+                            correo, direccion, estado
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, 1);
+                    """, (
+                        cliente["nit"], cliente["cui"], cliente["nombres"],
+                        cliente["apellidos"], cliente["telefono"],
+                        cliente["correo"], cliente["direccion"],
+                    ))
+                    connection.commit()
+                return redirect(url_for("clientes"))
+            except Exception as exc:
+                connection.rollback()
+                if getattr(exc, "args", [None])[0] == 1062:
+                    errores.append("El NIT o CUI ya está registrado.")
+                else:
+                    raise
+            finally:
+                connection.close()
+
+    return render_template("cliente_form.html", cliente=cliente, errores=errores, titulo="Nuevo cliente")
+
+
+@app.route("/clientes/editar/<int:id_cliente>", methods=["GET", "POST"])
+def editar_cliente(id_cliente):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    errores = []
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT * FROM CLIENTE
+                WHERE id_cliente = %s AND estado = 1;
+            """, (id_cliente,))
+            cliente = cursor.fetchone()
+            if not cliente:
+                return redirect(url_for("clientes"))
+
+            if request.method == "POST":
+                datos, errores = validar_datos_cliente(request.form)
+                if not errores:
+                    try:
+                        cursor.execute("""
+                            UPDATE CLIENTE
+                            SET nit = %s, cui = %s, nombres = %s,
+                                apellidos = %s, telefono = %s,
+                                correo = %s, direccion = %s
+                            WHERE id_cliente = %s AND estado = 1;
+                        """, (
+                            datos["nit"], datos["cui"], datos["nombres"],
+                            datos["apellidos"], datos["telefono"],
+                            datos["correo"], datos["direccion"], id_cliente,
+                        ))
+                        connection.commit()
+                        return redirect(url_for("clientes"))
+                    except Exception as exc:
+                        connection.rollback()
+                        if getattr(exc, "args", [None])[0] == 1062:
+                            errores.append("El NIT o CUI ya está registrado.")
+                        else:
+                            raise
+                cliente = {**cliente, **datos}
+    finally:
+        connection.close()
+
+    return render_template(
+        "cliente_form.html", cliente=cliente, errores=errores, titulo="Editar cliente"
+    )
+
+
+@app.route("/clientes/desactivar/<int:id_cliente>", methods=["POST"])
+def desactivar_cliente(id_cliente):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE CLIENTE
+                SET estado = 0
+                WHERE id_cliente = %s AND estado = 1;
+            """, (id_cliente,))
+            connection.commit()
+    finally:
+        connection.close()
+
+    return redirect(url_for("clientes"))
 
 
 @app.route("/logout")

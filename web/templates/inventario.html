@@ -14,6 +14,8 @@
         <p>Sesión: {{ session.get('user_name') }}</p>
         {% endif %}
         <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+        <a href="{{ url_for('productos') }}" class="btn">Administrar productos</a>
+        <a href="{{ url_for('clientes') }}" class="btn">Clientes</a>
     </header>
 
     <main>

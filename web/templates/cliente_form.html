@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }} - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Comercial Estuardo</h1>
+        <p>Sesión: {{ session.get('user_name', '') }}</p>
+    </header>
+
+    <main class="product-form-page">
+        <h2>{{ titulo }}</h2>
+        {% if errores %}
+        <div class="alert-danger" role="alert">
+            <ul>{% for error in errores %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        <form method="POST" class="product-form">
+            <div class="form-group">
+                <label for="nit">NIT</label>
+                <input id="nit" name="nit" maxlength="15" required value="{{ cliente.nit if cliente else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="cui">CUI (opcional)</label>
+                <input id="cui" name="cui" maxlength="13" value="{{ cliente.cui or '' if cliente else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="nombres">Nombres</label>
+                <input id="nombres" name="nombres" maxlength="100" required value="{{ cliente.nombres if cliente else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="apellidos">Apellidos (opcional)</label>
+                <input id="apellidos" name="apellidos" maxlength="100" value="{{ cliente.apellidos or '' if cliente else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input id="telefono" name="telefono" maxlength="15" minlength="8" required value="{{ cliente.telefono if cliente else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="correo">Correo (opcional)</label>
+                <input id="correo" name="correo" type="email" maxlength="100" value="{{ cliente.correo or '' if cliente else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <input id="direccion" name="direccion" maxlength="200" required value="{{ cliente.direccion if cliente else '' }}">
+            </div>
+            <button type="submit" class="btn-submit">Guardar</button>
+            <a href="{{ url_for('clientes') }}" class="btn">Cancelar</a>
+        </form>
+    </main>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Comercial Estuardo</h1>
+        <p>Gestión de clientes · Sesión: {{ session.get('user_name', '') }}</p>
+        <a href="{{ url_for('inventario') }}" class="btn">Inventario</a>
+        <a href="{{ url_for('productos') }}" class="btn">Productos</a>
+        <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+    </header>
+
+    <main>
+        <section class="toolbar">
+            <h2>Clientes activos</h2>
+            <a href="{{ url_for('nuevo_cliente') }}" class="btn active">Nuevo cliente</a>
+        </section>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>NIT</th><th>CUI</th><th>Nombre</th><th>Teléfono</th>
+                    <th>Correo</th><th>Dirección</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clientes %}
+                <tr>
+                    <td>{{ c.nit }}</td>
+                    <td>{{ c.cui or '-' }}</td>
+                    <td>{{ c.nombres }} {{ c.apellidos or '' }}</td>
+                    <td>{{ c.telefono }}</td>
+                    <td>{{ c.correo or '-' }}</td>
+                    <td>{{ c.direccion }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_cliente', id_cliente=c.id_cliente) }}">Editar</a>
+                        <form method="POST"
+                              action="{{ url_for('desactivar_cliente', id_cliente=c.id_cliente) }}"
+                              style="display:inline"
+                              onsubmit="return confirm('¿Desactivar este cliente?');">
+                            <button type="submit">Desactivar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center">No hay clientes activos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

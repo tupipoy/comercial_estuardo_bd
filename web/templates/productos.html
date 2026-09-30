@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Comercial Estuardo</h1>
+        <p>Gestión de productos · Sesión: {{ session.get('user_name', '') }}</p>
+        <a href="{{ url_for('inventario') }}" class="btn">Inventario</a>
+        <a href="{{ url_for('clientes') }}" class="btn">Clientes</a>
+        <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+    </header>
+
+    <main>
+        <section class="toolbar">
+            <h2>Productos activos</h2>
+            <a href="{{ url_for('nuevo_producto') }}" class="btn active">Nuevo producto</a>
+        </section>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Precio de costo</th>
+                    <th>Precio de venta</th>
+                    <th>Stock</th>
+                    <th>Mínimo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in productos %}
+                <tr>
+                    <td>{{ p.codigo_barra or 'N/A' }}</td>
+                    <td>{{ p.nombre }}</td>
+                    <td>{{ p.categoria }}</td>
+                    <td>Q {{ "%.2f"|format(p.precio_costo) }}</td>
+                    <td>Q {{ "%.2f"|format(p.precio_venta) }}</td>
+                    <td>{{ p.stock_actual }}</td>
+                    <td>{{ p.stock_minimo }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar</a>
+                        <form method="POST"
+                              action="{{ url_for('desactivar_producto', id_producto=p.id_producto) }}"
+                              style="display:inline"
+                              onsubmit="return confirm('¿Desactivar este producto?');">
+                            <button type="submit">Desactivar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center">No hay productos activos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
