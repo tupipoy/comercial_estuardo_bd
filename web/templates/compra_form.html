@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva compra - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand">
+            <h1>Comercial Estuardo</h1>
+            <p>Registro de compra</p>
+        </div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="{{ url_for('inventario') }}">Inventario</a>
+            <a href="{{ url_for('productos') }}">Productos</a>
+            <a class="active" href="{{ url_for('compras') }}">Compras</a>
+        </nav>
+        <div class="nav-user">
+            <span>{{ session.get('user_name', '') }}</span>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="product-form-page">
+            <h2>Nueva compra</h2>
+
+            {% if errores %}
+            <div class="alert-danger" role="alert">
+                <ul>
+                    {% for error in errores %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <form class="product-form" method="POST" action="{{ url_for('nueva_compra') }}">
+                <div class="form-group">
+                    <label for="numero_orden">Número de orden</label>
+                    <input id="numero_orden" name="numero_orden" type="text" maxlength="30" required value="{{ datos.numero_orden }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="id_proveedor">Proveedor</label>
+                    <select id="id_proveedor" name="id_proveedor" required>
+                        <option value="">Selecciona un proveedor</option>
+                        {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id_proveedor }}" {% if datos.id_proveedor|string == proveedor.id_proveedor|string %}selected{% endif %}>
+                            {{ proveedor.razon_social }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not proveedores %}<small>No hay proveedores activos registrados.</small>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_producto">Producto</label>
+                    <select id="id_producto" name="id_producto" required>
+                        <option value="">Selecciona un producto</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id_producto }}" {% if datos.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                            {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — stock {{ producto.stock_actual }}, costo actual Q {{ "%.2f"|format(producto.precio_costo) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not productos %}<small>No hay productos activos registrados.</small>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="cantidad">Cantidad recibida</label>
+                    <input id="cantidad" name="cantidad" type="number" min="1" step="1" required value="{{ datos.cantidad }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="costo_unitario">Costo unitario de compra</label>
+                    <input id="costo_unitario" name="costo_unitario" type="number" min="0.01" step="0.01" required value="{{ datos.costo_unitario }}">
+                    <small>Al registrar la compra, este costo reemplazará el costo vigente del producto.</small>
+                </div>
+
+                <button class="btn-submit" type="submit" {% if not proveedores or not productos %}disabled{% endif %}>
+                    Registrar compra
+                </button>
+                <a class="btn" href="{{ url_for('compras') }}">Cancelar</a>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

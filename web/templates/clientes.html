@@ -19,6 +19,9 @@
             {% endif %}
             <a class="active" href="{{ url_for('clientes') }}">Clientes</a>
             <a href="{{ url_for('ventas') }}">Ventas</a>
+            {% if session.get('user_role') == 'Administrador' %}
+            <a href="{{ url_for('compras') }}">Compras</a>
+            {% endif %}
         </nav>
         <div class="nav-user">
             <span>{{ session.get('user_name', '') }}</span>

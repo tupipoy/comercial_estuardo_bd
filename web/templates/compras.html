@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ventas - Comercial Estuardo</title>
+    <title>Compras - Comercial Estuardo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header class="navbar">
         <div class="nav-brand">
             <h1>Comercial Estuardo</h1>
-            <p>Gestión de ventas</p>
+            <p>Gestión de compras e inventario</p>
         </div>
         <nav class="nav-links" aria-label="Navegación principal">
             <a href="{{ url_for('inventario') }}">Inventario</a>
-            {% if session.get('user_role') == 'Administrador' %}
             <a href="{{ url_for('productos') }}">Productos</a>
-            {% endif %}
-            <a href="{{ url_for('clientes') }}">Clientes</a>
-            <a class="active" href="{{ url_for('ventas') }}">Ventas</a>
+            <a class="active" href="{{ url_for('compras') }}">Compras</a>
             {% if session.get('user_role') == 'Administrador' %}
-            <a href="{{ url_for('compras') }}">Compras</a>
+            <a href="{{ url_for('clientes') }}">Clientes</a>
+            <a href="{{ url_for('ventas') }}">Ventas</a>
             {% endif %}
         </nav>
         <div class="nav-user">
@@ -37,37 +35,33 @@
         {% endwith %}
 
         <section class="toolbar">
-            <h2>Ventas registradas</h2>
-            <a href="{{ url_for('nueva_venta') }}" class="btn active">Nueva venta</a>
+            <h2>Compras registradas</h2>
+            <a href="{{ url_for('nueva_compra') }}" class="btn active">Nueva compra</a>
         </section>
 
         <table>
             <thead>
                 <tr>
-                    <th>Factura</th>
+                    <th>Orden</th>
                     <th>Fecha</th>
-                    <th>Cliente</th>
+                    <th>Proveedor</th>
                     <th>Empleado</th>
-                    <th>Sucursal</th>
-                    <th>Pago</th>
                     <th>Total</th>
                     <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
-                {% for venta in ventas %}
+                {% for compra in compras %}
                 <tr>
-                    <td>{{ venta.serie_factura }}-{{ venta.numero_factura }}</td>
-                    <td>{{ venta.fecha_venta }}</td>
-                    <td>{{ venta.cliente }}</td>
-                    <td>{{ venta.empleado }}</td>
-                    <td>{{ venta.sucursal }}</td>
-                    <td>{{ venta.tipo_pago }}</td>
-                    <td>Q {{ "%.2f"|format(venta.total_venta) }}</td>
-                    <td>{{ venta.estado }}</td>
+                    <td>{{ compra.numero_orden }}</td>
+                    <td>{{ compra.fecha_compra }}</td>
+                    <td>{{ compra.proveedor }}</td>
+                    <td>{{ compra.empleado }}</td>
+                    <td>Q {{ "%.2f"|format(compra.total_compra) }}</td>
+                    <td>{{ compra.estado_recepcion }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8" class="text-center">Todavía no hay ventas registradas.</td></tr>
+                <tr><td colspan="6" class="text-center">Todavía no hay compras registradas.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

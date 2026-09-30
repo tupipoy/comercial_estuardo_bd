@@ -700,6 +700,161 @@ def nueva_venta():
     )
 
 
+def cargar_opciones_compra(cursor):
+    cursor.execute("""
+        SELECT id_proveedor, razon_social
+        FROM PROVEEDOR
+        WHERE estado = 1
+        ORDER BY razon_social;
+    """)
+    proveedores_activos = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT id_producto, codigo_barra, nombre, precio_costo, stock_actual
+        FROM PRODUCTO
+        WHERE estado = 1
+        ORDER BY nombre;
+    """)
+    productos_activos = cursor.fetchall()
+    return proveedores_activos, productos_activos
+
+
+@app.route("/compras")
+@requiere_rol("Administrador", "Bodega")
+def compras():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    c.id_compra,
+                    c.numero_orden,
+                    c.fecha_compra,
+                    c.total_compra,
+                    c.estado_recepcion,
+                    p.razon_social AS proveedor,
+                    CONCAT(e.nombres, ' ', e.apellidos) AS empleado
+                FROM COMPRA AS c
+                INNER JOIN PROVEEDOR AS p ON p.id_proveedor = c.id_proveedor
+                INNER JOIN EMPLEADO AS e ON e.id_empleado = c.id_empleado
+                ORDER BY c.fecha_compra DESC, c.id_compra DESC
+                LIMIT 200;
+            """)
+            lista_compras = cursor.fetchall()
+    finally:
+        connection.close()
+
+    return render_template("compras.html", compras=lista_compras)
+
+
+@app.route("/compras/nueva", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Bodega")
+def nueva_compra():
+    errores = []
+    datos = {
+        "numero_orden": "",
+        "id_proveedor": "",
+        "id_producto": "",
+        "cantidad": "1",
+        "costo_unitario": "",
+    }
+    proveedores = []
+    productos = []
+    connection = None
+
+    if request.method == "POST":
+        datos.update({
+            campo: request.form.get(campo, "").strip()
+            for campo in datos
+        })
+        if not datos["numero_orden"]:
+            errores.append("El número de orden es obligatorio.")
+        elif len(datos["numero_orden"]) > 30:
+            errores.append("El número de orden no puede superar 30 caracteres.")
+
+        for campo, etiqueta in (("id_proveedor", "proveedor"), ("id_producto", "producto")):
+            try:
+                datos[campo] = int(datos[campo])
+                if datos[campo] <= 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                errores.append(f"Selecciona un {etiqueta} válido.")
+
+        try:
+            datos["cantidad"] = int(datos["cantidad"])
+            if datos["cantidad"] <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            errores.append("La cantidad debe ser un entero mayor que cero.")
+
+        try:
+            datos["costo_unitario"] = Decimal(datos["costo_unitario"])
+            if not datos["costo_unitario"].is_finite() or datos["costo_unitario"] <= 0:
+                raise InvalidOperation
+        except (InvalidOperation, TypeError, ValueError):
+            errores.append("El costo unitario debe ser un importe mayor que cero.")
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            proveedores, productos = cargar_opciones_compra(cursor)
+
+            if request.method == "POST" and not errores:
+                proveedor_ids = {p["id_proveedor"] for p in proveedores}
+                producto_por_id = {p["id_producto"]: p for p in productos}
+                if datos["id_proveedor"] not in proveedor_ids:
+                    errores.append("El proveedor seleccionado no existe o está inactivo.")
+                if datos["id_producto"] not in producto_por_id:
+                    errores.append("El producto seleccionado no existe o está inactivo.")
+
+                cursor.execute("""
+                    SELECT id_empleado
+                    FROM EMPLEADO
+                    WHERE id_empleado = %s AND estado = 1;
+                """, (session["user_id"],))
+                empleado = cursor.fetchone()
+                if not empleado:
+                    errores.append("El empleado de la sesión ya no está activo.")
+
+                if not errores:
+                    cursor.callproc("sp_registrar_compra", (
+                        datos["numero_orden"],
+                        datos["id_proveedor"],
+                        session["user_id"],
+                        datos["id_producto"],
+                        datos["cantidad"],
+                        datos["costo_unitario"],
+                    ))
+                    while cursor.nextset():
+                        pass
+                    flash(
+                        f"Compra {datos['numero_orden']} registrada correctamente; "
+                        "stock y costo fueron actualizados.",
+                        "success",
+                    )
+                    return redirect(url_for("compras"))
+    except Exception as exc:
+        if connection:
+            connection.rollback()
+        app.logger.exception("No se pudo registrar la compra")
+        mensaje_db = str(exc.args[1]) if len(getattr(exc, "args", ())) > 1 else ""
+        if "Duplicate entry" in mensaje_db:
+            errores.append("Ese número de orden ya está registrado.")
+        else:
+            errores.append("No se pudo registrar la compra. Revisa los datos y la configuración de MySQL.")
+    finally:
+        if connection:
+            connection.close()
+
+    return render_template(
+        "compra_form.html",
+        proveedores=proveedores,
+        productos=productos,
+        datos=datos,
+        errores=errores,
+    )
+
+
 @app.route("/logout")
 def logout():
     session.clear()
