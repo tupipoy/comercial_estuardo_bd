@@ -7,15 +7,20 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Comercial Estuardo</h1>
-        <p>Sistema de Gestión de Ventas, Compras e Inventario — Avance 30%</p>
-        {% if session.get('user_name') %}
-        <p>Sesión: {{ session.get('user_name') }}</p>
-        {% endif %}
-        <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
-        <a href="{{ url_for('productos') }}" class="btn">Administrar productos</a>
-        <a href="{{ url_for('clientes') }}" class="btn">Clientes</a>
+    <header class="navbar">
+        <div class="nav-brand">
+            <h1>Comercial Estuardo</h1>
+            <p>Sistema de Gestión de Ventas, Compras e Inventario</p>
+        </div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a class="active" href="{{ url_for('inventario') }}">Inventario</a>
+            <a href="{{ url_for('productos') }}">Productos</a>
+            <a href="{{ url_for('clientes') }}">Clientes</a>
+        </nav>
+        <div class="nav-user">
+            <span>{{ session.get('user_name', '') }}</span>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
     </header>
 
     <main>

@@ -24,6 +24,32 @@ header {
 header h1 { margin: 0 0 5px 0; }
 header p { margin: 0; color: #94a3b8; }
 
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+.nav-links,
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.nav-links a,
+.nav-user a {
+    color: #e2e8f0;
+    text-decoration: none;
+}
+.nav-links a:hover,
+.nav-user a:hover { text-decoration: underline; }
+.nav-links a.active { color: #fff; font-weight: 700; }
+.nav-user span { color: #cbd5e1; }
+@media (max-width: 720px) {
+    .navbar { align-items: flex-start; flex-direction: column; }
+    .nav-links, .nav-user { flex-wrap: wrap; }
+}
+
 .toolbar {
     display: flex;
     justify-content: space-between;

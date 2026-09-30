@@ -7,12 +7,20 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Comercial Estuardo</h1>
-        <p>Gestión de productos · Sesión: {{ session.get('user_name', '') }}</p>
-        <a href="{{ url_for('inventario') }}" class="btn">Inventario</a>
-        <a href="{{ url_for('clientes') }}" class="btn">Clientes</a>
-        <a href="{{ url_for('logout') }}" class="btn">Cerrar sesión</a>
+    <header class="navbar">
+        <div class="nav-brand">
+            <h1>Comercial Estuardo</h1>
+            <p>Gestión de productos</p>
+        </div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="{{ url_for('inventario') }}">Inventario</a>
+            <a class="active" href="{{ url_for('productos') }}">Productos</a>
+            <a href="{{ url_for('clientes') }}">Clientes</a>
+        </nav>
+        <div class="nav-user">
+            <span>{{ session.get('user_name', '') }}</span>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
     </header>
 
     <main>
