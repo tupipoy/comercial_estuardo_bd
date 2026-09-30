@@ -10,11 +10,10 @@ Documentar las pruebas funcionales y de seguridad de la base de datos y la aplic
 
 ## Entorno de prueba
 
-- Aplicación Flask con MySQL local.
-- Usuarios de prueba creados en `EMPLEADO` con hashes PBKDF2:
-  - `ventas@comercialestuardo.com` — cargo `Vendedor`.
-  - `bodega@comercialestuardo.com` — cargo `Bodega`.
-- Se aplicó `sql/migrations/03_add_product_cost.sql` porque la ruta de productos requiere `PRODUCTO.precio_costo`.
+- Instalación completa de Flask y MySQL en un esquema temporal independiente, creada con los siete scripts en el orden indicado en `INSTALL.md`.
+- Se asignaron hashes PBKDF2 temporales a los empleados Administrador, Vendedor y Bodega del conjunto de datos.
+- La prueba no aplicó migraciones: `password_hash` y `precio_costo` ya existen en el DDL actual.
+- El esquema y los roles temporales se eliminaron al terminar; no se modificó la base local de trabajo.
 
 ---
 
@@ -24,13 +23,13 @@ Documentar las pruebas funcionales y de seguridad de la base de datos y la aplic
 
 **Precondiciones:** El empleado existe, tiene `estado = 1` y `password_hash` válido.
 
-**Datos de prueba:** Se inició sesión con las cuentas de prueba de Vendedor y Bodega usando sus contraseñas correspondientes.
+**Datos de prueba:** Se inició sesión con las cuentas temporales de Administrador, Vendedor y Bodega usando una contraseña válida de prueba.
 
 **Procedimiento:** Abrir el login, ingresar correo y contraseña válidos y enviar el formulario.
 
 **Resultado esperado:** Se crea la sesión y la aplicación redirige a Inventario.
 
-**Resultado obtenido:** Ambos inicios de sesión devolvieron redirección HTTP `302` y guardaron el cargo esperado en la sesión.
+**Resultado obtenido:** Las tres cuentas devolvieron redirección HTTP `302` a Inventario y permitieron comprobar sus respectivos cargos y permisos.
 
 **Estado:** ✅ Aprobado
 
@@ -48,9 +47,9 @@ Documentar las pruebas funcionales y de seguridad de la base de datos y la aplic
 
 **Resultado esperado:** El sistema rechaza el acceso, muestra un mensaje de credenciales incorrectas y no crea una sesión autenticada.
 
-**Resultado obtenido:** Pendiente de prueba con MySQL local.
+**Resultado obtenido:** El login respondió HTTP `200`, mostró el mensaje de credenciales incorrectas y no creó `user_id` en la sesión.
 
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Aprobado
 
 ---
 
@@ -64,7 +63,7 @@ Documentar las pruebas funcionales y de seguridad de la base de datos y la aplic
 
 **Resultado esperado:** Inventario y Clientes son accesibles; Productos no aparece en el menú y la ruta responde HTTP `403`.
 
-**Resultado obtenido:** Inventario y Clientes respondieron HTTP `200`; `/productos` respondió HTTP `403`; el enlace de Productos no apareció en el menú.
+**Resultado obtenido:** Inventario, Clientes y Ventas respondieron HTTP `200`; `/productos` y `/compras` respondieron HTTP `403`; el menú omitió Productos.
 
 **Estado:** ✅ Aprobado
 
@@ -80,7 +79,7 @@ Documentar las pruebas funcionales y de seguridad de la base de datos y la aplic
 
 **Resultado esperado:** Inventario y Productos son accesibles; Clientes no aparece en el menú y la ruta responde HTTP `403`.
 
-**Resultado obtenido:** Inventario y Productos respondieron HTTP `200`; `/clientes` respondió HTTP `403`; el enlace de Clientes no apareció en el menú.
+**Resultado obtenido:** Inventario, Productos, Compras y Proveedores respondieron HTTP `200`; `/clientes` y `/ventas` respondieron HTTP `403`; el menú omitió Clientes.
 
 **Estado:** ✅ Aprobado
 
@@ -103,11 +102,11 @@ ORDER BY id_producto DESC
 LIMIT 1;
 ```
 
-**Resultado esperado:** El producto aparece en la interfaz y en MySQL con `estado = 1`.
+**Resultado esperado:** El producto aparece en la interfaz y en MySQL con `estado = 1`; la edición persiste y la desactivación cambia su estado a `0`.
 
-**Resultado obtenido:** La ruta CRUD se verificó con conexión simulada; falta probar la creación con persistencia en MySQL real.
+**Resultado obtenido:** En MySQL temporal se creó el producto, se verificaron los datos persistidos, se editó y se desactivó lógicamente. Cada operación respondió como se esperaba.
 
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Aprobado
 
 ---
 
@@ -128,11 +127,11 @@ ORDER BY id_cliente DESC
 LIMIT 1;
 ```
 
-**Resultado esperado:** El cliente aparece en el listado y persiste en la base de datos.
+**Resultado esperado:** El cliente aparece en el listado y persiste en la base de datos; la edición y desactivación lógica también se guardan.
 
-**Resultado obtenido:** La ruta CRUD se verificó con conexión simulada; falta probar la creación con persistencia en MySQL real.
+**Resultado obtenido:** En MySQL temporal se creó el cliente, se verificaron los datos persistidos, se editó y se desactivó lógicamente. Cada operación respondió como se esperaba.
 
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Aprobado
 
 ---
 
@@ -142,31 +141,13 @@ LIMIT 1;
 
 **Precondiciones:** Existen producto con stock suficiente, cliente, empleado y sucursal válidos; también están creados `sp_registrar_venta`, `trg_validar_stock_venta` y `trg_descontar_stock_venta`.
 
-**Procedimiento:** En una base de pruebas, consultar el stock, registrar una venta con el procedimiento y volver a consultar el stock, la venta y el detalle. Sustituir los IDs de ejemplo por IDs existentes y usar un número de factura único.
-
-```sql
-SELECT id_producto, nombre, stock_actual
-FROM PRODUCTO
-WHERE id_producto = 1;
-
-CALL sp_registrar_venta(
-    'PRUEBA', 9001, 'Efectivo',
-    1, 1, 1, 1, 2, 100.00, 0.00
-);
-
-SELECT id_producto, nombre, stock_actual
-FROM PRODUCTO
-WHERE id_producto = 1;
-
-SELECT * FROM VENTA ORDER BY id_venta DESC LIMIT 1;
-SELECT * FROM DETALLE_VENTA ORDER BY id_detalle_venta DESC LIMIT 1;
-```
+**Procedimiento:** En el esquema temporal completo, iniciar sesión como Vendedor, consultar el stock del producto 1 y registrar una venta de dos unidades desde `/ventas/nueva`. Después consultar la cabecera, el detalle y el stock en MySQL.
 
 **Resultado esperado:** Se crean cabecera y detalle, el total coincide y el stock baja en dos unidades.
 
-**Resultado obtenido:** Pendiente de ejecutar contra MySQL. No se ejecutó esta operación porque modifica inventario y genera una venta.
+**Resultado obtenido:** La ruta web respondió HTTP `302`; se guardaron la cabecera y el detalle, y el stock bajó exactamente dos unidades mediante el trigger.
 
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Aprobado
 
 ---
 
@@ -176,14 +157,7 @@ SELECT * FROM DETALLE_VENTA ORDER BY id_detalle_venta DESC LIMIT 1;
 
 **Precondiciones:** Producto existente y activos el trigger `trg_validar_stock_venta` y el procedimiento `sp_registrar_venta`.
 
-**Procedimiento:** En una base de pruebas y usando IDs válidos, intentar vender una cantidad mayor al stock:
-
-```sql
-CALL sp_registrar_venta(
-    'PRUEBA', 9002, 'Efectivo',
-    1, 1, 1, 1, 99999, 100.00, 0.00
-);
-```
+**Procedimiento:** En el esquema temporal, iniciar sesión como Vendedor e intentar registrar por la web una cantidad mayor que el stock disponible.
 
 **Resultado esperado:** MySQL informa que el stock es insuficiente, la transacción se revierte y no queda una venta incompleta.
 
@@ -193,9 +167,15 @@ CALL sp_registrar_venta(
 Stock insuficiente para realizar la venta
 ```
 
-**Resultado obtenido:** Pendiente de ejecutar contra MySQL.
+**Resultado obtenido:** La aplicación mostró “Stock insuficiente”. La transacción no dejó una cabecera de venta y el stock quedó sin cambios.
 
-**Estado:** ⏳ Pendiente
+**Estado:** ✅ Aprobado
+
+---
+
+## Verificaciones adicionales
+
+En el mismo entorno temporal se probó el CRUD de Proveedores y el registro de una compra como Bodega. La compra quedó persistida y `sp_registrar_compra` incrementó el stock en dos unidades y actualizó `precio_costo` al valor enviado. El listado y las rutas de Compras/Proveedores también respetaron los permisos.
 
 ---
 
@@ -204,14 +184,14 @@ Stock insuficiente para realizar la venta
 | Código | Caso de prueba | Resultado |
 |---|---|---|
 | CP01 | Login correcto | ✅ Aprobado |
-| CP02 | Login incorrecto | ⏳ Pendiente |
+| CP02 | Login incorrecto | ✅ Aprobado |
 | CP03 | Restricción de Productos para Vendedor | ✅ Aprobado |
 | CP04 | Restricción de Clientes para Bodega | ✅ Aprobado |
-| CP05 | Crear producto con persistencia MySQL | ⏳ Pendiente |
-| CP06 | Crear cliente con persistencia MySQL | ⏳ Pendiente |
-| CP07 | Venta con stock suficiente | ⏳ Pendiente |
-| CP08 | Venta con stock insuficiente | ⏳ Pendiente |
+| CP05 | CRUD de Producto con persistencia MySQL | ✅ Aprobado |
+| CP06 | CRUD de Cliente con persistencia MySQL | ✅ Aprobado |
+| CP07 | Venta con stock suficiente | ✅ Aprobado |
+| CP08 | Venta con stock insuficiente | ✅ Aprobado |
 
 ## Conclusión
 
-Se comprobó el inicio de sesión de los usuarios de prueba y el control de acceso por cargo en las rutas de Inventario, Productos y Clientes. Las pruebas de login incorrecto, persistencia real de los CRUD y transacciones de ventas todavía deben ejecutarse antes de declarar esos casos aprobados.
+Los ocho casos se ejecutaron y aprobaron en una instalación temporal completa de MySQL. Se verificaron la autenticación válida e inválida, los permisos por cargo, la persistencia CRUD de Productos y Clientes, y las transacciones de venta con stock suficiente e insuficiente. Las pruebas no alteraron la base de datos local de trabajo.
