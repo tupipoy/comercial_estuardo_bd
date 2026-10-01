@@ -1,109 +1,109 @@
-# Bitácora de Uso de Inteligencia Artificial - Entrega 3
+# Registro de Apoyo con Inteligencia Artificial - Entrega 3
 
 **Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario  
 **Empresa:** Comercial Estuardo  
-**Fase:** Entrega 3 — Implementación Avanzada, Seguridad, Procedimientos y Aplicación Web  
-**Periodo:** 19 al 29 de septiembre de 2026
+**Etapa:** Entrega 3 — Desarrollo Avanzado, Seguridad, Procedimientos y Aplicación Web  
+**Periodo evaluado:** 19 al 29 de septiembre de 2026
 
 ---
 
-### Objetivo
+## Propósito del Documento
 
-Documentar el uso de herramientas de inteligencia artificial como apoyo durante el desarrollo de la Entrega 3.
+El presente registro tiene como finalidad dejar evidencia del uso de herramientas de inteligencia artificial durante las actividades correspondientes a la **Entrega 3** del proyecto.
 
-La inteligencia artificial fue utilizada como una herramienta de asistencia para revisar ideas, detectar errores, proponer estructuras, apoyar consultas SQL, orientar la implementación de módulos y facilitar la documentación.
+Estas herramientas fueron utilizadas como apoyo para analizar código, plantear posibles soluciones, revisar consultas SQL, detectar errores, proponer estructuras de módulos y facilitar la elaboración de documentación técnica.
 
-El equipo mantuvo la responsabilidad sobre las decisiones técnicas, adaptación del código, ejecución de pruebas, correcciones y validación final del sistema.
+La implementación definitiva, las decisiones de diseño, las pruebas, los ajustes y la validación de los resultados permanecieron bajo responsabilidad del equipo de desarrollo.
 
 ---
 
-### Registro de Actividades
+## Historial de Actividades
 
-| **Fecha** | **Actividad** | **Apoyo de IA** | **Trabajo realizado por el equipo** |
+| Fecha | Tarea desarrollada | Uso de Inteligencia Artificial | Actividad realizada por el equipo |
 |---|---|---|---|
-| 19/09/2026 | Revisión general del proyecto | Se utilizó IA para comparar el avance con los requisitos de la Entrega 3 e identificar elementos pendientes. | Se revisó el repositorio y se determinó qué funcionalidades debían priorizarse. |
-| 20/09/2026 | Organización del repositorio | Se recibieron sugerencias para mejorar `.gitignore`, `.env.example` y la estructura de instalación. | Se aplicaron los cambios y se verificó el estado del repositorio mediante Git. |
-| 21/09/2026 | Seguridad del inicio de sesión | La IA ayudó a revisar el manejo de contraseñas, sesiones y posibles mejoras de seguridad. | Se implementó el uso de `password_hash`, sesiones y validación de credenciales. |
-| 22/09/2026 | CRUD de Productos | Se utilizaron sugerencias para estructurar rutas, formularios y consultas parametrizadas. | Se adaptó la propuesta a la tabla real `PRODUCTO` y se realizaron pruebas de persistencia. |
-| 22/09/2026 | CRUD de Clientes | La IA apoyó con la estructura inicial del módulo y algunas validaciones. | Se implementaron altas, consultas, modificaciones y desactivación lógica. |
-| 23/09/2026 | Datos de prueba | Se utilizó IA para apoyar la organización de registros y revisar relaciones entre tablas. | Se ajustaron los datos a las llaves foráneas y restricciones reales de la base. |
-| 24/09/2026 | Vistas SQL | Se recibieron sugerencias de vistas útiles para inventario y ventas. | Se implementaron y verificaron en MySQL Workbench. |
-| 24/09/2026 | Triggers | La IA ayudó a revisar la lógica para validar y actualizar existencias. | Se implementaron y probaron los triggers de validación y descuento de stock. |
-| 25/09/2026 | Procedimientos almacenados | Se utilizó IA como apoyo para estructurar operaciones transaccionales de venta y compra. | Se ejecutaron, corrigieron y verificaron los procedimientos en MySQL. |
-| 25/09/2026 | Roles de seguridad | Se recibieron sugerencias para distribuir privilegios según el tipo de usuario. | Se crearon los roles y se verificaron sus permisos mediante `SHOW GRANTS`. |
-| 26/09/2026 | Control de acceso en Flask | La IA ayudó a revisar una estructura para restringir rutas por cargo. | Se implementaron permisos para Administrador, Vendedor y Bodega y se probaron respuestas HTTP 200 y 403. |
-| 27/09/2026 | Módulo Web de Ventas | Se utilizó IA para revisar la integración entre Flask, procedimientos y triggers. | Se realizó la implementación final y se comprobó el registro de ventas y actualización del stock. |
-| 28/09/2026 | Módulo Web de Compras | La IA apoyó con la revisión del flujo de compras y el uso del procedimiento almacenado. | Se integró el módulo con productos, proveedores y actualización de inventario. |
-| 28/09/2026 | CRUD de Proveedores | Se recibieron sugerencias de estructura para rutas y formularios. | Se implementó el CRUD y se integró con el módulo de Compras. |
-| 29/09/2026 | Casos de prueba | La IA ayudó a organizar distintos escenarios funcionales y de seguridad. | El equipo realizó las pruebas y comparó los resultados esperados con los obtenidos. |
-| 29/09/2026 | Documentación final | Se utilizó IA para apoyar la redacción y organización de la documentación. | Se revisó y adaptó la matriz de trazabilidad, avance web, certificación y bitácora. |
+| 19/09/2026 | Análisis del estado del proyecto | Se utilizó IA para revisar el avance existente y contrastarlo con los requisitos de la Entrega 3. | Se inspeccionó el repositorio y se definieron las tareas prioritarias. |
+| 20/09/2026 | Ajustes en la estructura del repositorio | Se consultaron recomendaciones para mejorar `.gitignore`, `.env.example` y la organización general del proyecto. | Se aplicaron los cambios seleccionados y se verificaron mediante Git. |
+| 21/09/2026 | Revisión de autenticación | Se analizó con apoyo de IA el manejo de credenciales, contraseñas y sesiones. | Se incorporó `password_hash`, manejo de sesiones y validación de usuarios. |
+| 22/09/2026 | Desarrollo de Productos | Se utilizaron sugerencias para organizar formularios, rutas y consultas SQL parametrizadas. | El módulo fue adaptado a la estructura de la tabla `PRODUCTO` y posteriormente probado. |
+| 22/09/2026 | Desarrollo de Clientes | Se solicitó apoyo para definir la estructura inicial y reglas de validación. | Se desarrollaron funciones de registro, consulta, modificación y desactivación lógica. |
+| 23/09/2026 | Preparación de datos de prueba | Se utilizó IA para revisar la organización de datos y relaciones entre entidades. | Los registros fueron ajustados según las restricciones y llaves foráneas existentes. |
+| 24/09/2026 | Creación de vistas SQL | Se analizaron posibles vistas útiles para inventario, productos y ventas. | Las vistas seleccionadas fueron implementadas y probadas en MySQL Workbench. |
+| 24/09/2026 | Implementación de triggers | Se utilizó IA para revisar reglas relacionadas con control de existencias. | Se configuraron y probaron triggers para validar y descontar stock. |
+| 25/09/2026 | Desarrollo de procedimientos almacenados | Se solicitaron propuestas para organizar transacciones de compras y ventas. | Los procedimientos fueron modificados, ejecutados y comprobados en MySQL. |
+| 25/09/2026 | Configuración de roles | Se analizaron alternativas para distribuir privilegios según las funciones de los usuarios. | Los roles fueron creados y sus permisos se comprobaron mediante `SHOW GRANTS`. |
+| 26/09/2026 | Restricción de rutas en Flask | Se revisaron estrategias para limitar rutas según el perfil del usuario. | Se implementaron permisos para Administrador, Vendedor y Bodega y se verificaron respuestas HTTP 200 y 403. |
+| 27/09/2026 | Integración del módulo de Ventas | Se utilizó IA para revisar la comunicación entre Flask, procedimientos y triggers. | Se completó la funcionalidad de ventas y se validó la actualización automática del inventario. |
+| 28/09/2026 | Integración del módulo de Compras | Se analizaron propuestas para organizar el flujo de compra y conexión con procedimientos almacenados. | Se conectaron productos, proveedores y actualización de existencias. |
+| 28/09/2026 | Desarrollo de Proveedores | Se solicitaron sugerencias para la organización de rutas y formularios. | Se desarrolló el CRUD y se relacionó con el módulo de Compras. |
+| 29/09/2026 | Ejecución de pruebas | La IA permitió plantear diferentes escenarios funcionales y de seguridad. | Se ejecutaron pruebas y se compararon los resultados obtenidos con los esperados. |
+| 29/09/2026 | Preparación de documentación | Se utilizó IA como apoyo para ordenar y mejorar la presentación de documentos técnicos. | Se revisaron la bitácora, matriz de trazabilidad, certificación y documentación del avance web. |
 
 ---
 
-### Uso de la Inteligencia Artificial
+## Formas de Uso de la IA
 
-Durante esta fase la IA tuvo una participación importante como herramienta de apoyo.
+Durante esta etapa, la inteligencia artificial se utilizó como herramienta de consulta y apoyo técnico.
 
-Se utilizó principalmente para:
+Las principales actividades realizadas con asistencia de IA fueron:
 
-1. Revisar fragmentos de código.
-2. Proponer estructuras iniciales para módulos.
-3. Explicar errores encontrados durante la implementación.
-4. Revisar consultas SQL.
-5. Apoyar la creación de procedimientos almacenados.
-6. Apoyar la creación y revisión de triggers.
-7. Analizar permisos y roles de MySQL.
-8. Revisar buenas prácticas de seguridad.
-9. Proponer casos de prueba.
-10. Organizar documentación técnica.
+1. Análisis de código existente.
+2. Propuesta de estructuras de programación.
+3. Interpretación de mensajes de error.
+4. Revisión de sentencias SQL.
+5. Orientación sobre procedimientos almacenados.
+6. Revisión de triggers.
+7. Análisis de roles y permisos.
+8. Recomendaciones relacionadas con seguridad.
+9. Diseño de posibles casos de prueba.
+10. Organización de documentación técnica.
 
-Las propuestas obtenidas mediante IA no fueron incorporadas automáticamente al proyecto.
+Ninguna propuesta fue incorporada de manera automática al proyecto.
 
-Cada resultado fue revisado, adaptado y probado de acuerdo con la estructura real de la base de datos y las necesidades del sistema.
-
----
-
-### Participación del Equipo
-
-El trabajo de la Entrega 3 se desarrolló mediante una combinación de trabajo manual y asistencia de inteligencia artificial.
-
-De manera aproximada se considera la siguiente distribución:
-
-**50% apoyo de inteligencia artificial**  
-**50% desarrollo, adaptación, pruebas y validación del equipo**
-
-El porcentaje de IA corresponde principalmente a orientación, revisión, generación de propuestas iniciales, explicación de errores y apoyo en documentación.
-
-El equipo realizó directamente:
-
-- configuración del entorno;
-- ejecución de scripts;
-- implementación y adaptación del código;
-- integración entre Flask y MySQL;
-- pruebas funcionales;
-- corrección de errores;
-- verificación de permisos;
-- pruebas de seguridad;
-- control de versiones;
-- validación de resultados.
+Antes de utilizar cualquier sugerencia, el equipo verificó su compatibilidad con la estructura real del sistema y realizó los ajustes necesarios.
 
 ---
 
-### Principales Áreas en las que se Utilizó IA
+## Distribución del Trabajo
 
-#### Seguridad y autenticación
+La Entrega 3 fue desarrollada mediante trabajo directo del equipo combinado con herramientas de inteligencia artificial utilizadas como asistencia.
 
-La IA fue utilizada como apoyo para revisar el manejo de contraseñas y sesiones.
+De forma aproximada, la distribución considerada fue:
 
-Se implementó almacenamiento seguro mediante hash utilizando Werkzeug y una configuración compatible con el entorno de desarrollo.
+**50% asistencia mediante herramientas de inteligencia artificial**  
+**50% implementación, revisión, pruebas y validación por parte del equipo**
 
-El equipo realizó las pruebas correspondientes de inicio de sesión, cierre de sesión y acceso restringido.
+El porcentaje correspondiente a IA se relaciona principalmente con orientación, revisión, generación de ideas iniciales y explicación de posibles soluciones.
+
+Por su parte, el equipo se encargó directamente de:
+
+- configurar el entorno de desarrollo;
+- ejecutar scripts SQL;
+- implementar y adaptar código;
+- establecer la comunicación entre Flask y MySQL;
+- realizar pruebas funcionales;
+- corregir errores detectados;
+- validar roles y privilegios;
+- verificar controles de seguridad;
+- administrar cambios mediante Git;
+- confirmar el funcionamiento final.
 
 ---
 
-#### Base de datos
+## Áreas Técnicas Apoyadas con IA
 
-La IA apoyó la revisión de:
+### Autenticación y Seguridad
+
+La inteligencia artificial fue utilizada como referencia para revisar aspectos relacionados con el manejo de contraseñas y sesiones.
+
+Se implementó almacenamiento mediante hash utilizando Werkzeug y se realizaron los ajustes necesarios para mantener compatibilidad con la versión de Python utilizada.
+
+El equipo comprobó el funcionamiento del inicio de sesión, cierre de sesión y protección de rutas.
+
+---
+
+### Base de Datos
+
+Se utilizó IA como apoyo en la revisión de los siguientes elementos:
 
 - consultas SQL;
 - vistas;
@@ -111,17 +111,15 @@ La IA apoyó la revisión de:
 - procedimientos almacenados;
 - roles;
 - privilegios;
-- relaciones entre tablas.
+- relaciones entre entidades.
 
-Los scripts fueron ejecutados y comprobados directamente en MySQL Workbench.
+Los scripts definitivos fueron ejecutados y comprobados en MySQL Workbench.
 
 ---
 
-#### Módulos Web
+### Aplicación Web
 
-Se utilizó IA para apoyar la estructura inicial de varios módulos.
-
-Entre ellos:
+La IA se utilizó principalmente para revisar la estructura inicial de distintos módulos:
 
 - Productos;
 - Clientes;
@@ -129,100 +127,100 @@ Entre ellos:
 - Ventas;
 - Compras.
 
-El equipo realizó la adaptación final de las rutas, formularios, consultas y reglas de acceso.
+La adaptación definitiva de rutas, formularios, consultas y reglas de acceso fue realizada por el equipo.
 
 ---
 
-#### Pruebas
+### Pruebas del Sistema
 
-La IA ayudó a proponer escenarios de prueba.
+La inteligencia artificial permitió generar propuestas de escenarios de prueba.
 
-El equipo realizó las verificaciones reales sobre:
+El equipo realizó directamente verificaciones sobre:
 
 - autenticación;
-- permisos;
-- CRUD;
-- ventas;
-- compras;
-- stock;
-- triggers;
-- procedimientos almacenados.
+- restricciones de acceso;
+- operaciones CRUD;
+- registro de ventas;
+- registro de compras;
+- control de inventario;
+- funcionamiento de triggers;
+- ejecución de procedimientos almacenados.
 
 ---
 
-### Problemas Detectados y Corregidos
+## Incidencias Encontradas Durante el Desarrollo
 
-Durante el desarrollo surgieron distintos problemas que requirieron revisión manual.
+Durante la implementación se presentaron diferentes situaciones que requirieron correcciones y ajustes.
 
-Entre ellos:
+Las principales fueron:
 
-1. La tabla `EMPLEADO` no incluía inicialmente el campo `password_hash`.
-2. La configuración inicial del algoritmo de hash no era compatible con la versión de Python utilizada.
-3. Fue necesario incorporar `precio_costo` en la tabla `PRODUCTO`.
-4. Se verificó que los triggers estuvieran instalados antes de habilitar las ventas.
-5. El módulo de Compras requería proveedores activos antes de realizar pruebas.
-6. Algunas propuestas iniciales debieron adaptarse a los nombres y estructuras reales de las tablas.
+1. La tabla `EMPLEADO` inicialmente no contaba con el campo `password_hash`.
+2. El algoritmo de hash configurado al inicio presentó incompatibilidades con la versión de Python disponible.
+3. La tabla `PRODUCTO` necesitó incorporar el campo `precio_costo`.
+4. Fue necesario comprobar la existencia de los triggers antes de habilitar las operaciones de venta.
+5. Las pruebas del módulo de Compras requerían contar previamente con proveedores activos.
+6. Algunas propuestas generadas inicialmente debieron modificarse para coincidir con los nombres y estructuras reales de las tablas.
 
-La IA ayudó a analizar posibles soluciones, pero las decisiones y pruebas fueron realizadas directamente sobre el sistema.
+La inteligencia artificial ayudó a evaluar alternativas, pero las soluciones definitivas fueron implementadas y verificadas por el equipo.
 
 ---
 
-### Validaciones Realizadas
+## Herramientas y Métodos de Validación
 
-Durante la Entrega 3 se utilizaron diferentes mecanismos de validación:
+Para comprobar el correcto funcionamiento de la Entrega 3 se utilizaron los siguientes mecanismos:
 
 - MySQL Workbench.
 - `SELECT`.
 - `SHOW TRIGGERS`.
 - `SHOW GRANTS`.
 - `SHOW PROCEDURE STATUS`.
-- Pruebas de inicio de sesión.
+- Pruebas de autenticación.
 - Pruebas de cierre de sesión.
-- Pruebas de roles.
-- Respuestas HTTP 200.
-- Respuestas HTTP 403.
+- Comprobación de roles.
+- Validación de respuestas HTTP 200.
+- Validación de respuestas HTTP 403.
 - Creación de registros.
-- Edición de registros.
+- Actualización de registros.
 - Desactivación lógica.
-- Pruebas de ventas.
-- Pruebas de compras.
-- Validación de stock.
+- Registro de ventas.
+- Registro de compras.
+- Comprobación de existencias.
 - `git diff --check`.
-- Revisión manual del código.
+- Inspección manual del código.
 
 ---
 
-### Criterio de Uso Responsable
+## Uso Responsable de Inteligencia Artificial
 
-La inteligencia artificial fue utilizada como herramienta de apoyo y no como sustituto de la comprensión técnica del proyecto.
+La IA fue utilizada únicamente como herramienta de soporte para complementar el trabajo técnico del equipo.
 
-El equipo revisó las propuestas obtenidas y descartó o modificó aquellas que no se ajustaban al modelo real.
+Cada propuesta fue revisada antes de integrarse al proyecto. Las sugerencias que no coincidían con la arquitectura, las tablas o las necesidades reales del sistema fueron corregidas o descartadas.
 
-Antes de incorporar cualquier cambio importante se buscó comprobar:
+Antes de aceptar una modificación se verificó:
 
-1. que fuera compatible con MySQL;
-2. que respetara el modelo de datos;
-3. que no afectara la integridad referencial;
-4. que funcionara correctamente desde Flask;
-5. que respetara los permisos definidos;
-6. que los resultados fueran reproducibles.
+1. compatibilidad con MySQL;
+2. correspondencia con el modelo de datos;
+3. mantenimiento de la integridad referencial;
+4. funcionamiento adecuado desde Flask;
+5. cumplimiento de permisos y restricciones;
+6. posibilidad de reproducir los resultados mediante pruebas.
 
 ---
 
-### Responsables
+## Integrantes Responsables
 
-| **Nombre del Integrante** | **Responsabilidad** |
+| Integrante | Responsabilidad |
 |---|---|
 | Elvin Miranda | Desarrollo Web, integración, pruebas y validación |
 | Carlos Ochoa | Base de Datos, documentación y validación SQL |
-| Elvin, Carlos | Control de versiones, pruebas y revisión final |
+| Elvin y Carlos | Control de versiones, pruebas y revisión general |
 
 ---
 
-### Conclusión
+## Resultado Final
 
-La inteligencia artificial representó un apoyo considerable durante la Entrega 3, principalmente en tareas de revisión, análisis, explicación de errores, estructuración inicial de código y documentación.
+El uso de inteligencia artificial facilitó distintas actividades de la Entrega 3, principalmente en la revisión de código, análisis de errores, orientación técnica, elaboración de propuestas y organización de documentación.
 
-Sin embargo, el equipo mantuvo el control del desarrollo mediante la adaptación de las propuestas, ejecución directa de scripts, pruebas funcionales, revisión de resultados y corrección de errores.
+A pesar de utilizar estas herramientas como apoyo, la implementación, adaptación y verificación de las soluciones fue realizada directamente por los integrantes del proyecto.
 
-Por esta razón, el proceso de desarrollo puede considerarse un trabajo combinado entre la asistencia proporcionada por herramientas de inteligencia artificial y el trabajo técnico realizado directamente por los integrantes del proyecto.
+De esta manera, el trabajo realizado corresponde a un proceso colaborativo entre herramientas de asistencia basadas en inteligencia artificial y el desarrollo técnico efectuado por el equipo.
