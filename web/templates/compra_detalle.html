@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Orden {{ compra.numero_orden }}</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><header class="navbar"><div class="nav-brand"><h1>Comercial Estuardo</h1><p>Detalle de compra</p></div><nav class="nav-links"><a href="{{ url_for('inventario') }}">Inventario</a><a href="{{ url_for('compras') }}">Compras</a></nav><div class="nav-user"><span>{{ session.get('user_name', '') }}</span><form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form></div></header>
+<main><section class="toolbar"><h2>Orden {{ compra.numero_orden }}</h2><a href="{{ url_for('compras') }}" class="btn">Volver a compras</a></section>
+<section class="product-form-page"><p><strong>Fecha:</strong> {{ compra.fecha_compra }}</p><p><strong>Proveedor:</strong> {{ compra.proveedor }}</p><p><strong>Empleado:</strong> {{ compra.empleado_nombres }} {{ compra.empleado_apellidos }}</p><p><strong>Estado:</strong> {{ compra.estado_recepcion }}</p></section>
+<table><thead><tr><th>Producto</th><th>Código</th><th>Cantidad</th><th>Costo unitario</th><th>Subtotal</th></tr></thead><tbody>
+{% for d in detalles %}<tr><td>{{ d.producto }}</td><td>{{ d.codigo_barra or '-' }}</td><td>{{ d.cantidad }}</td><td>Q {{ "%.2f"|format(d.costo_unitario) }}</td><td>Q {{ "%.2f"|format(d.subtotal) }}</td></tr>{% else %}<tr><td colspan="5" class="text-center">La compra no tiene detalles.</td></tr>{% endfor %}
+</tbody><tfoot><tr><th colspan="4">Total de compra</th><th>Q {{ "%.2f"|format(compra.total_compra) }}</th></tr></tfoot></table></main></body></html>

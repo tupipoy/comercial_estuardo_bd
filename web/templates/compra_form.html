@@ -20,7 +20,7 @@
         </nav>
         <div class="nav-user">
             <span>{{ session.get('user_name', '') }}</span>
-            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
         </div>
     </header>
 
@@ -37,6 +37,7 @@
             {% endif %}
 
             <form class="product-form" method="POST" action="{{ url_for('nueva_compra') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="form-group">
                     <label for="numero_orden">Número de orden</label>
                     <input id="numero_orden" name="numero_orden" type="text" maxlength="30" required value="{{ datos.numero_orden }}">
@@ -55,29 +56,27 @@
                     {% if not proveedores %}<small>No hay proveedores activos registrados.</small>{% endif %}
                 </div>
 
-                <div class="form-group">
-                    <label for="id_producto">Producto</label>
-                    <select id="id_producto" name="id_producto" required>
+                <div id="lineas-compra">
+                    {% for linea in lineas %}
+                    <fieldset class="form-group linea-transaccion">
+                    <legend>Producto {{ loop.index }}</legend>
+                    <label for="id_producto_{{ loop.index }}">Producto</label>
+                    <select id="id_producto_{{ loop.index }}" name="id_producto" required>
                         <option value="">Selecciona un producto</option>
                         {% for producto in productos %}
-                        <option value="{{ producto.id_producto }}" {% if datos.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                        <option value="{{ producto.id_producto }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
                             {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — stock {{ producto.stock_actual }}, costo actual Q {{ "%.2f"|format(producto.precio_costo) }}
                         </option>
                         {% endfor %}
                     </select>
                     {% if not productos %}<small>No hay productos activos registrados.</small>{% endif %}
+                    <label>Cantidad recibida <input name="cantidad" type="number" min="1" step="1" required value="{{ linea.cantidad }}"></label>
+                    <label>Costo unitario (Q) <input name="costo_unitario" type="number" min="0.01" step="0.01" required value="{{ linea.costo_unitario }}"></label>
+                    <button type="button" class="quitar-linea">Quitar producto</button>
+                    </fieldset>
+                    {% endfor %}
                 </div>
-
-                <div class="form-group">
-                    <label for="cantidad">Cantidad recibida</label>
-                    <input id="cantidad" name="cantidad" type="number" min="1" step="1" required value="{{ datos.cantidad }}">
-                </div>
-
-                <div class="form-group">
-                    <label for="costo_unitario">Costo unitario de compra</label>
-                    <input id="costo_unitario" name="costo_unitario" type="number" min="0.01" step="0.01" required value="{{ datos.costo_unitario }}">
-                    <small>Al registrar la compra, este costo reemplazará el costo vigente del producto.</small>
-                </div>
+                <button type="button" id="agregar-linea">Agregar otro producto</button>
 
                 <button class="btn-submit" type="submit" {% if not proveedores or not productos %}disabled{% endif %}>
                     Registrar compra
@@ -86,5 +85,21 @@
             </form>
         </section>
     </main>
+    <script>
+        const lineasCompra = document.getElementById('lineas-compra');
+        document.getElementById('agregar-linea').addEventListener('click', () => {
+            const linea = lineasCompra.querySelector('.linea-transaccion').cloneNode(true);
+            linea.querySelector('legend').textContent = `Producto ${lineasCompra.children.length + 1}`;
+            const selectId = `id_producto_${Date.now()}_${lineasCompra.children.length}`;
+            linea.querySelector('select').id = selectId;
+            linea.querySelector('label[for^="id_producto_"]').htmlFor = selectId;
+            linea.querySelectorAll('input').forEach((input) => { input.value = input.name === 'cantidad' ? '1' : ''; });
+            linea.querySelector('select').selectedIndex = 0;
+            lineasCompra.appendChild(linea);
+        });
+        lineasCompra.addEventListener('click', (event) => {
+            if (event.target.matches('.quitar-linea') && lineasCompra.children.length > 1) event.target.closest('.linea-transaccion').remove();
+        });
+    </script>
 </body>
 </html>

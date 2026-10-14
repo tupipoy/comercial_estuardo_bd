@@ -20,11 +20,14 @@
             {% if session.get('user_role') == 'Administrador' %}
             <a href="{{ url_for('clientes') }}">Clientes</a>
             <a href="{{ url_for('ventas') }}">Ventas</a>
+            <a href="{{ url_for('categorias') }}">Categorías</a>
+            <a href="{{ url_for('sucursales') }}">Sucursales</a>
+            <a href="{{ url_for('empleados') }}">Empleados</a>
             {% endif %}
         </nav>
         <div class="nav-user">
             <span>{{ session.get('user_name', '') }}</span>
-            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
         </div>
     </header>
 
@@ -67,6 +70,7 @@
                               action="{{ url_for('desactivar_proveedor', id_proveedor=proveedor.id_proveedor) }}"
                               style="display:inline"
                               onsubmit="return confirm('¿Desactivar este proveedor?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <button type="submit">Desactivar</button>
                         </form>
                     </td>

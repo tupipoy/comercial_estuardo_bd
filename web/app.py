@@ -1,19 +1,54 @@
 import os
+import json
+import hmac
+import secrets
 from decimal import Decimal, InvalidOperation
 from functools import wraps
 
 from flask import Flask, flash, render_template, request, redirect, url_for, session
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import get_db_connection
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "supersecretkey_comercial_estuardo")
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates",
+)
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
+app.secret_key = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("Configura SECRET_KEY o FLASK_SECRET_KEY en el entorno.")
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.getenv("RAILWAY_ENVIRONMENT")),
+)
 
 
+@app.context_processor
+def csrf_context():
+    token = session.setdefault("csrf_token", secrets.token_urlsafe(32))
+    return {"csrf_token": token}
+
+
+@app.before_request
+def proteger_solicitudes_post():
+    if request.method == "POST":
+        esperado = session.get("csrf_token", "")
+        recibido = request.form.get("csrf_token", "")
+        if not esperado or not hmac.compare_digest(esperado, recibido):
+            return "Solicitud no válida. Recarga el formulario e inténtalo de nuevo.", 400
+
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
+
+#Login y control de acceso por cargo
 def requiere_rol(*roles):
     roles_permitidos = {rol.strip().casefold() for rol in roles}
 
@@ -86,6 +121,7 @@ def login():
 
     return render_template("login.html", error=error)
 
+#empieza el inventario
 @app.route("/inventario")
 @requiere_rol("Administrador", "Vendedor", "Bodega")
 def inventario():
@@ -118,6 +154,394 @@ def inventario():
         connection.close()
 
     return render_template("inventario.html", productos=productos, solo_stock_bajo=solo_stock_bajo)
+
+
+def validar_datos_categoria(form):
+    nombre = form.get("nombre", "").strip()
+    descripcion = form.get("descripcion", "").strip() or None
+    errores = []
+    if not nombre:
+        errores.append("El nombre de la categoría es obligatorio.")
+    elif len(nombre) > 100:
+        errores.append("El nombre no puede superar 100 caracteres.")
+    if descripcion and len(descripcion) > 255:
+        errores.append("La descripción no puede superar 255 caracteres.")
+    return {"nombre": nombre, "descripcion": descripcion}, errores
+
+
+@app.route("/categorias")
+@requiere_rol("Administrador")
+def categorias():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT c.id_categoria, c.nombre, c.descripcion,
+                       COUNT(p.id_producto) AS productos
+                FROM CATEGORIA c
+                LEFT JOIN PRODUCTO p ON p.id_categoria = c.id_categoria AND p.estado = 1
+                WHERE c.estado = 1
+                GROUP BY c.id_categoria, c.nombre, c.descripcion
+                ORDER BY c.nombre;
+            """)
+            lista_categorias = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("categorias.html", categorias=lista_categorias)
+
+
+@app.route("/categorias/nueva", methods=["GET", "POST"])
+@requiere_rol("Administrador")
+def nueva_categoria():
+    categoria = {"nombre": "", "descripcion": ""}
+    errores = []
+    if request.method == "POST":
+        categoria, errores = validar_datos_categoria(request.form)
+        if not errores:
+            connection = get_db_connection()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO CATEGORIA (nombre, descripcion, estado)
+                        VALUES (%s, %s, 1);
+                    """, (categoria["nombre"], categoria["descripcion"]))
+                connection.commit()
+                flash("Categoría creada correctamente.", "success")
+                return redirect(url_for("categorias"))
+            except Exception as exc:
+                connection.rollback()
+                app.logger.exception("No se pudo crear la categoría")
+                errores.append("Ya existe una categoría con ese nombre." if getattr(exc, "args", (None,))[0] == 1062 else "No se pudo guardar la categoría.")
+            finally:
+                connection.close()
+    return render_template("categoria_form.html", categoria=categoria, errores=errores, titulo="Nueva categoría")
+
+
+@app.route("/categorias/editar/<int:id_categoria>", methods=["GET", "POST"])
+@requiere_rol("Administrador")
+def editar_categoria(id_categoria):
+    errores = []
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id_categoria, nombre, descripcion FROM CATEGORIA WHERE id_categoria = %s AND estado = 1", (id_categoria,))
+            categoria = cursor.fetchone()
+            if not categoria:
+                return "Categoría no encontrada", 404
+            if request.method == "POST":
+                datos, errores = validar_datos_categoria(request.form)
+                if not errores:
+                    try:
+                        cursor.execute("UPDATE CATEGORIA SET nombre = %s, descripcion = %s WHERE id_categoria = %s AND estado = 1", (datos["nombre"], datos["descripcion"], id_categoria))
+                        connection.commit()
+                        flash("Categoría actualizada correctamente.", "success")
+                        return redirect(url_for("categorias"))
+                    except Exception as exc:
+                        connection.rollback()
+                        app.logger.exception("No se pudo actualizar la categoría")
+                        errores.append("Ya existe una categoría con ese nombre." if getattr(exc, "args", (None,))[0] == 1062 else "No se pudo guardar la categoría.")
+                categoria = {**categoria, **datos}
+    finally:
+        connection.close()
+    return render_template("categoria_form.html", categoria=categoria, errores=errores, titulo="Editar categoría")
+
+
+@app.route("/categorias/desactivar/<int:id_categoria>", methods=["POST"])
+@requiere_rol("Administrador")
+def desactivar_categoria(id_categoria):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) AS total FROM PRODUCTO WHERE id_categoria = %s AND estado = 1", (id_categoria,))
+            if cursor.fetchone()["total"]:
+                flash("Desactiva primero los productos activos de esta categoría.", "warning")
+                return redirect(url_for("categorias"))
+            cursor.execute("UPDATE CATEGORIA SET estado = 0 WHERE id_categoria = %s AND estado = 1", (id_categoria,))
+            connection.commit()
+        flash("Categoría desactivada; los productos históricos se conservaron.", "success")
+    finally:
+        connection.close()
+    return redirect(url_for("categorias"))
+
+
+def validar_datos_sucursal(form):
+    datos = {campo: form.get(campo, "").strip() for campo in ("nombre", "direccion", "telefono", "municipio")}
+    errores = []
+    limites = {"nombre": 100, "direccion": 200, "telefono": 15, "municipio": 100}
+    for campo, limite in limites.items():
+        if not datos[campo]:
+            errores.append(f"El campo {campo.replace('_', ' ')} es obligatorio.")
+        elif len(datos[campo]) > limite:
+            errores.append(f"El campo {campo.replace('_', ' ')} no puede superar {limite} caracteres.")
+    if datos["telefono"] and len(datos["telefono"]) < 8:
+        errores.append("El teléfono debe tener al menos 8 caracteres.")
+    return datos, errores
+
+
+@app.route("/sucursales")
+@requiere_rol("Administrador")
+def sucursales():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id_sucursal, nombre, direccion, telefono, municipio FROM SUCURSAL WHERE estado = 1 ORDER BY nombre")
+            lista_sucursales = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("sucursales.html", sucursales=lista_sucursales)
+
+
+@app.route("/sucursales/nueva", methods=["GET", "POST"])
+@requiere_rol("Administrador")
+def nueva_sucursal():
+    sucursal = {"nombre": "", "direccion": "", "telefono": "", "municipio": ""}
+    errores = []
+    if request.method == "POST":
+        sucursal, errores = validar_datos_sucursal(request.form)
+        if not errores:
+            connection = get_db_connection()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("INSERT INTO SUCURSAL (nombre, direccion, telefono, municipio, estado) VALUES (%s, %s, %s, %s, 1)", tuple(sucursal.values()))
+                connection.commit()
+                flash("Sucursal creada correctamente.", "success")
+                return redirect(url_for("sucursales"))
+            except Exception as exc:
+                connection.rollback()
+                app.logger.exception("No se pudo crear la sucursal")
+                errores.append("Ya existe una sucursal con ese nombre." if getattr(exc, "args", (None,))[0] == 1062 else "No se pudo guardar la sucursal.")
+            finally:
+                connection.close()
+    return render_template("sucursal_form.html", sucursal=sucursal, errores=errores, titulo="Nueva sucursal")
+
+
+@app.route("/sucursales/editar/<int:id_sucursal>", methods=["GET", "POST"])
+@requiere_rol("Administrador")
+def editar_sucursal(id_sucursal):
+    errores = []
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id_sucursal, nombre, direccion, telefono, municipio FROM SUCURSAL WHERE id_sucursal = %s AND estado = 1", (id_sucursal,))
+            sucursal = cursor.fetchone()
+            if not sucursal:
+                return "Sucursal no encontrada", 404
+            if request.method == "POST":
+                datos, errores = validar_datos_sucursal(request.form)
+                if not errores:
+                    try:
+                        cursor.execute("UPDATE SUCURSAL SET nombre = %s, direccion = %s, telefono = %s, municipio = %s WHERE id_sucursal = %s AND estado = 1", (*datos.values(), id_sucursal))
+                        connection.commit()
+                        flash("Sucursal actualizada correctamente.", "success")
+                        return redirect(url_for("sucursales"))
+                    except Exception as exc:
+                        connection.rollback()
+                        app.logger.exception("No se pudo actualizar la sucursal")
+                        errores.append("Ya existe una sucursal con ese nombre." if getattr(exc, "args", (None,))[0] == 1062 else "No se pudo guardar la sucursal.")
+                sucursal = {**sucursal, **datos}
+    finally:
+        connection.close()
+    return render_template("sucursal_form.html", sucursal=sucursal, errores=errores, titulo="Editar sucursal")
+
+
+@app.route("/sucursales/desactivar/<int:id_sucursal>", methods=["POST"])
+@requiere_rol("Administrador")
+def desactivar_sucursal(id_sucursal):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) AS total FROM EMPLEADO WHERE id_sucursal = %s AND estado = 1", (id_sucursal,))
+            if cursor.fetchone()["total"]:
+                flash("Reasigna o desactiva primero los empleados activos de esta sucursal.", "warning")
+                return redirect(url_for("sucursales"))
+            cursor.execute("UPDATE SUCURSAL SET estado = 0 WHERE id_sucursal = %s AND estado = 1", (id_sucursal,))
+            connection.commit()
+        flash("Sucursal desactivada; el historial asociado se conservó.", "success")
+    finally:
+        connection.close()
+    return redirect(url_for("sucursales"))
+
+
+def datos_formulario_empleado(form):
+    return {
+        "cui": form.get("cui", "").strip(),
+        "nombres": form.get("nombres", "").strip(),
+        "apellidos": form.get("apellidos", "").strip(),
+        "cargo": form.get("cargo", "").strip(),
+        "telefono": form.get("telefono", "").strip(),
+        "correo": form.get("correo", "").strip() or None,
+        "fecha_ingreso": form.get("fecha_ingreso", "").strip(),
+        "id_sucursal": form.get("id_sucursal", "").strip(),
+        "password": form.get("password", ""),
+    }
+
+
+def validar_datos_empleado(datos, requiere_password=False):
+    errores = []
+    limites = {"cui": 13, "nombres": 100, "apellidos": 100, "telefono": 15, "correo": 100}
+    for campo, limite in limites.items():
+        valor = datos[campo] or ""
+        if len(valor) > limite:
+            errores.append(f"{campo.replace('_', ' ').capitalize()} no puede superar {limite} caracteres.")
+    for campo in ("cui", "nombres", "apellidos", "cargo", "telefono", "fecha_ingreso", "id_sucursal"):
+        if not datos[campo]:
+            errores.append(f"El campo {campo.replace('_', ' ')} es obligatorio.")
+    if datos["cui"] and (len(datos["cui"]) != 13 or not datos["cui"].isdigit()):
+        errores.append("El CUI debe tener exactamente 13 dígitos.")
+    if datos["telefono"] and len(datos["telefono"]) < 8:
+        errores.append("El teléfono debe tener al menos 8 caracteres.")
+    if datos["cargo"] not in {"Administrador", "Vendedor", "Bodega"}:
+        errores.append("Selecciona un cargo válido.")
+    if datos["correo"] and ("@" not in datos["correo"] or " " in datos["correo"]):
+        errores.append("Ingresa un correo válido.")
+    try:
+        datos["id_sucursal"] = int(datos["id_sucursal"])
+        if datos["id_sucursal"] <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        errores.append("Selecciona una sucursal válida.")
+    try:
+        from datetime import date
+        date.fromisoformat(datos["fecha_ingreso"])
+    except ValueError:
+        errores.append("Ingresa una fecha válida.")
+    if requiere_password and len(datos["password"]) < 10:
+        errores.append("La contraseña inicial debe tener al menos 10 caracteres.")
+    elif datos["password"] and len(datos["password"]) < 10:
+        errores.append("La nueva contraseña debe tener al menos 10 caracteres.")
+    return errores
+
+
+@app.route("/empleados")
+@requiere_rol("Administrador")
+def empleados():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT e.id_empleado, e.cui, e.nombres, e.apellidos, e.cargo,
+                       e.telefono, e.correo, e.fecha_ingreso, s.nombre AS sucursal
+                FROM EMPLEADO e
+                INNER JOIN SUCURSAL s ON s.id_sucursal = e.id_sucursal
+                WHERE e.estado = 1
+                ORDER BY e.apellidos, e.nombres;
+            """)
+            lista_empleados = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("empleados.html", empleados=lista_empleados)
+
+
+def cargar_sucursales_activas(cursor):
+    cursor.execute("SELECT id_sucursal, nombre FROM SUCURSAL WHERE estado = 1 ORDER BY nombre")
+    return cursor.fetchall()
+
+
+@app.route("/empleados/nuevo", methods=["GET", "POST"])
+@requiere_rol("Administrador")
+def nuevo_empleado():
+    from datetime import date
+    empleado = {"cui": "", "nombres": "", "apellidos": "", "cargo": "Vendedor", "telefono": "", "correo": "", "fecha_ingreso": date.today().isoformat(), "id_sucursal": "", "password": ""}
+    errores = []
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sucursales = cargar_sucursales_activas(cursor)
+            if request.method == "POST":
+                empleado = datos_formulario_empleado(request.form)
+                errores = validar_datos_empleado(empleado, requiere_password=True)
+                sucursal_ids = {s["id_sucursal"] for s in sucursales}
+                if empleado["id_sucursal"] not in sucursal_ids:
+                    errores.append("La sucursal seleccionada no está activa.")
+                if not errores:
+                    try:
+                        cursor.execute("""
+                            INSERT INTO EMPLEADO (cui, nombres, apellidos, cargo, telefono, correo, password_hash, fecha_ingreso, id_sucursal, estado)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+                        """, (empleado["cui"], empleado["nombres"], empleado["apellidos"], empleado["cargo"], empleado["telefono"], empleado["correo"], generate_password_hash(empleado["password"], method="pbkdf2:sha256"), empleado["fecha_ingreso"], empleado["id_sucursal"]))
+                        connection.commit()
+                        flash("Empleado creado correctamente.", "success")
+                        return redirect(url_for("empleados"))
+                    except Exception as exc:
+                        connection.rollback()
+                        app.logger.exception("No se pudo crear el empleado")
+                        errores.append("El CUI o correo ya está registrado." if getattr(exc, "args", (None,))[0] == 1062 else "No se pudo guardar el empleado.")
+    finally:
+        connection.close()
+    empleado.pop("password", None)
+    return render_template("empleado_form.html", empleado=empleado, sucursales=sucursales, errores=errores, titulo="Nuevo empleado", nuevo=True)
+
+
+@app.route("/empleados/editar/<int:id_empleado>", methods=["GET", "POST"])
+@requiere_rol("Administrador")
+def editar_empleado(id_empleado):
+    errores = []
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id_empleado, cui, nombres, apellidos, cargo, telefono, correo, fecha_ingreso, id_sucursal FROM EMPLEADO WHERE id_empleado = %s AND estado = 1", (id_empleado,))
+            empleado = cursor.fetchone()
+            if not empleado:
+                return "Empleado no encontrado", 404
+            sucursales = cargar_sucursales_activas(cursor)
+            if request.method == "POST":
+                datos = datos_formulario_empleado(request.form)
+                errores = validar_datos_empleado(datos)
+                if id_empleado == session.get("user_id") and datos["cargo"] != "Administrador":
+                    errores.append("No puedes quitarte tu propio cargo de Administrador.")
+                if datos["id_sucursal"] not in {s["id_sucursal"] for s in sucursales}:
+                    errores.append("La sucursal seleccionada no está activa.")
+                if not errores:
+                    try:
+                        if datos["password"]:
+                            cursor.execute("""
+                                UPDATE EMPLEADO SET cui=%s, nombres=%s, apellidos=%s, cargo=%s,
+                                    telefono=%s, correo=%s, fecha_ingreso=%s, id_sucursal=%s,
+                                    password_hash=%s WHERE id_empleado=%s AND estado=1
+                            """, (datos["cui"], datos["nombres"], datos["apellidos"], datos["cargo"], datos["telefono"], datos["correo"], datos["fecha_ingreso"], datos["id_sucursal"], generate_password_hash(datos["password"], method="pbkdf2:sha256"), id_empleado))
+                        else:
+                            cursor.execute("""
+                                UPDATE EMPLEADO SET cui=%s, nombres=%s, apellidos=%s, cargo=%s,
+                                    telefono=%s, correo=%s, fecha_ingreso=%s, id_sucursal=%s
+                                WHERE id_empleado=%s AND estado=1
+                            """, (datos["cui"], datos["nombres"], datos["apellidos"], datos["cargo"], datos["telefono"], datos["correo"], datos["fecha_ingreso"], datos["id_sucursal"], id_empleado))
+                        connection.commit()
+                        flash("Empleado actualizado correctamente.", "success")
+                        return redirect(url_for("empleados"))
+                    except Exception as exc:
+                        connection.rollback()
+                        app.logger.exception("No se pudo actualizar el empleado")
+                        errores.append("El CUI o correo ya está registrado." if getattr(exc, "args", (None,))[0] == 1062 else "No se pudo guardar el empleado.")
+                empleado = {**empleado, **{k: v for k, v in datos.items() if k != "password"}}
+            if hasattr(empleado.get("fecha_ingreso"), "isoformat"):
+                empleado["fecha_ingreso"] = empleado["fecha_ingreso"].isoformat()
+    finally:
+        connection.close()
+    return render_template("empleado_form.html", empleado=empleado, sucursales=sucursales, errores=errores, titulo="Editar empleado", nuevo=False)
+
+
+@app.route("/empleados/desactivar/<int:id_empleado>", methods=["POST"])
+@requiere_rol("Administrador")
+def desactivar_empleado(id_empleado):
+    if id_empleado == session.get("user_id"):
+        flash("No puedes desactivar tu propia cuenta.", "warning")
+        return redirect(url_for("empleados"))
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT cargo FROM EMPLEADO WHERE id_empleado = %s AND estado = 1", (id_empleado,))
+            empleado = cursor.fetchone()
+            if empleado and empleado["cargo"] == "Administrador":
+                cursor.execute("SELECT COUNT(*) AS total FROM EMPLEADO WHERE cargo = 'Administrador' AND estado = 1")
+                if cursor.fetchone()["total"] <= 1:
+                    flash("No se puede desactivar el último Administrador activo.", "warning")
+                    return redirect(url_for("empleados"))
+            cursor.execute("UPDATE EMPLEADO SET estado = 0 WHERE id_empleado = %s AND estado = 1", (id_empleado,))
+            connection.commit()
+        flash("Empleado desactivado; sus registros históricos se conservaron.", "success")
+    finally:
+        connection.close()
+    return redirect(url_for("empleados"))
 
 
 def cargar_categorias(cursor):
@@ -508,10 +932,12 @@ def cargar_opciones_venta(cursor):
     clientes_activos = cursor.fetchall()
 
     cursor.execute("""
-        SELECT id_producto, codigo_barra, nombre, precio_venta, stock_actual
-        FROM PRODUCTO
-        WHERE estado = 1 AND stock_actual > 0
-        ORDER BY nombre;
+        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
+               p.stock_actual, c.nombre AS categoria
+        FROM PRODUCTO p
+        INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
+        WHERE p.estado = 1 AND p.stock_actual > 0 AND c.estado = 1
+        ORDER BY p.nombre;
     """)
     productos_disponibles = cursor.fetchall()
     return clientes_activos, productos_disponibles
@@ -529,7 +955,7 @@ def faltan_triggers_venta(cursor):
     """)
     return cursor.fetchone()["cantidad"] != 2
 
-
+#ventas
 @app.route("/ventas")
 @requiere_rol("Administrador", "Vendedor")
 def ventas():
@@ -562,16 +988,49 @@ def ventas():
     return render_template("ventas.html", ventas=lista_ventas)
 
 
+@app.route("/ventas/<int:id_venta>")
+@requiere_rol("Administrador", "Vendedor")
+def detalle_venta(id_venta):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT v.id_venta, v.serie_factura, v.numero_factura, v.fecha_venta,
+                       v.total_venta, v.tipo_pago, v.estado,
+                       CONCAT_WS(' ', c.nombres, c.apellidos) AS cliente,
+                       e.nombres AS empleado_nombres, e.apellidos AS empleado_apellidos,
+                       s.nombre AS sucursal
+                FROM VENTA v
+                INNER JOIN CLIENTE c ON c.id_cliente = v.id_cliente
+                INNER JOIN EMPLEADO e ON e.id_empleado = v.id_empleado
+                INNER JOIN SUCURSAL s ON s.id_sucursal = v.id_sucursal
+                WHERE v.id_venta = %s
+            """, (id_venta,))
+            venta = cursor.fetchone()
+            if not venta:
+                return "Venta no encontrada", 404
+            cursor.execute("""
+                SELECT d.id_detalle_venta, p.codigo_barra, p.nombre AS producto,
+                       d.vin_chasis, d.numero_motor, d.cantidad, d.precio_unitario,
+                       d.descuento, d.subtotal
+                FROM DETALLE_VENTA d
+                INNER JOIN PRODUCTO p ON p.id_producto = d.id_producto
+                WHERE d.id_venta = %s
+                ORDER BY d.id_detalle_venta
+            """, (id_venta,))
+            detalles = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("venta_detalle.html", venta=venta, detalles=detalles)
+
+#ventas
 @app.route("/ventas/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Vendedor")
 def nueva_venta():
     errores = []
-    datos = {
-        "id_cliente": "",
-        "id_producto": "",
-        "cantidad": "1",
-        "tipo_pago": "Efectivo",
-    }
+    datos = {"id_cliente": "", "tipo_pago": "Efectivo"}
+    lineas_formulario = [{"id_producto": "", "cantidad": "1", "descuento": "0.00", "vin_chasis": "", "numero_motor": ""}]
+    lineas_validas = []
     lock_name = "comercial_estuardo_web_venta_numero"
     lock_acquired = False
     connection = None
@@ -580,26 +1039,43 @@ def nueva_venta():
     triggers_disponibles = False
 
     if request.method == "POST":
-        datos.update({
-            "id_cliente": request.form.get("id_cliente", "").strip(),
-            "id_producto": request.form.get("id_producto", "").strip(),
-            "cantidad": request.form.get("cantidad", "").strip(),
-            "tipo_pago": request.form.get("tipo_pago", "").strip(),
-        })
+        datos.update({"id_cliente": request.form.get("id_cliente", "").strip(), "tipo_pago": request.form.get("tipo_pago", "").strip()})
         try:
             datos["id_cliente"] = int(datos["id_cliente"])
         except (TypeError, ValueError):
             errores.append("Selecciona un cliente válido.")
-        try:
-            datos["id_producto"] = int(datos["id_producto"])
-        except (TypeError, ValueError):
-            errores.append("Selecciona un producto válido.")
-        try:
-            datos["cantidad"] = int(datos["cantidad"])
-            if datos["cantidad"] <= 0:
-                raise ValueError
-        except (TypeError, ValueError):
-            errores.append("La cantidad debe ser un entero mayor que cero.")
+        posted = zip(request.form.getlist("id_producto"), request.form.getlist("cantidad"), request.form.getlist("descuento"), request.form.getlist("vin_chasis"), request.form.getlist("numero_motor"))
+        line_lists = [request.form.getlist(name) for name in ("id_producto", "cantidad", "descuento", "vin_chasis", "numero_motor")]
+        if len({len(values) for values in line_lists}) != 1:
+            errores.append("El formulario de líneas no está completo. Recarga e inténtalo de nuevo.")
+        if len(line_lists[0]) > 50:
+            errores.append("Una venta no puede superar 50 líneas de producto.")
+        lineas_formulario = []
+        for id_producto, cantidad, descuento, vin, motor in posted:
+            linea = {"id_producto": id_producto.strip(), "cantidad": cantidad.strip(), "descuento": descuento.strip(), "vin_chasis": vin.strip() or None, "numero_motor": motor.strip() or None}
+            if not linea["id_producto"] and not linea["cantidad"]:
+                continue
+            lineas_formulario.append(linea)
+            try:
+                id_producto_num = int(linea["id_producto"])
+                cantidad_num = int(linea["cantidad"])
+                descuento_num = Decimal(linea["descuento"] or "0")
+                if id_producto_num <= 0 or cantidad_num <= 0 or not descuento_num.is_finite() or descuento_num < 0 or descuento_num.as_tuple().exponent < -2:
+                    raise ValueError
+                lineas_validas.append({"id_producto": id_producto_num, "cantidad": cantidad_num, "descuento": descuento_num, "vin_chasis": linea["vin_chasis"], "numero_motor": linea["numero_motor"]})
+            except (TypeError, ValueError, InvalidOperation):
+                errores.append("Revisa el producto, cantidad y descuento de cada línea de venta.")
+        if not lineas_validas:
+            errores.append("Agrega al menos un producto a la venta.")
+        if len(lineas_validas) != len({l["id_producto"] for l in lineas_validas}):
+            errores.append("Cada producto debe aparecer una sola vez; ajusta la cantidad en su línea.")
+        for linea in lineas_validas:
+            if bool(linea["vin_chasis"]) != bool(linea["numero_motor"]):
+                errores.append("Para una motocicleta debes ingresar tanto VIN/chasis como número de motor.")
+                break
+            if linea["vin_chasis"] and (len(linea["vin_chasis"]) > 50 or len(linea["numero_motor"]) > 50):
+                errores.append("VIN y número de motor no pueden superar 50 caracteres.")
+                break
 
         tipos_pago = {"Efectivo", "Transferencia", "Depósito Bancario"}
         if datos["tipo_pago"] not in tipos_pago:
@@ -622,9 +1098,20 @@ def nueva_venta():
                 producto_por_id = {p["id_producto"]: p for p in productos_disponibles}
                 if datos["id_cliente"] not in cliente_ids:
                     errores.append("El cliente seleccionado no existe o está inactivo.")
-                producto = producto_por_id.get(datos["id_producto"])
-                if not producto:
-                    errores.append("El producto seleccionado no existe, está inactivo o no tiene stock.")
+                for linea in lineas_validas:
+                    producto = producto_por_id.get(linea["id_producto"])
+                    if not producto:
+                        errores.append("Uno de los productos no existe, está inactivo o no tiene stock.")
+                        break
+                    linea["precio_unitario"] = str(producto["precio_venta"])
+                    if linea["descuento"] > Decimal(producto["precio_venta"]) * linea["cantidad"]:
+                        errores.append("El descuento de una línea supera el importe de esa línea.")
+                        break
+                    es_motocicleta = "moto" in producto["categoria"].casefold()
+                    if es_motocicleta and (linea["cantidad"] != 1 or not linea["vin_chasis"] or not linea["numero_motor"]):
+                        errores.append("Cada motocicleta requiere cantidad 1, VIN/chasis y número de motor.")
+                        break
+                    linea["descuento"] = str(linea["descuento"])
 
                 cursor.execute("""
                     SELECT id_sucursal
@@ -650,9 +1137,7 @@ def nueva_venta():
                         numero_factura = cursor.fetchone()["siguiente"]
 
                         cursor.execute("""
-                            CALL sp_registrar_venta(
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                            );
+                            CALL sp_registrar_venta_detallada(%s, %s, %s, %s, %s, %s, %s);
                         """, (
                             serie_factura,
                             numero_factura,
@@ -660,10 +1145,7 @@ def nueva_venta():
                             datos["id_cliente"],
                             session["user_id"],
                             empleado["id_sucursal"],
-                            datos["id_producto"],
-                            datos["cantidad"],
-                            producto["precio_venta"],
-                            Decimal("0.00"),
+                            json.dumps(lineas_validas),
                         ))
                         while cursor.nextset():
                             pass
@@ -695,6 +1177,7 @@ def nueva_venta():
         clientes=clientes_activos,
         productos=productos_disponibles,
         datos=datos,
+        lineas=lineas_formulario,
         errores=errores,
         triggers_disponibles=triggers_disponibles,
     )
@@ -710,15 +1193,16 @@ def cargar_opciones_compra(cursor):
     proveedores_activos = cursor.fetchall()
 
     cursor.execute("""
-        SELECT id_producto, codigo_barra, nombre, precio_costo, stock_actual
-        FROM PRODUCTO
-        WHERE estado = 1
-        ORDER BY nombre;
+        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.stock_actual
+        FROM PRODUCTO p
+        INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
+        WHERE p.estado = 1 AND c.estado = 1
+        ORDER BY p.nombre;
     """)
     productos_activos = cursor.fetchall()
     return proveedores_activos, productos_activos
 
-
+#compra
 @app.route("/compras")
 @requiere_rol("Administrador", "Bodega")
 def compras():
@@ -747,6 +1231,38 @@ def compras():
     return render_template("compras.html", compras=lista_compras)
 
 
+@app.route("/compras/<int:id_compra>")
+@requiere_rol("Administrador", "Bodega")
+def detalle_compra(id_compra):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT c.id_compra, c.numero_orden, c.fecha_compra, c.total_compra,
+                       c.estado_recepcion, p.razon_social AS proveedor,
+                       e.nombres AS empleado_nombres, e.apellidos AS empleado_apellidos
+                FROM COMPRA c
+                INNER JOIN PROVEEDOR p ON p.id_proveedor = c.id_proveedor
+                INNER JOIN EMPLEADO e ON e.id_empleado = c.id_empleado
+                WHERE c.id_compra = %s
+            """, (id_compra,))
+            compra = cursor.fetchone()
+            if not compra:
+                return "Compra no encontrada", 404
+            cursor.execute("""
+                SELECT d.id_detalle_compra, p.codigo_barra, p.nombre AS producto,
+                       d.cantidad, d.costo_unitario, d.subtotal
+                FROM DETALLE_COMPRA d
+                INNER JOIN PRODUCTO p ON p.id_producto = d.id_producto
+                WHERE d.id_compra = %s
+                ORDER BY d.id_detalle_compra
+            """, (id_compra,))
+            detalles = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("compra_detalle.html", compra=compra, detalles=detalles)
+
+#compra
 @app.route("/compras/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def nueva_compra():
@@ -754,10 +1270,9 @@ def nueva_compra():
     datos = {
         "numero_orden": "",
         "id_proveedor": "",
-        "id_producto": "",
-        "cantidad": "1",
-        "costo_unitario": "",
     }
+    lineas_formulario = [{"id_producto": "", "cantidad": "1", "costo_unitario": ""}]
+    lineas_validas = []
     proveedores = []
     productos = []
     connection = None
@@ -772,7 +1287,7 @@ def nueva_compra():
         elif len(datos["numero_orden"]) > 30:
             errores.append("El número de orden no puede superar 30 caracteres.")
 
-        for campo, etiqueta in (("id_proveedor", "proveedor"), ("id_producto", "producto")):
+        for campo, etiqueta in (("id_proveedor", "proveedor"),):
             try:
                 datos[campo] = int(datos[campo])
                 if datos[campo] <= 0:
@@ -780,19 +1295,31 @@ def nueva_compra():
             except (TypeError, ValueError):
                 errores.append(f"Selecciona un {etiqueta} válido.")
 
-        try:
-            datos["cantidad"] = int(datos["cantidad"])
-            if datos["cantidad"] <= 0:
-                raise ValueError
-        except (TypeError, ValueError):
-            errores.append("La cantidad debe ser un entero mayor que cero.")
-
-        try:
-            datos["costo_unitario"] = Decimal(datos["costo_unitario"])
-            if not datos["costo_unitario"].is_finite() or datos["costo_unitario"] <= 0:
-                raise InvalidOperation
-        except (InvalidOperation, TypeError, ValueError):
-            errores.append("El costo unitario debe ser un importe mayor que cero.")
+        posted = zip(request.form.getlist("id_producto"), request.form.getlist("cantidad"), request.form.getlist("costo_unitario"))
+        line_lists = [request.form.getlist(name) for name in ("id_producto", "cantidad", "costo_unitario")]
+        if len({len(values) for values in line_lists}) != 1:
+            errores.append("El formulario de líneas no está completo. Recarga e inténtalo de nuevo.")
+        if len(line_lists[0]) > 50:
+            errores.append("Una compra no puede superar 50 líneas de producto.")
+        lineas_formulario = []
+        for id_producto, cantidad, costo in posted:
+            linea = {"id_producto": id_producto.strip(), "cantidad": cantidad.strip(), "costo_unitario": costo.strip()}
+            if not linea["id_producto"] and not linea["cantidad"] and not linea["costo_unitario"]:
+                continue
+            lineas_formulario.append(linea)
+            try:
+                id_producto_num = int(linea["id_producto"])
+                cantidad_num = int(linea["cantidad"])
+                costo_num = Decimal(linea["costo_unitario"])
+                if id_producto_num <= 0 or cantidad_num <= 0 or not costo_num.is_finite() or costo_num <= 0 or costo_num.as_tuple().exponent < -2:
+                    raise ValueError
+                lineas_validas.append({"id_producto": id_producto_num, "cantidad": cantidad_num, "costo_unitario": str(costo_num)})
+            except (InvalidOperation, TypeError, ValueError):
+                errores.append("Revisa el producto, cantidad y costo unitario de cada línea de compra.")
+        if not lineas_validas:
+            errores.append("Agrega al menos un producto a la compra.")
+        if len(lineas_validas) != len({linea["id_producto"] for linea in lineas_validas}):
+            errores.append("Cada producto debe aparecer una sola vez; ajusta la cantidad en su línea.")
 
     try:
         connection = get_db_connection()
@@ -804,8 +1331,8 @@ def nueva_compra():
                 producto_por_id = {p["id_producto"]: p for p in productos}
                 if datos["id_proveedor"] not in proveedor_ids:
                     errores.append("El proveedor seleccionado no existe o está inactivo.")
-                if datos["id_producto"] not in producto_por_id:
-                    errores.append("El producto seleccionado no existe o está inactivo.")
+                if any(linea["id_producto"] not in producto_por_id for linea in lineas_validas):
+                    errores.append("Uno de los productos no existe o está inactivo.")
 
                 cursor.execute("""
                     SELECT id_empleado
@@ -817,13 +1344,11 @@ def nueva_compra():
                     errores.append("El empleado de la sesión ya no está activo.")
 
                 if not errores:
-                    cursor.callproc("sp_registrar_compra", (
+                    cursor.callproc("sp_registrar_compra_detallada", (
                         datos["numero_orden"],
                         datos["id_proveedor"],
                         session["user_id"],
-                        datos["id_producto"],
-                        datos["cantidad"],
-                        datos["costo_unitario"],
+                        json.dumps(lineas_validas),
                     ))
                     while cursor.nextset():
                         pass
@@ -851,6 +1376,7 @@ def nueva_compra():
         proveedores=proveedores,
         productos=productos,
         datos=datos,
+        lineas=lineas_formulario,
         errores=errores,
     )
 
@@ -1030,11 +1556,11 @@ def desactivar_proveedor(id_proveedor):
     return redirect(url_for("proveedores"))
 
 
-@app.route("/logout")
+@app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5050))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG") == "1")

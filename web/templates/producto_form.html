@@ -24,6 +24,7 @@
         {% endif %}
 
         <form method="POST" class="product-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="codigo_barra">Código de barras (opcional)</label>
                 <input id="codigo_barra" name="codigo_barra" maxlength="50"

@@ -72,7 +72,7 @@ INSERT INTO SUCURSAL (id_sucursal, nombre, direccion, telefono, municipio, estad
 
 -- ===================== CATEGORIA: completar hasta 50 =====================
 INSERT INTO CATEGORIA (id_categoria, nombre, descripcion, estado) VALUES
-(6, 'Categoría 06', 'Categoría de prueba 06', 1),
+(6, 'Motocicletas', 'Motocicletas y unidades con trazabilidad VIN/motor', 1),
 (7, 'Categoría 07', 'Categoría de prueba 07', 1),
 (8, 'Categoría 08', 'Categoría de prueba 08', 1),
 (9, 'Categoría 09', 'Categoría de prueba 09', 1),
@@ -283,7 +283,7 @@ INSERT INTO PRODUCTO (id_producto, codigo_barra, nombre, descripcion, precio_cos
 (3, '740200000003', 'Producto de Prueba 03', 'Descripción del producto de prueba 03', 75.00, 130.00, 23, 8, 3, 1),
 (4, '740200000004', 'Producto de Prueba 04', 'Descripción del producto de prueba 04', 80.00, 140.00, 24, 9, 4, 1),
 (5, '740200000005', 'Producto de Prueba 05', 'Descripción del producto de prueba 05', 85.00, 150.00, 25, 5, 5, 1),
-(6, '740200000006', 'Producto de Prueba 06', 'Descripción del producto de prueba 06', 90.00, 160.00, 26, 6, 6, 1),
+(6, '740200000006', 'Motocicleta de Prueba 06', 'Motocicleta para validar trazabilidad VIN y número de motor', 90.00, 160.00, 26, 6, 6, 1),
 (7, '740200000007', 'Producto de Prueba 07', 'Descripción del producto de prueba 07', 95.00, 170.00, 27, 7, 7, 1),
 (8, '740200000008', 'Producto de Prueba 08', 'Descripción del producto de prueba 08', 100.00, 180.00, 28, 8, 8, 1),
 (9, '740200000009', 'Producto de Prueba 09', 'Descripción del producto de prueba 09', 105.00, 190.00, 29, 9, 9, 1),
@@ -495,7 +495,7 @@ INSERT INTO DETALLE_VENTA (id_detalle_venta, id_venta, id_producto, vin_chasis, 
 (3, 3, 3, NULL, NULL, 1, 130.00, 0.00, 130.00),
 (4, 4, 4, NULL, NULL, 2, 140.00, 0.00, 280.00),
 (5, 5, 5, NULL, NULL, 3, 150.00, 0.00, 450.00),
-(6, 6, 6, NULL, NULL, 1, 160.00, 0.00, 160.00),
+(6, 6, 6, 'VIN-TEST-000006', 'MOTOR-TEST-000006', 1, 160.00, 0.00, 160.00),
 (7, 7, 7, NULL, NULL, 2, 170.00, 0.00, 340.00),
 (8, 8, 8, NULL, NULL, 3, 180.00, 0.00, 540.00),
 (9, 9, 9, NULL, NULL, 1, 190.00, 0.00, 190.00),

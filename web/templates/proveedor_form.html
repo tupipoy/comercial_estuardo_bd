@@ -20,7 +20,7 @@
         </nav>
         <div class="nav-user">
             <span>{{ session.get('user_name', '') }}</span>
-            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
         </div>
     </header>
 
@@ -35,6 +35,7 @@
             {% endif %}
 
             <form class="product-form" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="form-group">
                     <label for="nit">NIT</label>
                     <input id="nit" name="nit" type="text" maxlength="15" required value="{{ proveedor.nit or '' }}">

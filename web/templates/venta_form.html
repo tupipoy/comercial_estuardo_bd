@@ -23,7 +23,7 @@
         </nav>
         <div class="nav-user">
             <span>{{ session.get('user_name', '') }}</span>
-            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
         </div>
     </header>
 
@@ -47,6 +47,7 @@
             {% endif %}
 
             <form class="product-form" method="POST" action="{{ url_for('nueva_venta') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="form-group">
                     <label for="id_cliente">Cliente</label>
                     <select id="id_cliente" name="id_cliente" required>
@@ -60,23 +61,29 @@
                     {% if not clientes %}<small>No hay clientes activos para seleccionar.</small>{% endif %}
                 </div>
 
-                <div class="form-group">
-                    <label for="id_producto">Producto</label>
-                    <select id="id_producto" name="id_producto" required>
+                <div id="lineas-venta">
+                    {% for linea in lineas %}
+                    <fieldset class="form-group linea-transaccion">
+                    <legend>Producto {{ loop.index }}</legend>
+                    <label for="id_producto_{{ loop.index }}">Producto</label>
+                    <select id="id_producto_{{ loop.index }}" name="id_producto" required>
                         <option value="">Selecciona un producto</option>
                         {% for producto in productos %}
-                        <option value="{{ producto.id_producto }}" {% if datos.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                        <option value="{{ producto.id_producto }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
                             {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — Q {{ "%.2f"|format(producto.precio_venta) }}, stock {{ producto.stock_actual }}
                         </option>
                         {% endfor %}
                     </select>
                     {% if not productos %}<small>No hay productos activos con existencias.</small>{% endif %}
+                    <label>Cantidad <input name="cantidad" type="number" min="1" step="1" required value="{{ linea.cantidad }}"></label>
+                    <label>Descuento de la línea (Q) <input name="descuento" type="number" min="0" step="0.01" required value="{{ linea.descuento }}"></label>
+                    <label>VIN / chasis (motocicletas) <input name="vin_chasis" maxlength="50" value="{{ linea.vin_chasis or '' }}"></label>
+                    <label>Número de motor (motocicletas) <input name="numero_motor" maxlength="50" value="{{ linea.numero_motor or '' }}"></label>
+                    <button type="button" class="quitar-linea">Quitar producto</button>
+                    </fieldset>
+                    {% endfor %}
                 </div>
-
-                <div class="form-group">
-                    <label for="cantidad">Cantidad</label>
-                    <input id="cantidad" name="cantidad" type="number" min="1" step="1" required value="{{ datos.cantidad }}">
-                </div>
+                <button type="button" id="agregar-linea">Agregar otro producto</button>
 
                 <div class="form-group">
                     <label for="tipo_pago">Tipo de pago</label>
@@ -94,5 +101,23 @@
             </form>
         </section>
     </main>
+    <script>
+        const lineasVenta = document.getElementById('lineas-venta');
+        document.getElementById('agregar-linea').addEventListener('click', () => {
+            const linea = lineasVenta.querySelector('.linea-transaccion').cloneNode(true);
+            linea.querySelector('legend').textContent = `Producto ${lineasVenta.children.length + 1}`;
+            const selectId = `id_producto_${Date.now()}_${lineasVenta.children.length}`;
+            linea.querySelector('select').id = selectId;
+            linea.querySelector('label[for^="id_producto_"]').htmlFor = selectId;
+            linea.querySelectorAll('input').forEach((input) => {
+                input.value = input.name === 'cantidad' ? '1' : (input.name === 'descuento' ? '0.00' : '');
+            });
+            linea.querySelector('select').selectedIndex = 0;
+            lineasVenta.appendChild(linea);
+        });
+        lineasVenta.addEventListener('click', (event) => {
+            if (event.target.matches('.quitar-linea') && lineasVenta.children.length > 1) event.target.closest('.linea-transaccion').remove();
+        });
+    </script>
 </body>
 </html>

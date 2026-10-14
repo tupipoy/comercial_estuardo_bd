@@ -26,7 +26,7 @@
         </nav>
         <div class="nav-user">
             <span>{{ session.get('user_name', '') }}</span>
-            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
         </div>
     </header>
 
@@ -53,6 +53,7 @@
                     <th>Pago</th>
                     <th>Total</th>
                     <th>Estado</th>
+                    <th>Detalle</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,9 +67,10 @@
                     <td>{{ venta.tipo_pago }}</td>
                     <td>Q {{ "%.2f"|format(venta.total_venta) }}</td>
                     <td>{{ venta.estado }}</td>
+                    <td><a href="{{ url_for('detalle_venta', id_venta=venta.id_venta) }}">Ver factura</a></td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8" class="text-center">Todavía no hay ventas registradas.</td></tr>
+                <tr><td colspan="9" class="text-center">Todavía no hay ventas registradas.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

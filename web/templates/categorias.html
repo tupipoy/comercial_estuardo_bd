@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand"><h1>Comercial Estuardo</h1><p>Gestión de categorías</p></div>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="{{ url_for('inventario') }}">Inventario</a><a href="{{ url_for('productos') }}">Productos</a>
+            <a class="active" href="{{ url_for('categorias') }}">Categorías</a><a href="{{ url_for('sucursales') }}">Sucursales</a>
+            <a href="{{ url_for('empleados') }}">Empleados</a>
+        </nav>
+        <div class="nav-user"><span>{{ session.get('user_name', '') }}</span><form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form></div>
+    </header>
+    <main>
+        {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}">{{ mensaje }}</div>{% endfor %}{% endwith %}
+        <section class="toolbar"><h2>Categorías activas</h2><a href="{{ url_for('nueva_categoria') }}" class="btn active">Nueva categoría</a></section>
+        <table><thead><tr><th>Nombre</th><th>Descripción</th><th>Productos activos</th><th>Acciones</th></tr></thead><tbody>
+        {% for c in categorias %}<tr><td>{{ c.nombre }}</td><td>{{ c.descripcion or '-' }}</td><td>{{ c.productos }}</td><td>
+            <a href="{{ url_for('editar_categoria', id_categoria=c.id_categoria) }}">Editar</a>
+            <form method="POST" action="{{ url_for('desactivar_categoria', id_categoria=c.id_categoria) }}" style="display:inline" onsubmit="return confirm('¿Desactivar esta categoría?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Desactivar</button></form>
+        </td></tr>{% else %}<tr><td colspan="4" class="text-center">No hay categorías activas.</td></tr>{% endfor %}
+        </tbody></table>
+    </main>
+</body>
+</html>

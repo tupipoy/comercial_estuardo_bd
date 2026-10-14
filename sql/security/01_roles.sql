@@ -35,6 +35,8 @@ GRANT SELECT ON comercial_estuardo_db.DETALLE_VENTA
     TO 'rol_ventas';
 GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_venta
     TO 'rol_ventas';
+GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_venta_detallada
+    TO 'rol_ventas';
 
 -- Bodega: mantenimiento de catálogo, proveedores y compras. Las compras
 -- se registran mediante el procedimiento para que detalle, existencias y
@@ -54,6 +56,8 @@ GRANT SELECT ON comercial_estuardo_db.COMPRA
 GRANT SELECT ON comercial_estuardo_db.DETALLE_COMPRA
     TO 'rol_bodega';
 GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_compra
+    TO 'rol_bodega';
+GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_compra_detallada
     TO 'rol_bodega';
 
 -- La asignación a usuarios se realiza cuando existan las cuentas MySQL.

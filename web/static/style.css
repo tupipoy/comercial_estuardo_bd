@@ -41,6 +41,16 @@ header p { margin: 0; color: #94a3b8; }
     color: #e2e8f0;
     text-decoration: none;
 }
+.nav-user form { display: inline; }
+.nav-user button {
+    color: #e2e8f0;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+}
+.nav-user button:hover { text-decoration: underline; }
 .nav-links a:hover,
 .nav-user a:hover { text-decoration: underline; }
 .nav-links a.active { color: #fff; font-weight: 700; }

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Empleados - Comercial Estuardo</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><header class="navbar"><div class="nav-brand"><h1>Comercial Estuardo</h1><p>Administración de empleados</p></div>
+<nav class="nav-links" aria-label="Navegación principal"><a href="{{ url_for('inventario') }}">Inventario</a><a href="{{ url_for('categorias') }}">Categorías</a><a href="{{ url_for('sucursales') }}">Sucursales</a><a class="active" href="{{ url_for('empleados') }}">Empleados</a></nav>
+<div class="nav-user"><span>{{ session.get('user_name', '') }}</span><form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form></div></header>
+<main>{% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}">{{ mensaje }}</div>{% endfor %}{% endwith %}
+<section class="toolbar"><h2>Empleados activos</h2><a href="{{ url_for('nuevo_empleado') }}" class="btn active">Nuevo empleado</a></section>
+<table><thead><tr><th>CUI</th><th>Nombre</th><th>Cargo</th><th>Teléfono</th><th>Correo</th><th>Sucursal</th><th>Ingreso</th><th>Acciones</th></tr></thead><tbody>
+{% for e in empleados %}<tr><td>{{ e.cui }}</td><td>{{ e.nombres }} {{ e.apellidos }}</td><td>{{ e.cargo }}</td><td>{{ e.telefono }}</td><td>{{ e.correo or '-' }}</td><td>{{ e.sucursal }}</td><td>{{ e.fecha_ingreso }}</td><td><a href="{{ url_for('editar_empleado', id_empleado=e.id_empleado) }}">Editar</a>
+{% if e.id_empleado != session.get('user_id') %}<form method="POST" action="{{ url_for('desactivar_empleado', id_empleado=e.id_empleado) }}" style="display:inline" onsubmit="return confirm('¿Desactivar este empleado?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Desactivar</button></form>{% else %}<span>Sesión actual</span>{% endif %}</td></tr>
+{% else %}<tr><td colspan="8" class="text-center">No hay empleados activos.</td></tr>{% endfor %}</tbody></table></main></body></html>

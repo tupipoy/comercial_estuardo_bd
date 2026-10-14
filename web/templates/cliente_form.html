@@ -21,6 +21,7 @@
         {% endif %}
 
         <form method="POST" class="product-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="nit">NIT</label>
                 <input id="nit" name="nit" maxlength="15" required value="{{ cliente.nit if cliente else '' }}">
