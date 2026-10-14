@@ -20,7 +20,7 @@ Los resultados se deben completar con fecha, entorno y evidencia real. No consid
 | CP4-11 | Registrar venta con dos productos y stock suficiente | Una cabecera, dos detalles, total correcto y descuento de stock en ambos productos. | Pendiente MySQL |
 | CP4-12 | Venta del producto de prueba 6 (categoría Motocicletas) con VIN/motor nuevos | Guarda ambos seriales únicos y cantidad igual a una unidad. | Pendiente MySQL |
 | CP4-13 | Venta sin stock suficiente o con VIN/motor repetido | Operación completa revertida; stock sin cambios. | Pendiente MySQL |
-| CP4-14 | Venta con descuento mayor al importe o más de 50 líneas | Se rechaza antes de persistir. | Pendiente MySQL |
+| CP4-14 | Venta con descuento mayor al importe, valores fuera de rango SQL o más de 50 líneas | La app rechaza antes de persistir; se validan límites INT y DECIMAL del esquema. | Pendiente MySQL/app |
 | CP4-15 | Cierre de sesión mediante POST válido e inválido | Token válido cierra sesión; sin token responde HTTP 400. | Verificado con Flask test client; falta evidencia integrada |
 | CP4-16 | Publicar con Gunicorn y MySQL en Railway | Dominio público responde; login, permisos y flujos principales funcionan. | Pendiente Railway |
 

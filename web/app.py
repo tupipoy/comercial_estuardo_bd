@@ -13,6 +13,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+MYSQL_INT_MAX = 2_147_483_647
+MYSQL_DECIMAL_10_2_MAX = Decimal("99999999.99")
+MYSQL_DECIMAL_12_2_MAX = Decimal("9999999999.99")
+
 app = Flask(
     __name__,
     static_folder="static",
@@ -1060,7 +1064,7 @@ def nueva_venta():
                 id_producto_num = int(linea["id_producto"])
                 cantidad_num = int(linea["cantidad"])
                 descuento_num = Decimal(linea["descuento"] or "0")
-                if id_producto_num <= 0 or cantidad_num <= 0 or not descuento_num.is_finite() or descuento_num < 0 or descuento_num.as_tuple().exponent < -2:
+                if id_producto_num <= 0 or cantidad_num <= 0 or cantidad_num > MYSQL_INT_MAX or not descuento_num.is_finite() or descuento_num < 0 or descuento_num > MYSQL_DECIMAL_10_2_MAX or descuento_num.as_tuple().exponent < -2:
                     raise ValueError
                 lineas_validas.append({"id_producto": id_producto_num, "cantidad": cantidad_num, "descuento": descuento_num, "vin_chasis": linea["vin_chasis"], "numero_motor": linea["numero_motor"]})
             except (TypeError, ValueError, InvalidOperation):
@@ -1098,14 +1102,23 @@ def nueva_venta():
                 producto_por_id = {p["id_producto"]: p for p in productos_disponibles}
                 if datos["id_cliente"] not in cliente_ids:
                     errores.append("El cliente seleccionado no existe o está inactivo.")
+                total_venta = Decimal("0.00")
                 for linea in lineas_validas:
                     producto = producto_por_id.get(linea["id_producto"])
                     if not producto:
                         errores.append("Uno de los productos no existe, está inactivo o no tiene stock.")
                         break
                     linea["precio_unitario"] = str(producto["precio_venta"])
-                    if linea["descuento"] > Decimal(producto["precio_venta"]) * linea["cantidad"]:
+                    bruto_linea = Decimal(producto["precio_venta"]) * linea["cantidad"]
+                    if bruto_linea > MYSQL_DECIMAL_12_2_MAX:
+                        errores.append("El importe de una línea supera el máximo permitido por la base de datos.")
+                        break
+                    if linea["descuento"] > bruto_linea:
                         errores.append("El descuento de una línea supera el importe de esa línea.")
+                        break
+                    total_venta += bruto_linea - linea["descuento"]
+                    if total_venta > MYSQL_DECIMAL_12_2_MAX:
+                        errores.append("El total de la venta supera el máximo permitido por la base de datos.")
                         break
                     es_motocicleta = "moto" in producto["categoria"].casefold()
                     if es_motocicleta and (linea["cantidad"] != 1 or not linea["vin_chasis"] or not linea["numero_motor"]):
@@ -1311,7 +1324,7 @@ def nueva_compra():
                 id_producto_num = int(linea["id_producto"])
                 cantidad_num = int(linea["cantidad"])
                 costo_num = Decimal(linea["costo_unitario"])
-                if id_producto_num <= 0 or cantidad_num <= 0 or not costo_num.is_finite() or costo_num <= 0 or costo_num.as_tuple().exponent < -2:
+                if id_producto_num <= 0 or cantidad_num <= 0 or cantidad_num > MYSQL_INT_MAX or not costo_num.is_finite() or costo_num <= 0 or costo_num > MYSQL_DECIMAL_10_2_MAX or costo_num.as_tuple().exponent < -2:
                     raise ValueError
                 lineas_validas.append({"id_producto": id_producto_num, "cantidad": cantidad_num, "costo_unitario": str(costo_num)})
             except (InvalidOperation, TypeError, ValueError):
@@ -1333,6 +1346,25 @@ def nueva_compra():
                     errores.append("El proveedor seleccionado no existe o está inactivo.")
                 if any(linea["id_producto"] not in producto_por_id for linea in lineas_validas):
                     errores.append("Uno de los productos no existe o está inactivo.")
+
+                total_compra = Decimal("0.00")
+                for linea in lineas_validas:
+                    producto = producto_por_id.get(linea["id_producto"])
+                    if not producto:
+                        continue
+                    cantidad = linea["cantidad"]
+                    costo = Decimal(linea["costo_unitario"])
+                    subtotal = costo * cantidad
+                    if cantidad > MYSQL_INT_MAX - producto["stock_actual"]:
+                        errores.append("La cantidad supera el máximo de existencias admitido por la base de datos.")
+                        break
+                    if subtotal > MYSQL_DECIMAL_12_2_MAX:
+                        errores.append("El importe de una línea supera el máximo permitido por la base de datos.")
+                        break
+                    total_compra += subtotal
+                    if total_compra > MYSQL_DECIMAL_12_2_MAX:
+                        errores.append("El total de la compra supera el máximo permitido por la base de datos.")
+                        break
 
                 cursor.execute("""
                     SELECT id_empleado
