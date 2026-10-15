@@ -959,6 +959,12 @@ def faltan_triggers_venta(cursor):
     """)
     return cursor.fetchone()["cantidad"] != 2
 
+
+def es_categoria_motocicleta(nombre_categoria):
+    return str(nombre_categoria or "").strip().casefold() in {
+        "moto", "motos", "motocicleta", "motocicletas"
+    }
+
 #ventas
 @app.route("/ventas")
 @requiere_rol("Administrador", "Vendedor")
@@ -1120,7 +1126,7 @@ def nueva_venta():
                     if total_venta > MYSQL_DECIMAL_12_2_MAX:
                         errores.append("El total de la venta supera el máximo permitido por la base de datos.")
                         break
-                    es_motocicleta = "moto" in producto["categoria"].casefold()
+                    es_motocicleta = es_categoria_motocicleta(producto["categoria"])
                     if es_motocicleta and (linea["cantidad"] != 1 or not linea["vin_chasis"] or not linea["numero_motor"]):
                         errores.append("Cada motocicleta requiere cantidad 1, VIN/chasis y número de motor.")
                         break

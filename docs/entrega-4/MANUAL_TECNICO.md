@@ -17,11 +17,11 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 ## Despliegue en Railway
 
 1. Crear un proyecto Railway y agregar un servicio MySQL.
-2. Conectar el repositorio al servicio web y configurar el directorio raíz en la raíz del repositorio.
+2. Conectar el repositorio al servicio web y configurar **Root Directory** como `web`, donde está `requirements.txt`.
 3. Definir el Start Command:
 
    ```bash
-   gunicorn --chdir web --bind 0.0.0.0:$PORT app:app
+   gunicorn --bind 0.0.0.0:$PORT app:app
    ```
 
    Configurar `/health` como ruta de health check del servicio.

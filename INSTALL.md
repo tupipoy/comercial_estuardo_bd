@@ -106,13 +106,13 @@ Configura `SECRET_KEY` en `.env` con un valor aleatorio antes de iniciar la apli
 
 ## 8. Despliegue en Railway
 
-El servicio web se ejecuta con Gunicorn desde la raíz del repositorio:
+El servicio web se ejecuta con Gunicorn desde la carpeta `web/`:
 
 ```bash
-gunicorn --chdir web --bind 0.0.0.0:$PORT app:app
+gunicorn --bind 0.0.0.0:$PORT app:app
 ```
 
-En Railway, crea un proyecto con un servicio **MySQL** y un servicio web conectado al repositorio GitHub. Como la aplicación está dentro de `web/`, deja **Root Directory** en la raíz del repositorio y configura el comando anterior como **Start Command** del servicio web. Agrega estas variables en el servicio web:
+En Railway, crea un proyecto con un servicio **MySQL** y un servicio web conectado al repositorio GitHub. Configura **Root Directory** como `web` para que Railpack detecte `requirements.txt` e instale las dependencias Python. Configura el comando anterior como **Start Command** del servicio web. Agrega estas variables en el servicio web:
 
 Configura la ruta de health check de Railway como `/health`; responde cuando el proceso web está activo y no consulta MySQL.
 

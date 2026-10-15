@@ -22,7 +22,9 @@ Los resultados se deben completar con fecha, entorno y evidencia real. No consid
 | CP4-13 | Venta sin stock suficiente o con VIN/motor repetido | Operación completa revertida; stock sin cambios. | Pendiente MySQL |
 | CP4-14 | Venta con descuento mayor al importe, valores fuera de rango SQL o más de 50 líneas | La app rechaza antes de persistir; se validan límites INT y DECIMAL del esquema. | Pendiente MySQL/app |
 | CP4-15 | Cierre de sesión mediante POST válido e inválido | Token válido cierra sesión; sin token responde HTTP 400. | Verificado con Flask test client; falta evidencia integrada |
-| CP4-16 | Publicar con Gunicorn y MySQL en Railway | Dominio público responde; login, permisos y flujos principales funcionan. | Pendiente Railway |
+| CP4-16 | Publicar con Gunicorn y MySQL en Railway | Dominio público responde; login, permisos y flujos principales funcionan. | Parcialmente verificado en Railway: dominio, login, módulos y alta/edición de cliente; compras/ventas aún pendientes |
+| CP4-17 | Crear y editar un cliente temporal desde el dominio Railway | El alta y el cambio persisten y aparecen en la lista. | Aprobado manualmente por el usuario; pendiente adjuntar captura |
+| CP4-18 | Vender producto de categoría `Repuestos de Motor` sin seriales | No se exige VIN/motor; estos seriales se exigen solo en categorías de motocicletas. | Pendiente de desplegar la corrección y probar en Railway |
 
 ## Evidencia a adjuntar
 

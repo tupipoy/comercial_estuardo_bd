@@ -1,5 +1,8 @@
 USE comercial_estuardo_db;
 
+-- IMPORTANTE: ejecutar el archivo completo en MySQL Workbench (Execute All).
+-- No ejecutar solo las líneas CREATE TRIGGER: Workbench necesita procesar
+-- DELIMITER $$ antes del cuerpo compuesto y DELIMITER ; al terminar.
 -- Permite volver a aplicar el archivo para actualizar estos triggers.
 DROP TRIGGER IF EXISTS trg_descontar_stock_venta;
 DROP TRIGGER IF EXISTS trg_validar_stock_venta;
