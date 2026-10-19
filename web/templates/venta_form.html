@@ -69,7 +69,7 @@
                     <select id="id_producto_{{ loop.index }}" name="id_producto" required>
                         <option value="">Selecciona un producto</option>
                         {% for producto in productos %}
-                        <option value="{{ producto.id_producto }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                        <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio_venta }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
                             {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — Q {{ "%.2f"|format(producto.precio_venta) }}, stock {{ producto.stock_actual }}
                         </option>
                         {% endfor %}
@@ -79,11 +79,14 @@
                     <label>Descuento de la línea (Q) <input name="descuento" type="number" min="0" step="0.01" required value="{{ linea.descuento }}"></label>
                     <label>VIN / chasis (motocicletas) <input name="vin_chasis" maxlength="50" value="{{ linea.vin_chasis or '' }}"></label>
                     <label>Número de motor (motocicletas) <input name="numero_motor" maxlength="50" value="{{ linea.numero_motor or '' }}"></label>
+                    <p class="subtotal-estimado">Subtotal estimado: <output class="subtotal-linea">Q 0.00</output></p>
                     <button type="button" class="quitar-linea">Quitar producto</button>
                     </fieldset>
                     {% endfor %}
                 </div>
                 <button type="button" id="agregar-linea">Agregar otro producto</button>
+                <p id="limite-lineas" class="texto-ayuda" role="status">Puedes agregar hasta 50 productos distintos.</p>
+                <p class="total-estimado">Total estimado de venta: <output id="total-venta">Q 0.00</output></p>
 
                 <div class="form-group">
                     <label for="tipo_pago">Tipo de pago</label>
@@ -103,7 +106,27 @@
     </main>
     <script>
         const lineasVenta = document.getElementById('lineas-venta');
-        document.getElementById('agregar-linea').addEventListener('click', () => {
+        const botonAgregarVenta = document.getElementById('agregar-linea');
+        const formatoQuetzales = new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const actualizarTotalesVenta = () => {
+            let total = 0;
+            lineasVenta.querySelectorAll('.linea-transaccion').forEach((linea) => {
+                const opcion = linea.querySelector('select').selectedOptions[0];
+                const precio = Number(opcion?.dataset.precio || 0);
+                const cantidad = Number(linea.querySelector('[name="cantidad"]').value || 0);
+                const descuento = Number(linea.querySelector('[name="descuento"]').value || 0);
+                const subtotal = Math.max(0, precio * cantidad - descuento);
+                linea.querySelector('.subtotal-linea').textContent = `Q ${formatoQuetzales.format(subtotal)}`;
+                total += subtotal;
+            });
+            document.getElementById('total-venta').textContent = `Q ${formatoQuetzales.format(total)}`;
+            botonAgregarVenta.disabled = lineasVenta.children.length >= 50;
+            document.getElementById('limite-lineas').textContent = botonAgregarVenta.disabled
+                ? 'Se alcanzó el máximo de 50 productos por venta.'
+                : `Productos en la venta: ${lineasVenta.children.length} de 50.`;
+        };
+        botonAgregarVenta.addEventListener('click', () => {
+            if (lineasVenta.children.length >= 50) return;
             const linea = lineasVenta.querySelector('.linea-transaccion').cloneNode(true);
             linea.querySelector('legend').textContent = `Producto ${lineasVenta.children.length + 1}`;
             const selectId = `id_producto_${Date.now()}_${lineasVenta.children.length}`;
@@ -114,10 +137,17 @@
             });
             linea.querySelector('select').selectedIndex = 0;
             lineasVenta.appendChild(linea);
+            actualizarTotalesVenta();
         });
         lineasVenta.addEventListener('click', (event) => {
-            if (event.target.matches('.quitar-linea') && lineasVenta.children.length > 1) event.target.closest('.linea-transaccion').remove();
+            if (event.target.matches('.quitar-linea') && lineasVenta.children.length > 1) {
+                event.target.closest('.linea-transaccion').remove();
+                actualizarTotalesVenta();
+            }
         });
+        lineasVenta.addEventListener('input', actualizarTotalesVenta);
+        lineasVenta.addEventListener('change', actualizarTotalesVenta);
+        actualizarTotalesVenta();
     </script>
 </body>
 </html>

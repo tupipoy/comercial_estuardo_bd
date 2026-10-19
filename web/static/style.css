@@ -235,6 +235,30 @@ th { background-color: #0f172a; color: #fff; }
     background-color: #1d4ed8;
 }
 
+.btn-submit:disabled,
+#agregar-linea:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.subtotal-estimado,
+.total-estimado {
+    color: #334155;
+    font-weight: 600;
+    margin: 8px 0;
+}
+
+.total-estimado {
+    background: #eff6ff;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.texto-ayuda {
+    color: #64748b;
+    font-size: 13px;
+}
+
 .login-footer {
     text-align: center;
     margin-top: 20px;

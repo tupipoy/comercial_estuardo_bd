@@ -64,7 +64,7 @@
                     <select id="id_producto_{{ loop.index }}" name="id_producto" required>
                         <option value="">Selecciona un producto</option>
                         {% for producto in productos %}
-                        <option value="{{ producto.id_producto }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                        <option value="{{ producto.id_producto }}" data-costo="{{ producto.precio_costo }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
                             {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — stock {{ producto.stock_actual }}, costo actual Q {{ "%.2f"|format(producto.precio_costo) }}
                         </option>
                         {% endfor %}
@@ -72,11 +72,14 @@
                     {% if not productos %}<small>No hay productos activos registrados.</small>{% endif %}
                     <label>Cantidad recibida <input name="cantidad" type="number" min="1" step="1" required value="{{ linea.cantidad }}"></label>
                     <label>Costo unitario (Q) <input name="costo_unitario" type="number" min="0.01" step="0.01" required value="{{ linea.costo_unitario }}"></label>
+                    <p class="subtotal-estimado">Subtotal estimado: <output class="subtotal-linea">Q 0.00</output></p>
                     <button type="button" class="quitar-linea">Quitar producto</button>
                     </fieldset>
                     {% endfor %}
                 </div>
                 <button type="button" id="agregar-linea">Agregar otro producto</button>
+                <p id="limite-lineas" class="texto-ayuda" role="status">Puedes agregar hasta 50 productos distintos.</p>
+                <p class="total-estimado">Total estimado de compra: <output id="total-compra">Q 0.00</output></p>
 
                 <button class="btn-submit" type="submit" {% if not proveedores or not productos %}disabled{% endif %}>
                     Registrar compra
@@ -87,7 +90,26 @@
     </main>
     <script>
         const lineasCompra = document.getElementById('lineas-compra');
-        document.getElementById('agregar-linea').addEventListener('click', () => {
+        const botonAgregarCompra = document.getElementById('agregar-linea');
+        const formatoQuetzales = new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const actualizarTotalesCompra = () => {
+            let total = 0;
+            lineasCompra.querySelectorAll('.linea-transaccion').forEach((linea) => {
+                const opcion = linea.querySelector('select').selectedOptions[0];
+                const costo = Number(linea.querySelector('[name="costo_unitario"]').value || 0);
+                const cantidad = Number(linea.querySelector('[name="cantidad"]').value || 0);
+                const subtotal = Math.max(0, costo * cantidad);
+                linea.querySelector('.subtotal-linea').textContent = `Q ${formatoQuetzales.format(subtotal)}`;
+                total += subtotal;
+            });
+            document.getElementById('total-compra').textContent = `Q ${formatoQuetzales.format(total)}`;
+            botonAgregarCompra.disabled = lineasCompra.children.length >= 50;
+            document.getElementById('limite-lineas').textContent = botonAgregarCompra.disabled
+                ? 'Se alcanzó el máximo de 50 productos por compra.'
+                : `Productos en la compra: ${lineasCompra.children.length} de 50.`;
+        };
+        botonAgregarCompra.addEventListener('click', () => {
+            if (lineasCompra.children.length >= 50) return;
             const linea = lineasCompra.querySelector('.linea-transaccion').cloneNode(true);
             linea.querySelector('legend').textContent = `Producto ${lineasCompra.children.length + 1}`;
             const selectId = `id_producto_${Date.now()}_${lineasCompra.children.length}`;
@@ -96,10 +118,23 @@
             linea.querySelectorAll('input').forEach((input) => { input.value = input.name === 'cantidad' ? '1' : ''; });
             linea.querySelector('select').selectedIndex = 0;
             lineasCompra.appendChild(linea);
+            actualizarTotalesCompra();
         });
         lineasCompra.addEventListener('click', (event) => {
-            if (event.target.matches('.quitar-linea') && lineasCompra.children.length > 1) event.target.closest('.linea-transaccion').remove();
+            if (event.target.matches('.quitar-linea') && lineasCompra.children.length > 1) {
+                event.target.closest('.linea-transaccion').remove();
+                actualizarTotalesCompra();
+            }
         });
+        lineasCompra.addEventListener('input', actualizarTotalesCompra);
+        lineasCompra.addEventListener('change', (event) => {
+            if (event.target.matches('select[name="id_producto"]')) {
+                const costo = event.target.selectedOptions[0]?.dataset.costo || '';
+                event.target.closest('.linea-transaccion').querySelector('[name="costo_unitario"]').value = costo;
+            }
+            actualizarTotalesCompra();
+        });
+        actualizarTotalesCompra();
     </script>
 </body>
 </html>
