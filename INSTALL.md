@@ -48,7 +48,7 @@ mysql -u root -p < sql/dml/01_seed_data.sql
 mysql -u root -p < sql/dml/02_bulk_data.sql
 mysql -u root -p < sql/views/01_views.sql
 mysql -u root -p < sql/triggers/01_triggers.sql
-mysql -u root -p < sql/procedimiento/01_procedures.sql
+mysql -u root -p < sql/procedures/01_procedures.sql
 mysql -u root -p < sql/security/01_roles.sql
 ```
 

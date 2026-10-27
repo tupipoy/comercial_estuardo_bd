@@ -8,7 +8,7 @@ Sistema académico de gestión de inventario, compras y ventas para Comercial Es
 - **Curso:** Base de Datos, semestre 2026
 - **SGBD:** MySQL 8.0 o superior
 - **Aplicación:** Python 3.11+, Flask, PyMySQL y Gunicorn
-- **Despliegue previsto:** Railway (servicio web Flask + servicio MySQL)
+- **Despliegue actual:** Railway (servicio web Flask + servicio MySQL)
 - **Integrantes:**
   - Elvin Guillermo Miranda Gómez — 2690-24-16072
   - Juan Carlos Ochoa Samayoa — 2690-23-7592
@@ -36,7 +36,7 @@ sql/
   dml/             datos semilla y carga masiva
   views/           vistas de negocio
   triggers/        reglas de inventario para ventas
-  procedimiento/  procedimientos transaccionales
+  procedures/     procedimientos transaccionales
   security/        roles y privilegios MySQL
 docs/
   entrega-1/       propuesta, requerimientos y cronograma

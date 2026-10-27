@@ -1,13 +1,15 @@
 # Casos de prueba — Entrega 4
 
 **Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario — Comercial Estuardo  
-**Estado:** Casos preparados; pendientes de ejecución en MySQL 8 y en el despliegue de aceptación Railway.
+**URL de aceptación:** https://comercialestuardobd-production.up.railway.app
+
+**Estado:** Railway ya está desplegado y accesible. Login, módulos y alta/edición de clientes fueron confirmados por el usuario; las operaciones de compra/venta y los cambios locales recientes aún requieren aceptación. Las pruebas SQL integradas en MySQL 8 siguen pendientes.
 
 Los resultados se deben completar con fecha, entorno y evidencia real. No considerar aprobados los casos hasta ejecutar el procedimiento completo y verificar la persistencia en MySQL.
 
 | ID | Escenario | Resultado esperado | Estado |
 |---|---|---|---|
-| CP4-01 | Instalación limpia con los scripts de `INSTALL.md` | Diez tablas con 50 registros por conjunto; vistas, triggers, cuatro procedimientos y roles instalados. | Pendiente MySQL |
+| CP4-01 | Instalación limpia con los scripts de `INSTALL.md` | Diez tablas con 50 registros por conjunto; vistas, triggers, cuatro procedimientos y roles instalados. | Pendiente de evidencia de instalación limpia Entrega 4. Ejecutar solo en una base temporal desechable; el DDL elimina y recrea `comercial_estuardo_db`. |
 | CP4-02 | Inicializar empleado Administrador con hash y autenticarse | Login exitoso y acceso al inventario; contraseña en BD almacenada como hash. | Pendiente MySQL |
 | CP4-03 | Intentar POST sin token CSRF en login y formulario protegido | Respuesta HTTP 400 sin cambio en datos. | Verificado con Flask test client; falta evidencia integrada |
 | CP4-04 | Acceder como Vendedor a administración de Categorías/Sucursales/Empleados | Respuesta HTTP 403. | Pendiente MySQL/app integrada |
@@ -22,9 +24,9 @@ Los resultados se deben completar con fecha, entorno y evidencia real. No consid
 | CP4-13 | Venta sin stock suficiente o con VIN/motor repetido | Operación completa revertida; stock sin cambios. | Pendiente MySQL |
 | CP4-14 | Venta con descuento mayor al importe, valores fuera de rango SQL o más de 50 líneas | La app rechaza antes de persistir; se validan límites INT y DECIMAL del esquema. | Pendiente MySQL/app |
 | CP4-15 | Cierre de sesión mediante POST válido e inválido | Token válido cierra sesión; sin token responde HTTP 400. | Verificado con Flask test client; falta evidencia integrada |
-| CP4-16 | Publicar con Gunicorn y MySQL en Railway | Dominio público responde; login, permisos y flujos principales funcionan. | Parcialmente verificado en Railway: dominio, login, módulos y alta/edición de cliente; compras/ventas aún pendientes |
+| CP4-16 | Publicar con Gunicorn y MySQL en Railway | Dominio público responde; login, permisos y flujos principales funcionan. | Despliegue activo y accesible. Usuario confirmó dominio, login y módulos; falta verificar compras/ventas y el commit de los cambios recientes. |
 | CP4-17 | Crear y editar un cliente temporal desde el dominio Railway | El alta y el cambio persisten y aparecen en la lista. | Aprobado manualmente por el usuario; pendiente adjuntar captura |
-| CP4-18 | Vender producto de categoría `Repuestos de Motor` sin seriales | No se exige VIN/motor; estos seriales se exigen solo en categorías de motocicletas. | Pendiente de desplegar la corrección y probar en Railway |
+| CP4-18 | Vender producto de categoría `Repuestos de Motor` sin seriales | No se exige VIN/motor; estos seriales se exigen solo en categorías de motocicletas. | La corrección está en el commit `124f52e`; falta confirmar que ese commit esté desplegado en Railway y registrar la prueba funcional. |
 
 ## Evidencia a adjuntar
 

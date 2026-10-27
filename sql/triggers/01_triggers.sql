@@ -1,3 +1,7 @@
+-- Archivo: sql/triggers/01_triggers.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: valida y descuenta existencias al insertar detalles de venta.
+-- Dependencias: sql/ddl/01_schema.sql; InnoDB; ejecutar antes de los procedimientos.
 USE comercial_estuardo_db;
 
 -- IMPORTANTE: ejecutar el archivo completo en MySQL Workbench (Execute All).

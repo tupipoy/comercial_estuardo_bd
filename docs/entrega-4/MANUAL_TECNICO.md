@@ -8,7 +8,7 @@
 - **Interfaz y lógica web:** Flask en `web/app.py`; plantillas Jinja en `web/templates/`.
 - **Acceso a datos:** PyMySQL en `web/db.py`, con credenciales mediante variables de entorno.
 - **Base de datos:** MySQL 8+, motor InnoDB; DDL, DML, vistas, triggers, procedimientos y roles en `sql/`.
-- **Producción:** Gunicorn sirve el objeto Flask `app`; Railway alojará el servicio web y MySQL.
+- **Producción:** Gunicorn sirve el objeto Flask `app`; el servicio web y MySQL ya están desplegados en Railway.
 
 ## Ejecución local
 
@@ -16,9 +16,8 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
 ## Despliegue en Railway
 
-1. Crear un proyecto Railway y agregar un servicio MySQL.
-2. Conectar el repositorio al servicio web y configurar **Root Directory** como `web`, donde está `requirements.txt`.
-3. Definir el Start Command:
+1. El proyecto ya cuenta con servicio web y servicio MySQL en Railway. URL pública: https://comercialestuardobd-production.up.railway.app. Para reproducir el despliegue, usar el mismo repositorio y configurar **Root Directory** como `web`, donde está `requirements.txt`.
+2. Definir el Start Command:
 
    ```bash
    gunicorn --bind 0.0.0.0:$PORT app:app
@@ -26,9 +25,9 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
    Configurar `/health` como ruta de health check del servicio.
 
-4. Configurar `SECRET_KEY` y las variables `DB_HOST`, `DB_PORT`, `DB_USER` y `DB_PASSWORD` mediante referencias a `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER` y `MYSQLPASSWORD` del servicio MySQL. Definir `DB_NAME=comercial_estuardo_db`, el esquema creado por el DDL. No guardar valores reales en el repositorio.
-5. Inicializar el esquema remoto con los scripts descritos en `INSTALL.md`, generar el hash del usuario administrador y verificar los flujos web.
-6. Generar un dominio para el servicio web y revisar los logs de despliegue.
+3. Configurar `SECRET_KEY` y las variables `DB_HOST`, `DB_PORT`, `DB_USER` y `DB_PASSWORD` mediante referencias a `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER` y `MYSQLPASSWORD` del servicio MySQL. Definir `DB_NAME=comercial_estuardo_db`, el esquema creado por el DDL. No guardar valores reales en el repositorio.
+4. No ejecutar el DDL destructivo sobre la base productiva. Inicializar una base de aceptación separada con los scripts de `INSTALL.md`, crear su administrador y verificar los flujos.
+5. Confirmar el dominio actual del servicio web y revisar los logs del despliegue aceptado.
 
 ## Objetos SQL
 
@@ -50,4 +49,4 @@ Las rutas `/categorias`, `/sucursales` y `/empleados` se limitan al cargo Admini
 
 ## Estado de cierre
 
-Este manual se completará con la configuración realmente usada, capturas/evidencias del despliegue y el resultado de la instalación limpia y las pruebas de aceptación. No se declara un despliegue en Railway hasta que el equipo lo ejecute y documente.
+La aplicación está desplegada y accesible en Railway en https://comercialestuardobd-production.up.railway.app. El usuario confirmó el dominio, login, módulos y alta/edición de clientes. No se registran credenciales ni valores de configuración productiva en este manual. Falta registrar la evidencia de compras/ventas, instalación limpia y aceptación completa antes de certificar la versión final.

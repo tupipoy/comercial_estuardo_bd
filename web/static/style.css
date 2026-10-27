@@ -66,6 +66,25 @@ header p { margin: 0; color: #94a3b8; }
     align-items: center;
     margin-bottom: 15px;
 }
+.busqueda-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+}
+.busqueda-form label { font-weight: 600; }
+.busqueda-form input {
+    flex: 1 1 240px;
+    min-width: 180px;
+    padding: 9px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+.busqueda-form .btn { border: 0; cursor: pointer; margin-left: 0; }
 .btn {
     display: inline-block;
     padding: 8px 16px;

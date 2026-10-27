@@ -39,6 +39,17 @@
             <h2>Compras registradas</h2>
             <a href="{{ url_for('nueva_compra') }}" class="btn active">Nueva compra</a>
         </section>
+        <form class="busqueda-form" method="GET" action="{{ url_for('compras') }}">
+            <label for="buscar-compra">Orden, proveedor o empleado</label>
+            <input id="buscar-compra" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Número o nombre">
+            <label for="compra-desde">Desde</label>
+            <input id="compra-desde" name="desde" type="date" value="{{ desde }}">
+            <label for="compra-hasta">Hasta</label>
+            <input id="compra-hasta" name="hasta" type="date" value="{{ hasta }}">
+            <button class="btn active" type="submit">Filtrar</button>
+            {% if busqueda or desde or hasta %}<a class="btn" href="{{ url_for('compras') }}">Limpiar</a>{% endif %}
+        </form>
+        {% if error_fechas %}<p class="alert-danger" role="alert">{{ error_fechas }}</p>{% endif %}
 
         <table>
             <thead>

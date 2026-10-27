@@ -5,7 +5,7 @@
 - **Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario — Comercial Estuardo
 - **SGBD:** MySQL 8+
 - **Aplicación:** Flask, PyMySQL y Gunicorn
-- **Despliegue previsto:** Railway
+- **Despliegue:** Railway (activo; aceptación funcional completa pendiente)
 - **Integrantes:** Elvin Guillermo Miranda Gómez (2690-24-16072); Juan Carlos Ochoa Samayoa (2690-23-7592)
 
 ## Problema y solución
@@ -18,20 +18,20 @@ La base cuenta con ocho entidades principales y dos entidades asociativas, datos
 
 ## Despliegue y validación
 
-La aplicación está preparada para ejecutarse con Gunicorn en Railway; falta registrar aquí la URL, fecha de despliegue, configuración de servicios y evidencia de funcionamiento cuando el equipo complete la publicación. Los resultados de instalación limpia y pruebas de aceptación se añadirán sin atribuir resultados no ejecutados.
+La aplicación está desplegada y accesible en Railway con Gunicorn. URL pública: https://comercialestuardobd-production.up.railway.app. El usuario confirmó que el dominio abre, que el login y los módulos funcionan, y que pudo crear y editar clientes. Falta registrar la versión exacta probada, validar compras/ventas en el despliegue y documentar la instalación limpia y los demás casos de aceptación.
 
 ## Limitaciones conocidas
 
 - Las tablas asociativas se gestionan dentro de sus transacciones y tienen vistas de solo lectura; no se ofrece edición/borrado independiente del historial.
-- La ejecución integrada de procedimientos y transacciones mult producto sigue pendiente por falta de una instancia MySQL disponible en la validación actual.
+- La ejecución integrada de procedimientos y transacciones mult producto sigue pendiente de registrar. Railway tiene servicio MySQL, pero no se debe usar el DDL destructivo de instalación sobre la base productiva; validar en un esquema o servicio temporal.
 - La trazabilidad VIN/motor está modelada y el formulario exige seriales al vender productos en categoría cuyo nombre contenga “moto”; debe validarse en MySQL.
 
 ## Declaración de integridad académica
 
-El equipo declara que revisó y validó el diseño, los scripts, el código y la documentación incluidos en la versión entregada; que identificó el apoyo recibido de herramientas de inteligencia artificial en la bitácora consolidada; y que puede explicar individualmente las decisiones de modelado, seguridad, transacciones y despliegue. Completar y firmar esta declaración únicamente después de la revisión final del equipo.
+**Pendiente de revisión, aprobación y firma de cada integrante.** Antes de firmar, el equipo debe confirmar que revisó la versión final, que la bitácora consolidada identifica el apoyo de herramientas de IA y que cada integrante puede explicar las decisiones de modelado, seguridad, transacciones y despliegue. Esta sección no constituye una declaración ya aprobada por los integrantes.
 
 ## Referencias de entrega
 
 - **Tag Git:** pendiente (`entrega-4`).
-- **URL pública:** pendiente.
+- **URL pública:** https://comercialestuardobd-production.up.railway.app
 - **Fecha de cierre:** pendiente.

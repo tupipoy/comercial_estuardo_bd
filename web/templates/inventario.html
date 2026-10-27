@@ -43,6 +43,13 @@
                 <a href="{{ url_for('inventario', stock_bajo=1) }}" class="btn btn-warning {% if solo_stock_bajo == '1' %}active{% endif %}">Alerta: Stock Mínimo</a>
             </div>
         </section>
+        <form class="busqueda-form" method="GET" action="{{ url_for('inventario') }}">
+            {% if solo_stock_bajo == '1' %}<input type="hidden" name="stock_bajo" value="1">{% endif %}
+            <label for="buscar-inventario">Buscar producto, código o categoría</label>
+            <input id="buscar-inventario" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, SKU o categoría">
+            <button class="btn active" type="submit">Buscar</button>
+            {% if busqueda %}<a class="btn" href="{{ url_for('inventario', stock_bajo=1 if solo_stock_bajo == '1' else None) }}">Limpiar</a>{% endif %}
+        </form>
 
         <table>
             <thead>

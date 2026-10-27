@@ -1,3 +1,7 @@
+-- Archivo: sql/dml/01_seed_data.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: inserta datos iniciales de catálogos y usuarios.
+-- Dependencias: sql/ddl/01_schema.sql.
 USE comercial_estuardo_db;
 
 -- =====================================================

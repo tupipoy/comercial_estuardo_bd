@@ -1,5 +1,9 @@
 
--- SISTEMA DE GESTIÓN DE VENTAS, COMPRAS E INVENTARIO - COMERCIAL ESTUARDO
+-- Archivo: sql/ddl/01_schema.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: crea el esquema relacional, sus tablas y restricciones.
+-- Dependencias: ninguna; elimina y recrea comercial_estuardo_db.
+-- Revisión: no ejecutar sin autorización de ER y sin respaldar datos.
 
 DROP DATABASE IF EXISTS comercial_estuardo_db;
 CREATE DATABASE comercial_estuardo_db 

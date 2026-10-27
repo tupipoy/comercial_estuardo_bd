@@ -9,7 +9,7 @@ Este índice reúne los registros de las cuatro entregas. Cada archivo conserva 
 | 1 | [Bitácora Entrega 1](BITACORA_IA_ENTREGA_1.md) | Apoyo para propuesta, requerimientos y diseño inicial. |
 | 2 | [Bitácora Entrega 2](BITACORA_IA_ENTREGA_2.md) | Apoyo para modelo relacional, DDL y aplicación web inicial. |
 | 3 | [Bitácora Entrega 3](BITACORA_IA_ENTREGA_3.md) | Apoyo para seguridad, vistas, triggers, procedimientos y pruebas. |
-| 4 | [Bitácora Entrega 4](BITACORA_IA_ENTREGA_4.md) | Apoyo para cierre funcional, seguridad web, mult líneas y despliegue previsto. |
+| 4 | [Bitácora Entrega 4](BITACORA_IA_ENTREGA_4.md) | Apoyo para cierre funcional, seguridad web, operaciones mult línea y aceptación del despliegue Railway activo. |
 
 ## Revisión consolidada pendiente
 

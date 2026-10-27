@@ -40,6 +40,12 @@
             <h2>Productos activos</h2>
             <a href="{{ url_for('nuevo_producto') }}" class="btn active">Nuevo producto</a>
         </section>
+        <form class="busqueda-form" method="GET" action="{{ url_for('productos') }}">
+            <label for="buscar-producto">Buscar por producto, código o categoría</label>
+            <input id="buscar-producto" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, SKU o categoría">
+            <button class="btn active" type="submit">Buscar</button>
+            {% if busqueda %}<a class="btn" href="{{ url_for('productos') }}">Limpiar</a>{% endif %}
+        </form>
 
         <table>
             <thead>

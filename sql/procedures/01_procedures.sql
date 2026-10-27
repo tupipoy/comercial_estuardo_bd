@@ -1,3 +1,7 @@
+-- Archivo: sql/procedures/01_procedures.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: registra ventas y compras de una o varias líneas con transacciones.
+-- Dependencias: esquema instalado; triggers de venta de sql/triggers/01_triggers.sql.
 USE comercial_estuardo_db;
 
 -- Los procedimientos asumen que existen las tablas y, para ventas,

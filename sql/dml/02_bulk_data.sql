@@ -1,7 +1,9 @@
 -- ============================================================
 -- 02_bulk_data.sql
 -- Proyecto: Comercial Estuardo
+-- Autor: Equipo Comercial Estuardo
 -- Objetivo: completar datos de prueba para Entrega 3
+-- Dependencias: sql/ddl/01_schema.sql y sql/dml/01_seed_data.sql.
 -- IMPORTANTE: pensado para una instalación limpia después de:
 --   1) sql/ddl/01_schema.sql
 --   2) sql/dml/01_seed_data.sql

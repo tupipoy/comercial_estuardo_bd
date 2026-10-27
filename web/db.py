@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_db_connection():
+    """Abre una conexión MySQL con los parámetros definidos en el entorno."""
     host = os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or "localhost"
     port = os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or "3306"
     user = os.getenv("DB_USER") or os.getenv("MYSQLUSER") or "root"

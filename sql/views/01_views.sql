@@ -1,3 +1,7 @@
+-- Archivo: sql/views/01_views.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: crea vistas de inventario, stock crítico y ventas.
+-- Dependencias: esquema y datos base instalados.
 USE comercial_estuardo_db;
 
 -- =========================================================

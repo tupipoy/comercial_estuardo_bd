@@ -41,6 +41,17 @@
             <h2>Ventas registradas</h2>
             <a href="{{ url_for('nueva_venta') }}" class="btn active">Nueva venta</a>
         </section>
+        <form class="busqueda-form" method="GET" action="{{ url_for('ventas') }}">
+            <label for="buscar-venta">Factura, cliente o empleado</label>
+            <input id="buscar-venta" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Serie, número o nombre">
+            <label for="venta-desde">Desde</label>
+            <input id="venta-desde" name="desde" type="date" value="{{ desde }}">
+            <label for="venta-hasta">Hasta</label>
+            <input id="venta-hasta" name="hasta" type="date" value="{{ hasta }}">
+            <button class="btn active" type="submit">Filtrar</button>
+            {% if busqueda or desde or hasta %}<a class="btn" href="{{ url_for('ventas') }}">Limpiar</a>{% endif %}
+        </form>
+        {% if error_fechas %}<p class="alert-danger" role="alert">{{ error_fechas }}</p>{% endif %}
 
         <table>
             <thead>

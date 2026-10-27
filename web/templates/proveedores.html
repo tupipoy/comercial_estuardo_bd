@@ -42,6 +42,12 @@
             <h2>Proveedores activos</h2>
             <a href="{{ url_for('nuevo_proveedor') }}" class="btn active">Nuevo proveedor</a>
         </section>
+        <form class="busqueda-form" method="GET" action="{{ url_for('proveedores') }}">
+            <label for="buscar-proveedor">Buscar proveedor</label>
+            <input id="buscar-proveedor" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Razón social, NIT o contacto">
+            <button class="btn active" type="submit">Buscar</button>
+            {% if busqueda %}<a class="btn" href="{{ url_for('proveedores') }}">Limpiar</a>{% endif %}
+        </form>
 
         <table>
             <thead>

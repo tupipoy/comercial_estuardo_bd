@@ -38,6 +38,12 @@
             <h2>Clientes activos</h2>
             <a href="{{ url_for('nuevo_cliente') }}" class="btn active">Nuevo cliente</a>
         </section>
+        <form class="busqueda-form" method="GET" action="{{ url_for('clientes') }}">
+            <label for="buscar-cliente">Buscar cliente</label>
+            <input id="buscar-cliente" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, NIT, CUI o correo">
+            <button class="btn active" type="submit">Buscar</button>
+            {% if busqueda %}<a class="btn" href="{{ url_for('clientes') }}">Limpiar</a>{% endif %}
+        </form>
 
         <table>
             <thead>

@@ -1,3 +1,7 @@
+-- Archivo: sql/security/01_roles.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: crea roles con privilegios diferenciados para la aplicación.
+-- Dependencias: esquema, vistas y procedimientos instalados.
 USE comercial_estuardo_db;
 
 -- Roles de base de datos para Comercial Estuardo.

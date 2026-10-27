@@ -2,6 +2,7 @@ import os
 import json
 import hmac
 import secrets
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from functools import wraps
 
@@ -71,6 +72,7 @@ def requiere_rol(*roles):
 
 @app.route("/", methods=["GET", "POST"])
 def login():
+    """Consulta el empleado activo en MySQL y valida sus credenciales."""
     error = None
     if request.method == "POST":
         identificador = request.form.get("username", "").strip()
@@ -122,38 +124,59 @@ def login():
     return render_template("login.html", error=error)
 
 #empieza el inventario
+def patron_busqueda(texto):
+    texto = str(texto or "").strip()[:100]
+    if not texto:
+        return ""
+    texto = texto.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+    return f"%{texto}%"
+
+
+def fechas_filtro_transacciones():
+    desde = request.args.get("desde", "").strip()
+    hasta = request.args.get("hasta", "").strip()
+    try:
+        fecha_desde = date.fromisoformat(desde) if desde else None
+        fecha_hasta = date.fromisoformat(hasta) if hasta else None
+    except ValueError:
+        return desde, hasta, None, None, "Ingresa fechas válidas para filtrar."
+    if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
+        return desde, hasta, None, None, "La fecha inicial no puede ser posterior a la fecha final."
+    return desde, hasta, fecha_desde, fecha_hasta, None
+
+
 @app.route("/inventario")
 @requiere_rol("Administrador", "Vendedor", "Bodega")
 def inventario():
-    solo_stock_bajo = request.args.get("stock_bajo", "0")
+    """Consulta productos y existencias con filtros parametrizados."""
+    solo_stock_bajo = "1" if request.args.get("stock_bajo") == "1" else "0"
+    busqueda = request.args.get("q", "").strip()[:100]
+    condiciones = ["p.estado = 1"]
+    parametros = []
+    if solo_stock_bajo == "1":
+        condiciones.append("p.stock_actual <= p.stock_minimo")
+    patron = patron_busqueda(busqueda)
+    if patron:
+        condiciones.append("(p.nombre LIKE %s ESCAPE '!' OR p.codigo_barra LIKE %s ESCAPE '!' OR c.nombre LIKE %s ESCAPE '!')")
+        parametros.extend([patron, patron, patron])
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            if solo_stock_bajo == "1":
-                sql = """
-                    SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta, 
-                           p.stock_actual, p.stock_minimo, c.nombre AS categoria
-                    FROM PRODUCTO p
-                    INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
-                    WHERE p.stock_actual <= p.stock_minimo AND p.estado = 1
-                    ORDER BY p.stock_actual ASC;
-                """
-                cursor.execute(sql)
-            else:
-                sql = """
-                    SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta, 
-                           p.stock_actual, p.stock_minimo, c.nombre AS categoria
-                    FROM PRODUCTO p
-                    INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
-                    WHERE p.estado = 1
-                    ORDER BY c.nombre, p.nombre;
-                """
-                cursor.execute(sql)
+            orden = "p.stock_actual ASC" if solo_stock_bajo == "1" else "c.nombre, p.nombre"
+            cursor.execute(f"""
+                SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
+                       p.stock_actual, p.stock_minimo, c.nombre AS categoria
+                FROM PRODUCTO p
+                INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
+                WHERE {' AND '.join(condiciones)}
+                ORDER BY {orden};
+            """, parametros)
             productos = cursor.fetchall()
     finally:
         connection.close()
 
-    return render_template("inventario.html", productos=productos, solo_stock_bajo=solo_stock_bajo)
+    return render_template("inventario.html", productos=productos,
+                           solo_stock_bajo=solo_stock_bajo, busqueda=busqueda)
 
 
 def validar_datos_categoria(form):
@@ -172,6 +195,7 @@ def validar_datos_categoria(form):
 @app.route("/categorias")
 @requiere_rol("Administrador")
 def categorias():
+    """Consulta las categorías activas y sus relaciones con productos."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -193,6 +217,7 @@ def categorias():
 @app.route("/categorias/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def nueva_categoria():
+    """Valida y guarda una categoría nueva en MySQL."""
     categoria = {"nombre": "", "descripcion": ""}
     errores = []
     if request.method == "POST":
@@ -220,6 +245,7 @@ def nueva_categoria():
 @app.route("/categorias/editar/<int:id_categoria>", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def editar_categoria(id_categoria):
+    """Consulta y actualiza una categoría existente en MySQL."""
     errores = []
     connection = get_db_connection()
     try:
@@ -249,6 +275,7 @@ def editar_categoria(id_categoria):
 @app.route("/categorias/desactivar/<int:id_categoria>", methods=["POST"])
 @requiere_rol("Administrador")
 def desactivar_categoria(id_categoria):
+    """Desactiva lógicamente una categoría en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -281,6 +308,7 @@ def validar_datos_sucursal(form):
 @app.route("/sucursales")
 @requiere_rol("Administrador")
 def sucursales():
+    """Consulta las sucursales y el número de empleados relacionados."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -294,6 +322,7 @@ def sucursales():
 @app.route("/sucursales/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def nueva_sucursal():
+    """Valida y guarda una sucursal nueva en MySQL."""
     sucursal = {"nombre": "", "direccion": "", "telefono": "", "municipio": ""}
     errores = []
     if request.method == "POST":
@@ -318,6 +347,7 @@ def nueva_sucursal():
 @app.route("/sucursales/editar/<int:id_sucursal>", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def editar_sucursal(id_sucursal):
+    """Consulta y actualiza una sucursal existente en MySQL."""
     errores = []
     connection = get_db_connection()
     try:
@@ -347,6 +377,7 @@ def editar_sucursal(id_sucursal):
 @app.route("/sucursales/desactivar/<int:id_sucursal>", methods=["POST"])
 @requiere_rol("Administrador")
 def desactivar_sucursal(id_sucursal):
+    """Desactiva lógicamente una sucursal en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -415,6 +446,7 @@ def validar_datos_empleado(datos, requiere_password=False):
 @app.route("/empleados")
 @requiere_rol("Administrador")
 def empleados():
+    """Consulta empleados activos y sus sucursales en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -433,6 +465,7 @@ def empleados():
 
 
 def cargar_sucursales_activas(cursor):
+    """Consulta sucursales activas para formularios administrativos."""
     cursor.execute("SELECT id_sucursal, nombre FROM SUCURSAL WHERE estado = 1 ORDER BY nombre")
     return cursor.fetchall()
 
@@ -440,6 +473,7 @@ def cargar_sucursales_activas(cursor):
 @app.route("/empleados/nuevo", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def nuevo_empleado():
+    """Valida y crea un empleado en MySQL con contraseña cifrada."""
     from datetime import date
     empleado = {"cui": "", "nombres": "", "apellidos": "", "cargo": "Vendedor", "telefono": "", "correo": "", "fecha_ingreso": date.today().isoformat(), "id_sucursal": "", "password": ""}
     errores = []
@@ -475,6 +509,7 @@ def nuevo_empleado():
 @app.route("/empleados/editar/<int:id_empleado>", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def editar_empleado(id_empleado):
+    """Consulta y actualiza los datos de un empleado en MySQL."""
     errores = []
     connection = get_db_connection()
     try:
@@ -523,6 +558,7 @@ def editar_empleado(id_empleado):
 @app.route("/empleados/desactivar/<int:id_empleado>", methods=["POST"])
 @requiere_rol("Administrador")
 def desactivar_empleado(id_empleado):
+    """Desactiva un empleado y protege el último administrador activo."""
     if id_empleado == session.get("user_id"):
         flash("No puedes desactivar tu propia cuenta.", "warning")
         return redirect(url_for("empleados"))
@@ -545,6 +581,7 @@ def desactivar_empleado(id_empleado):
 
 
 def cargar_categorias(cursor):
+    """Consulta categorías activas para formularios de productos."""
     cursor.execute("""
         SELECT id_categoria, nombre
         FROM CATEGORIA
@@ -610,6 +647,9 @@ def validar_datos_producto(form):
 @app.route("/productos")
 @requiere_rol("Administrador", "Bodega")
 def productos():
+    """Consulta productos activos y aplica el filtro de búsqueda."""
+    busqueda = request.args.get("q", "").strip()[:100]
+    patron = patron_busqueda(busqueda)
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -629,19 +669,23 @@ def productos():
                 INNER JOIN CATEGORIA c
                     ON p.id_categoria = c.id_categoria
                 WHERE p.estado = 1
+                  AND (%s = '' OR p.nombre LIKE %s ESCAPE '!'
+                       OR p.codigo_barra LIKE %s ESCAPE '!'
+                       OR c.nombre LIKE %s ESCAPE '!')
                 ORDER BY p.nombre;
-            """)
+            """, (patron, patron, patron, patron))
             lista_productos = cursor.fetchall()
 
     finally:
         connection.close()
 
-    return render_template("productos.html", productos=lista_productos)
+    return render_template("productos.html", productos=lista_productos, busqueda=busqueda)
 
 
 @app.route("/productos/nuevo", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def nuevo_producto():
+    """Valida y crea un producto asociado a una categoría activa."""
     errores = []
     datos = None
     connection = get_db_connection()
@@ -687,6 +731,7 @@ def nuevo_producto():
 @app.route("/productos/editar/<int:id_producto>", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def editar_producto(id_producto):
+    """Consulta y actualiza un producto existente en MySQL."""
     errores = []
     producto = None
     connection = get_db_connection()
@@ -745,6 +790,7 @@ def editar_producto(id_producto):
 @app.route("/productos/desactivar/<int:id_producto>", methods=["POST"])
 @requiere_rol("Administrador", "Bodega")
 def desactivar_producto(id_producto):
+    """Desactiva lógicamente un producto en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -804,6 +850,9 @@ def validar_datos_cliente(form):
 @app.route("/clientes")
 @requiere_rol("Administrador", "Vendedor")
 def clientes():
+    """Consulta clientes activos y aplica el filtro de búsqueda."""
+    busqueda = request.args.get("q", "").strip()[:100]
+    patron = patron_busqueda(busqueda)
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -813,18 +862,24 @@ def clientes():
                     telefono, correo, direccion, estado
                 FROM CLIENTE
                 WHERE estado = 1
+                  AND (%s = '' OR nit LIKE %s ESCAPE '!'
+                       OR cui LIKE %s ESCAPE '!'
+                       OR nombres LIKE %s ESCAPE '!'
+                       OR apellidos LIKE %s ESCAPE '!'
+                       OR correo LIKE %s ESCAPE '!')
                 ORDER BY nombres, apellidos;
-            """)
+            """, (patron, patron, patron, patron, patron, patron))
             lista_clientes = cursor.fetchall()
     finally:
         connection.close()
 
-    return render_template("clientes.html", clientes=lista_clientes)
+    return render_template("clientes.html", clientes=lista_clientes, busqueda=busqueda)
 
 
 @app.route("/clientes/nuevo", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Vendedor")
 def nuevo_cliente():
+    """Valida y registra un cliente en MySQL."""
     cliente = None
     errores = []
     if request.method == "POST":
@@ -860,6 +915,7 @@ def nuevo_cliente():
 @app.route("/clientes/editar/<int:id_cliente>", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Vendedor")
 def editar_cliente(id_cliente):
+    """Consulta y actualiza un cliente existente en MySQL."""
     errores = []
     connection = get_db_connection()
     try:
@@ -907,6 +963,7 @@ def editar_cliente(id_cliente):
 @app.route("/clientes/desactivar/<int:id_cliente>", methods=["POST"])
 @requiere_rol("Administrador", "Vendedor")
 def desactivar_cliente(id_cliente):
+    """Desactiva lógicamente un cliente en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -923,6 +980,7 @@ def desactivar_cliente(id_cliente):
 
 
 def cargar_opciones_venta(cursor):
+    """Consulta clientes y productos elegibles para una venta."""
     cursor.execute("""
         SELECT id_cliente, nit, nombres, apellidos
         FROM CLIENTE
@@ -944,6 +1002,7 @@ def cargar_opciones_venta(cursor):
 
 
 def faltan_triggers_venta(cursor):
+    """Consulta information_schema para comprobar los triggers requeridos."""
     cursor.execute("""
         SELECT COUNT(*) AS cantidad
         FROM information_schema.TRIGGERS
@@ -959,6 +1018,25 @@ def faltan_triggers_venta(cursor):
 @app.route("/ventas")
 @requiere_rol("Administrador", "Vendedor")
 def ventas():
+    """Consulta el historial de ventas con filtros parametrizados."""
+    busqueda = request.args.get("q", "").strip()[:100]
+    patron = patron_busqueda(busqueda)
+    desde, hasta, fecha_desde, fecha_hasta, error_fechas = fechas_filtro_transacciones()
+    condiciones = []
+    parametros = []
+    if patron:
+        condiciones.append("(v.serie_factura LIKE %s ESCAPE '!' OR CAST(v.numero_factura AS CHAR) LIKE %s ESCAPE '!' OR c.nombres LIKE %s ESCAPE '!' OR c.apellidos LIKE %s ESCAPE '!' OR e.nombres LIKE %s ESCAPE '!' OR e.apellidos LIKE %s ESCAPE '!')")
+        parametros.extend([patron] * 6)
+    if error_fechas:
+        condiciones.append("1 = 0")
+    else:
+        if fecha_desde:
+            condiciones.append("v.fecha_venta >= %s")
+            parametros.append(fecha_desde.isoformat())
+        if fecha_hasta:
+            condiciones.append("v.fecha_venta < %s")
+            parametros.append((fecha_hasta + timedelta(days=1)).isoformat())
+    where = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -978,19 +1056,22 @@ def ventas():
                 INNER JOIN CLIENTE AS c ON c.id_cliente = v.id_cliente
                 INNER JOIN EMPLEADO AS e ON e.id_empleado = v.id_empleado
                 INNER JOIN SUCURSAL AS s ON s.id_sucursal = v.id_sucursal
+                {where}
                 ORDER BY v.fecha_venta DESC, v.id_venta DESC
                 LIMIT 200;
-            """)
+            """, parametros)
             lista_ventas = cursor.fetchall()
     finally:
         connection.close()
 
-    return render_template("ventas.html", ventas=lista_ventas)
+    return render_template("ventas.html", ventas=lista_ventas, busqueda=busqueda,
+                           desde=desde, hasta=hasta, error_fechas=error_fechas)
 
 
 @app.route("/ventas/<int:id_venta>")
 @requiere_rol("Administrador", "Vendedor")
 def detalle_venta(id_venta):
+    """Consulta la cabecera y las líneas de una factura en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -1027,6 +1108,7 @@ def detalle_venta(id_venta):
 @app.route("/ventas/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Vendedor")
 def nueva_venta():
+    """Valida y registra una venta mediante el procedimiento almacenado."""
     errores = []
     datos = {"id_cliente": "", "tipo_pago": "Efectivo"}
     lineas_formulario = [{"id_producto": "", "cantidad": "1", "descuento": "0.00", "vin_chasis": "", "numero_motor": ""}]
@@ -1184,6 +1266,7 @@ def nueva_venta():
 
 
 def cargar_opciones_compra(cursor):
+    """Consulta proveedores y productos activos para una compra."""
     cursor.execute("""
         SELECT id_proveedor, razon_social
         FROM PROVEEDOR
@@ -1206,6 +1289,25 @@ def cargar_opciones_compra(cursor):
 @app.route("/compras")
 @requiere_rol("Administrador", "Bodega")
 def compras():
+    """Consulta el historial de compras con filtros parametrizados."""
+    busqueda = request.args.get("q", "").strip()[:100]
+    patron = patron_busqueda(busqueda)
+    desde, hasta, fecha_desde, fecha_hasta, error_fechas = fechas_filtro_transacciones()
+    condiciones = []
+    parametros = []
+    if patron:
+        condiciones.append("(c.numero_orden LIKE %s ESCAPE '!' OR p.razon_social LIKE %s ESCAPE '!' OR p.nit LIKE %s ESCAPE '!' OR e.nombres LIKE %s ESCAPE '!' OR e.apellidos LIKE %s ESCAPE '!')")
+        parametros.extend([patron] * 5)
+    if error_fechas:
+        condiciones.append("1 = 0")
+    else:
+        if fecha_desde:
+            condiciones.append("c.fecha_compra >= %s")
+            parametros.append(fecha_desde.isoformat())
+        if fecha_hasta:
+            condiciones.append("c.fecha_compra < %s")
+            parametros.append((fecha_hasta + timedelta(days=1)).isoformat())
+    where = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -1221,19 +1323,22 @@ def compras():
                 FROM COMPRA AS c
                 INNER JOIN PROVEEDOR AS p ON p.id_proveedor = c.id_proveedor
                 INNER JOIN EMPLEADO AS e ON e.id_empleado = c.id_empleado
+                {where}
                 ORDER BY c.fecha_compra DESC, c.id_compra DESC
                 LIMIT 200;
-            """)
+            """, parametros)
             lista_compras = cursor.fetchall()
     finally:
         connection.close()
 
-    return render_template("compras.html", compras=lista_compras)
+    return render_template("compras.html", compras=lista_compras, busqueda=busqueda,
+                           desde=desde, hasta=hasta, error_fechas=error_fechas)
 
 
 @app.route("/compras/<int:id_compra>")
 @requiere_rol("Administrador", "Bodega")
 def detalle_compra(id_compra):
+    """Consulta la cabecera y las líneas de una orden en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -1266,6 +1371,7 @@ def detalle_compra(id_compra):
 @app.route("/compras/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def nueva_compra():
+    """Valida y registra una compra mediante el procedimiento almacenado."""
     errores = []
     datos = {
         "numero_orden": "",
@@ -1417,6 +1523,9 @@ def validar_datos_proveedor(datos):
 @app.route("/proveedores")
 @requiere_rol("Administrador", "Bodega")
 def proveedores():
+    """Consulta proveedores activos y aplica el filtro de búsqueda."""
+    busqueda = request.args.get("q", "").strip()[:100]
+    patron = patron_busqueda(busqueda)
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -1431,18 +1540,24 @@ def proveedores():
                     direccion
                 FROM PROVEEDOR
                 WHERE estado = 1
+                  AND (%s = '' OR nit LIKE %s ESCAPE '!'
+                       OR razon_social LIKE %s ESCAPE '!'
+                       OR contacto LIKE %s ESCAPE '!'
+                       OR telefono LIKE %s ESCAPE '!'
+                       OR correo LIKE %s ESCAPE '!')
                 ORDER BY razon_social;
-            """)
+            """, (patron, patron, patron, patron, patron, patron))
             lista_proveedores = cursor.fetchall()
     finally:
         connection.close()
 
-    return render_template("proveedores.html", proveedores=lista_proveedores)
+    return render_template("proveedores.html", proveedores=lista_proveedores, busqueda=busqueda)
 
 
 @app.route("/proveedores/nuevo", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def nuevo_proveedor():
+    """Valida y registra un proveedor en MySQL."""
     proveedor = {"nit": "", "razon_social": "", "contacto": "", "telefono": "", "correo": "", "direccion": ""}
     errores = []
 
@@ -1484,6 +1599,7 @@ def nuevo_proveedor():
 @app.route("/proveedores/editar/<int:id_proveedor>", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def editar_proveedor(id_proveedor):
+    """Consulta y actualiza un proveedor existente en MySQL."""
     errores = []
     connection = get_db_connection()
     try:
@@ -1540,6 +1656,7 @@ def editar_proveedor(id_proveedor):
 @app.route("/proveedores/desactivar/<int:id_proveedor>", methods=["POST"])
 @requiere_rol("Administrador", "Bodega")
 def desactivar_proveedor(id_proveedor):
+    """Desactiva lógicamente un proveedor en MySQL."""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
