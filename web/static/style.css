@@ -288,3 +288,133 @@ th { background-color: #0f172a; color: #fff; }
     font-size: 11px;
     color: #94a3b8;
 }
+/* Recibos de venta para pantalla e impresión térmica (58 u 80 mm). */
+.receipt-layout {
+    padding: 1.5rem 1rem 3rem;
+}
+
+.receipt-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0 auto 1rem;
+}
+
+.thermal-receipt {
+    box-sizing: border-box;
+    width: min(100%, 80mm);
+    margin: 0 auto;
+    padding: 6mm 5mm;
+    background: #fff;
+    color: #111;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 2px 14px rgb(0 0 0 / 14%);
+}
+
+.receipt-header,
+.receipt-footer {
+    text-align: center;
+}
+
+.receipt-header h1 {
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: 0.03em;
+}
+
+.receipt-header p,
+.receipt-footer p,
+.receipt-meta p,
+.receipt-item p {
+    margin: 3px 0;
+}
+
+.receipt-number {
+    font-weight: 700;
+}
+
+.receipt-rule {
+    margin: 8px 0;
+    border-top: 1px dashed #333;
+}
+
+.receipt-line,
+.receipt-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.receipt-line span:last-child,
+.receipt-total strong {
+    white-space: nowrap;
+}
+
+.receipt-item {
+    padding: 5px 0;
+    border-bottom: 1px dotted #888;
+    break-inside: avoid;
+}
+
+.receipt-product {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.receipt-small {
+    font-size: 10px;
+    overflow-wrap: anywhere;
+}
+
+.receipt-total {
+    align-items: baseline;
+    font-size: 15px;
+}
+
+.receipt-footer {
+    margin-top: 16px;
+}
+
+@media print {
+    @page {
+        size: 80mm auto;
+        margin: 2mm;
+    }
+
+    html,
+    body.receipt-page {
+        width: 76mm;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+    }
+
+    body.receipt-page .navbar,
+    .screen-only {
+        display: none !important;
+    }
+
+    .receipt-layout {
+        margin: 0;
+        padding: 0;
+    }
+
+    .thermal-receipt {
+        width: 76mm;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        font-size: 10pt;
+    }
+
+    .receipt-header h1 {
+        font-size: 12pt;
+    }
+
+    .receipt-small {
+        font-size: 8pt;
+    }
+}
