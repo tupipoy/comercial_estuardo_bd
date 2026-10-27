@@ -1104,6 +1104,62 @@ def detalle_venta(id_venta):
         connection.close()
     return render_template("venta_detalle.html", venta=venta, detalles=detalles)
 
+
+@app.route("/ventas/<int:id_venta>/eliminar", methods=["POST"])
+@requiere_rol("Administrador")
+def eliminar_venta(id_venta):
+    """Elimina un recibo por solicitud de gerencia y devuelve sus existencias."""
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id_venta FROM VENTA WHERE id_venta = %s FOR UPDATE",
+                (id_venta,),
+            )
+            venta = cursor.fetchone()
+            if not venta:
+                connection.rollback()
+                flash("El recibo ya no existe.", "warning")
+                return redirect(url_for("ventas"))
+
+            cursor.execute(
+                """
+                SELECT id_producto, cantidad
+                FROM DETALLE_VENTA
+                WHERE id_venta = %s
+                ORDER BY id_detalle_venta
+                FOR UPDATE
+                """,
+                (id_venta,),
+            )
+            detalles = cursor.fetchall()
+            for detalle in detalles:
+                cursor.execute(
+                    """
+                    UPDATE PRODUCTO
+                    SET stock_actual = stock_actual + %s
+                    WHERE id_producto = %s
+                    """,
+                    (detalle["cantidad"], detalle["id_producto"]),
+                )
+
+            cursor.execute("DELETE FROM VENTA WHERE id_venta = %s", (id_venta,))
+            connection.commit()
+            app.logger.warning(
+                "Recibo %s eliminado por empleado %s; se restauraron %s líneas de inventario",
+                id_venta,
+                session.get("user_id"),
+                len(detalles),
+            )
+            flash("Recibo eliminado y existencias devueltas al inventario.", "success")
+    except Exception:
+        connection.rollback()
+        app.logger.exception("No se pudo eliminar el recibo %s", id_venta)
+        flash("No se pudo eliminar el recibo. No se aplicaron cambios.", "danger")
+    finally:
+        connection.close()
+    return redirect(url_for("ventas"))
+
 #ventas
 @app.route("/ventas/nueva", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Vendedor")

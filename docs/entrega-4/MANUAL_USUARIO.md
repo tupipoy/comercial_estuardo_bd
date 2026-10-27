@@ -28,7 +28,7 @@ Los usuarios autorizados pueden consultar y buscar proveedores por razón social
 
 ## Administración (Administrador)
 
-El Administrador dispone además de **Categorías**, **Sucursales** y **Empleados**. En cada catálogo puede consultar, crear, editar y desactivar registros. Antes de desactivar una categoría, desactiva los productos que aún estén activos en ella; antes de desactivar una sucursal, reasigna o desactiva sus empleados activos. Esto conserva las relaciones históricas. Al crear un empleado, se asigna una contraseña inicial de al menos 10 caracteres; al editarlo, la contraseña se puede dejar vacía para conservar la existente. El sistema guarda contraseñas como hash.
+El Administrador (perfil de gerencia en este sistema) dispone además de **Categorías**, **Sucursales** y **Empleados**. En cada catálogo puede consultar, crear, editar y desactivar registros. En **Ver factura** puede eliminar un recibo: la acción devuelve las cantidades al inventario y elimina sus detalles. Esta operación es irreversible y requiere confirmación; el Vendedor puede consultar e imprimir, pero no eliminar recibos. Antes de desactivar una categoría, desactiva los productos que aún estén activos en ella; antes de desactivar una sucursal, reasigna o desactiva sus empleados activos. Esto conserva las relaciones históricas. Al crear un empleado, se asigna una contraseña inicial de al menos 10 caracteres; al editarlo, la contraseña se puede dejar vacía para conservar la existente. El sistema guarda contraseñas como hash.
 
 ## Ventas
 

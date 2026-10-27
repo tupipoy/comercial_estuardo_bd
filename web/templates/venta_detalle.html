@@ -29,6 +29,12 @@
         <div class="receipt-actions screen-only">
             <a href="{{ url_for('ventas') }}" class="btn">Volver a ventas</a>
             <button class="btn active" type="button" onclick="window.print()">Imprimir recibo</button>
+            {% if session.get('user_role') == 'Administrador' %}
+            <form method="POST" action="{{ url_for('eliminar_venta', id_venta=venta.id_venta) }}" onsubmit="return confirm('¿Eliminar este recibo y devolver sus productos al inventario? Esta acción no se puede deshacer.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn" type="submit">Eliminar recibo</button>
+            </form>
+            {% endif %}
         </div>
 
         <article class="thermal-receipt" aria-label="Recibo de venta">
