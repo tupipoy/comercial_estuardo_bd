@@ -1040,7 +1040,7 @@ def ventas():
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT
                     v.id_venta,
                     v.serie_factura,
@@ -1311,7 +1311,7 @@ def compras():
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT
                     c.id_compra,
                     c.numero_orden,
