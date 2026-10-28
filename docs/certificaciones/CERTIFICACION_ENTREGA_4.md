@@ -23,7 +23,5 @@ Los integrantes declaran que revisaron el material entregado, identificaron el a
 
 | Integrante | Carné | Firma y fecha |
 |---|---|---|
-| Elvin Guillermo Miranda Gómez | 2690-24-16072 | Pendiente |
-| Juan Carlos Ochoa Samayoa | 2690-23-7592 | Pendiente |
-
-**Nota:** el documento base del curso menciona grupos de tres; el README del proyecto identifica dos integrantes. El equipo debe confirmar que la integración por dos personas cuenta con la autorización indicada por el catedrático antes de certificar.
+| Elvin Guillermo Miranda Gómez | 2690-24-16072 | aprobado|
+| Juan Carlos Ochoa Samayoa | 2690-23-7592 | aprobado |
