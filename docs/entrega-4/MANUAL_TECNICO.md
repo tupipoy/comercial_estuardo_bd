@@ -48,6 +48,7 @@ Las rutas `/categorias`, `/sucursales` y `/empleados` se limitan al cargo Admini
 - Los formularios POST incluyen un token CSRF asociado a la sesión; el servidor rechaza solicitudes sin un token válido.
 - El cierre de sesión usa POST y también requiere token CSRF.
 - Las cookies de sesión usan `HttpOnly` y `SameSite=Lax`; en Railway se activa `Secure`.
+- Después de cinco contraseñas incorrectas, la cuenta queda suspendida temporalmente. Los intentos posteriores aumentan la suspensión progresivamente (1, 5, 15 y hasta 30 minutos); un inicio correcto restablece el contador. El aviso de login es genérico para no confirmar si una cuenta existe. En bases ya desplegadas, ejecutar una sola vez `sql/migrations/05_login_lockout.sql` antes de desplegar esta versión; en instalaciones nuevas las columnas vienen en el DDL.
 - Revisar logs de Railway ante errores de conexión o despliegue; la aplicación registra excepciones del servidor sin mostrar el SQL al usuario.
 - Hacer respaldos de MySQL antes de cambios de esquema y verificar restauración según el procedimiento del equipo.
 

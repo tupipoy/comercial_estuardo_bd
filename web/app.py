@@ -28,6 +28,21 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=bool(os.getenv("RAILWAY_ENVIRONMENT")),
 )
+# Hash de relleno para mantener un coste parecido si el usuario no existe o
+# está temporalmente suspendido. El valor aleatorio no se usa para autenticar.
+DUMMY_PASSWORD_HASH = generate_password_hash(secrets.token_urlsafe(32))
+INTENTOS_ANTES_DE_SUSPENDER = 5
+
+
+def minutos_suspension(intentos):
+    """Aumenta la espera ante fallos repetidos, con un máximo de 30 minutos."""
+    if intentos <= INTENTOS_ANTES_DE_SUSPENDER:
+        return 1
+    if intentos == 6:
+        return 5
+    if intentos == 7:
+        return 15
+    return 30
 
 
 @app.context_processor
@@ -77,12 +92,13 @@ def login():
         return redirect(url_for("resumen"))
     error = None
     if request.method == "POST":
-        identificador = request.form.get("username", "").strip()
+        identificador = request.form.get("username", "").strip()[:100]
         password = request.form.get("password", "")
 
         try:
             connection = get_db_connection()
             try:
+                connection.begin()
                 with connection.cursor() as cursor:
                     sql = """
                         SELECT
@@ -91,23 +107,71 @@ def login():
                             e.apellidos,
                             e.cargo,
                             e.password_hash,
+                            e.intentos_login_fallidos,
+                            (e.bloqueado_hasta IS NOT NULL
+                             AND e.bloqueado_hasta > NOW()) AS suspendido,
                             s.nombre AS sucursal
                         FROM EMPLEADO e
                         INNER JOIN SUCURSAL s
                             ON e.id_sucursal = s.id_sucursal
-                        WHERE
-                            (e.correo = %s OR e.cui = %s)
-                            AND e.estado = 1;
+                        WHERE (e.correo = %s OR e.cui = %s)
+                          AND e.estado = 1
+                        LIMIT 1
+                        FOR UPDATE;
                     """
                     cursor.execute(sql, (identificador, identificador))
                     empleado = cursor.fetchone()
+
+                    suspendido = bool(empleado and empleado["suspendido"])
+                    hash_guardado = (
+                        empleado["password_hash"]
+                        if empleado and empleado["password_hash"]
+                        else DUMMY_PASSWORD_HASH
+                    )
+                    password_valida = False
+                    if len(password) <= 256:
+                        password_valida = check_password_hash(hash_guardado, password)
+
+                    if empleado and not suspendido and password_valida:
+                        cursor.execute("""
+                            UPDATE EMPLEADO
+                            SET intentos_login_fallidos = 0, bloqueado_hasta = NULL
+                            WHERE id_empleado = %s
+                        """, (empleado["id_empleado"],))
+                    elif empleado and not suspendido:
+                        nuevos_intentos = min(
+                            empleado["intentos_login_fallidos"] + 1, 8
+                        )
+                        minutos = minutos_suspension(nuevos_intentos)
+                        cursor.execute("""
+                            UPDATE EMPLEADO
+                            SET intentos_login_fallidos = %s,
+                                bloqueado_hasta = CASE
+                                    WHEN %s >= %s
+                                    THEN DATE_ADD(NOW(), INTERVAL %s MINUTE)
+                                    ELSE NULL
+                                END
+                            WHERE id_empleado = %s
+                        """, (
+                            nuevos_intentos,
+                            nuevos_intentos,
+                            INTENTOS_ANTES_DE_SUSPENDER,
+                            minutos,
+                            empleado["id_empleado"],
+                        ))
+                        app.logger.warning(
+                            "Falló el inicio de sesión del empleado id=%s; intentos=%s",
+                            empleado["id_empleado"], nuevos_intentos,
+                        )
+                    connection.commit()
             finally:
                 connection.close()
 
             if (
                 empleado
+                and not suspendido
                 and empleado["password_hash"]
-                and check_password_hash(empleado["password_hash"], password)
+                and password_valida
             ):
                 session.clear()
                 session["user_id"] = empleado["id_empleado"]
@@ -118,7 +182,7 @@ def login():
                 session["user_branch"] = empleado["sucursal"]
                 return redirect(url_for("resumen"))
 
-            error = "Usuario o contraseña incorrectos."
+            error = "Usuario o contraseña incorrectos, o acceso temporalmente suspendido."
         except Exception:
             app.logger.exception("Error al autenticar empleado")
             error = "No fue posible iniciar sesión. Inténtalo de nuevo."

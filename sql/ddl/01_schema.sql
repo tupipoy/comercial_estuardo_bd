@@ -34,6 +34,8 @@ CREATE TABLE EMPLEADO (
     telefono VARCHAR(15) NOT NULL,
     correo VARCHAR(100) NULL UNIQUE,
     password_hash VARCHAR(255) NULL,
+    intentos_login_fallidos TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    bloqueado_hasta DATETIME NULL,
     fecha_ingreso DATE NOT NULL,
     id_sucursal INT NOT NULL,
     estado TINYINT(1) NOT NULL DEFAULT 1,
