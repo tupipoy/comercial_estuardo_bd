@@ -7,10 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Comercial Estuardo</h1>
-        <p>Sesión: {{ session.get('user_name', '') }}</p>
-    </header>
+    {% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
 
     <main class="product-form-page">
         <h2>{{ titulo }}</h2>

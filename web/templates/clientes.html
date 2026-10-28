@@ -7,31 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header class="navbar">
-        <div class="nav-brand">
-            <h1>Comercial Estuardo</h1>
-            <p>Gestión de clientes</p>
-        </div>
-        <nav class="nav-links" aria-label="Navegación principal">
-            <a href="{{ url_for('inventario') }}">Inventario</a>
-            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
-            <a href="{{ url_for('productos') }}">Productos</a>
-            {% endif %}
-            <a class="active" href="{{ url_for('clientes') }}">Clientes</a>
-            <a href="{{ url_for('ventas') }}">Ventas</a>
-            {% if session.get('user_role') == 'Administrador' %}
-            <a href="{{ url_for('proveedores') }}">Proveedores</a>
-            <a href="{{ url_for('compras') }}">Compras</a>
-            <a href="{{ url_for('categorias') }}">Categorías</a>
-            <a href="{{ url_for('sucursales') }}">Sucursales</a>
-            <a href="{{ url_for('empleados') }}">Empleados</a>
-            {% endif %}
-        </nav>
-        <div class="nav-user">
-            <span>{{ session.get('user_name', '') }}</span>
-            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
-        </div>
-    </header>
+    {% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
 
     <main>
         <section class="toolbar">

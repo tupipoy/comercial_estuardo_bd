@@ -7,10 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Comercial Estuardo</h1>
-        <p>Sesión: {{ session.get('user_name', '') }}</p>
-    </header>
+    {% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
 
     <main class="product-form-page">
         <h2>{{ titulo }}</h2>
@@ -76,5 +74,16 @@
             <a href="{{ url_for('productos') }}" class="btn">Cancelar</a>
         </form>
     </main>
+<script>
+    const formProducto = document.querySelector('.product-form');
+    formProducto?.addEventListener('submit', () => {
+        const boton = formProducto.querySelector('[type="submit"]');
+        if (boton) {
+            boton.disabled = true;
+            boton.textContent = 'Guardando…';
+            formProducto.setAttribute('aria-busy', 'true');
+        }
+    });
+</script>
 </body>
 </html>

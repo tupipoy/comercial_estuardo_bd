@@ -7,85 +7,42 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header class="navbar">
-        <div class="nav-brand">
-            <h1>Comercial Estuardo</h1>
-            <p>Gestión de productos</p>
-        </div>
-        <nav class="nav-links" aria-label="Navegación principal">
-            <a href="{{ url_for('inventario') }}">Inventario</a>
-            <a class="active" href="{{ url_for('productos') }}">Productos</a>
-            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
-            <a href="{{ url_for('proveedores') }}">Proveedores</a>
-            <a href="{{ url_for('compras') }}">Compras</a>
-            {% endif %}
-            {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}
-            <a href="{{ url_for('clientes') }}">Clientes</a>
-            <a href="{{ url_for('ventas') }}">Ventas</a>
-            {% endif %}
-            {% if session.get('user_role') == 'Administrador' %}
-            <a href="{{ url_for('categorias') }}">Categorías</a>
-            <a href="{{ url_for('sucursales') }}">Sucursales</a>
-            <a href="{{ url_for('empleados') }}">Empleados</a>
-            {% endif %}
-        </nav>
-        <div class="nav-user">
-            <span>{{ session.get('user_name', '') }}</span>
-            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
-        </div>
-    </header>
-
-    <main>
-        <section class="toolbar">
-            <h2>Productos activos</h2>
-            <a href="{{ url_for('nuevo_producto') }}" class="btn active">Nuevo producto</a>
-        </section>
-        <form class="busqueda-form" method="GET" action="{{ url_for('productos') }}">
-            <label for="buscar-producto">Buscar por producto, código o categoría</label>
-            <input id="buscar-producto" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, SKU o categoría">
-            <button class="btn active" type="submit">Buscar</button>
-            {% if busqueda %}<a class="btn" href="{{ url_for('productos') }}">Limpiar</a>{% endif %}
-        </form>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Producto</th>
-                    <th>Categoría</th>
-                    <th>Precio de costo</th>
-                    <th>Precio de venta</th>
-                    <th>Stock</th>
-                    <th>Mínimo</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in productos %}
-                <tr>
-                    <td>{{ p.codigo_barra or 'N/A' }}</td>
-                    <td>{{ p.nombre }}</td>
-                    <td>{{ p.categoria }}</td>
-                    <td>Q {{ "%.2f"|format(p.precio_costo) }}</td>
-                    <td>Q {{ "%.2f"|format(p.precio_venta) }}</td>
-                    <td>{{ p.stock_actual }}</td>
-                    <td>{{ p.stock_minimo }}</td>
-                    <td>
-                        <a href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar</a>
-                        <form method="POST"
-                              action="{{ url_for('desactivar_producto', id_producto=p.id_producto) }}"
-                              style="display:inline"
-                              onsubmit="return confirm('¿Desactivar este producto?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <button type="submit">Desactivar</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="8" class="text-center">No hay productos activos.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </main>
+{% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
+<main class="main-content">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}" role="status">{{ mensaje }}</div>{% endfor %}{% endwith %}
+    <div class="page-heading">
+        <div><p class="eyebrow">CATÁLOGO</p><h1>Productos</h1><p class="muted">Administra precios, códigos, categorías y niveles de existencias.</p></div>
+        <a href="{{ url_for('nuevo_producto') }}" class="button button-primary">＋ Agregar producto</a>
+    </div>
+    <form class="filter-panel" method="GET" action="{{ url_for('productos') }}">
+        <div class="search-field"><label class="visually-hidden" for="buscar-producto">Buscar producto</label><span aria-hidden="true">⌕</span><input id="buscar-producto" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Buscar nombre, código o categoría"></div>
+        <label class="visually-hidden" for="categoria-producto">Categoría</label><select id="categoria-producto" name="categoria"><option value="">Todas las categorías</option>{% for c in categorias %}<option value="{{ c.id_categoria }}" {% if categoria|string == c.id_categoria|string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}</select>
+        <label class="visually-hidden" for="estado-producto">Estado del stock</label><select id="estado-producto" name="estado"><option value="todos" {% if estado_stock == 'todos' %}selected{% endif %}>Todos los estados</option><option value="disponible" {% if estado_stock == 'disponible' %}selected{% endif %}>Disponible</option><option value="bajo" {% if estado_stock == 'bajo' %}selected{% endif %}>Stock bajo</option><option value="agotado" {% if estado_stock == 'agotado' %}selected{% endif %}>Agotado</option></select>
+        <label class="visually-hidden" for="orden-producto">Ordenar productos</label><select id="orden-producto" name="orden"><option value="nombre" {% if orden == 'nombre' %}selected{% endif %}>Nombre A–Z</option><option value="stock" {% if orden == 'stock' %}selected{% endif %}>Menor stock</option><option value="precio" {% if orden == 'precio' %}selected{% endif %}>Menor precio</option></select>
+        <button class="button button-primary" type="submit">Aplicar</button>
+        {% if busqueda or categoria or estado_stock != 'todos' or orden != 'nombre' %}<a class="button button-secondary" href="{{ url_for('productos') }}">Limpiar</a>{% endif %}
+    </form>
+    <section class="panel">
+        <div class="panel-heading"><div><h2>Catálogo activo</h2><p class="muted">{{ total_productos }} productos · página {{ pagina }} de {{ paginas }}</p></div></div>
+        {% if error_datos %}<div class="empty-state"><strong>No se pudo consultar MySQL</strong><p>Comprueba la conexión e intenta cargar el catálogo nuevamente.</p></div>
+        {% elif productos %}
+        <div class="responsive-table"><table class="data-table"><thead><tr><th>Producto</th><th>Código</th><th>Categoría</th><th>Costo</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+            {% for p in productos %}<tr>
+                <td><div class="product-cell"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><strong>{{ p.nombre }}</strong></div></td><td>{{ p.codigo_barra or '—' }}</td><td>{{ p.categoria }}</td>
+                <td>Q {{ "%.2f"|format(p.precio_costo) }}</td><td>Q {{ "%.2f"|format(p.precio_venta) }}</td><td><strong>{{ p.stock_actual }}</strong><small class="table-subtext">Mín. {{ p.stock_minimo }}</small></td>
+                <td>{% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</td>
+                <td><div class="row-actions"><a href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar</a><form method="POST" action="{{ url_for('desactivar_producto', id_producto=p.id_producto) }}" onsubmit="return confirm('¿Desactivar este producto?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit" class="text-button danger-text">Desactivar</button></form></div></td>
+            </tr>{% endfor %}
+        </tbody></table></div>
+        <div class="mobile-product-list">{% for p in productos %}<article class="mobile-product-card">
+            <div class="mobile-product-top"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><span class="mobile-product-title"><strong>{{ p.nombre }}</strong><small>{{ p.codigo_barra or 'Sin código' }} · {{ p.categoria }}</small></span>{% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</div>
+            <div class="mobile-product-meta"><span>Stock <strong>{{ p.stock_actual }}</strong> / mín. {{ p.stock_minimo }}</span><strong>Q {{ "%.2f"|format(p.precio_venta) }}</strong></div>
+            <div class="mobile-card-actions"><a class="button button-secondary" href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar producto</a><form method="POST" action="{{ url_for('desactivar_producto', id_producto=p.id_producto) }}" onsubmit="return confirm('¿Desactivar este producto?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit" class="button button-danger">Desactivar</button></form></div>
+        </article>{% endfor %}</div>
+        {% if paginas > 1 %}<nav class="pagination" aria-label="Paginación de productos">{% if pagina > 1 %}<a class="button button-secondary" href="{{ url_for('productos', q=busqueda, categoria=categoria, estado=estado_stock, orden=orden, pagina=pagina-1) }}">← Anterior</a>{% endif %}<span>Página {{ pagina }} de {{ paginas }}</span>{% if pagina < paginas %}<a class="button button-secondary" href="{{ url_for('productos', q=busqueda, categoria=categoria, estado=estado_stock, orden=orden, pagina=pagina+1) }}">Siguiente →</a>{% endif %}</nav>{% endif %}
+        {% else %}<div class="empty-state"><strong>{% if busqueda or categoria or estado_stock != 'todos' %}No encontramos productos{% else %}Todavía no hay productos{% endif %}</strong><p>{% if busqueda or categoria or estado_stock != 'todos' %}Cambia la búsqueda o los filtros para intentar de nuevo.{% else %}Agrega el primer producto para empezar a controlar existencias.{% endif %}</p>{% if not busqueda and not categoria %}<a class="button button-primary" href="{{ url_for('nuevo_producto') }}">Agregar producto</a>{% endif %}</div>{% endif %}
+    </section>
+</main>
 </body>
 </html>

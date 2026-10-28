@@ -10,6 +10,10 @@
 - **Base de datos:** MySQL 8+, motor InnoDB; DDL, DML, vistas, triggers, procedimientos y roles en `sql/`.
 - **Producción:** Gunicorn sirve el objeto Flask `app`; el servicio web y MySQL ya están desplegados en Railway.
 
+## Resumen y catálogo
+
+`/resumen` consulta totales de productos, alertas por el stock mínimo configurado, costos disponibles, compras/ventas por rango seleccionado y productos por categoría. No se presenta un historial de movimientos porque el esquema no tiene una tabla de movimientos; la actividad reciente muestra únicamente compras y ventas existentes. `/productos` aplica búsqueda, filtros y orden parametrizados y pagina a 24 resultados. La navegación común se renderiza desde parciales Jinja y usa CSS responsive sin dependencias adicionales.
+
 ## Ejecución local
 
 Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL, generar la clave secreta, configurar `.env` e iniciar Flask.

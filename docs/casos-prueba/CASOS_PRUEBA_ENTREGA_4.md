@@ -28,6 +28,7 @@ Los resultados se deben completar con fecha, entorno y evidencia real. No consid
 | CP4-17 | Crear y editar un cliente temporal desde el dominio Railway | El alta y el cambio persisten y aparecen en la lista. | Aprobado manualmente por el usuario; pendiente adjuntar captura |
 | CP4-18 | Vender producto de categoría `Repuestos de Motor` sin seriales | No se exige VIN/motor; estos seriales se exigen solo en categorías de motocicletas. | La corrección está en el commit `124f52e`; falta confirmar que ese commit esté desplegado en Railway y registrar la prueba funcional. |
 | CP4-19 | Eliminar un recibo como Administrador y tratar de eliminarlo como Vendedor | Administrador elimina cabecera/detalles y el stock de cada línea se restaura en una transacción; Vendedor recibe HTTP 403 y no se modifica ningún dato. | Pendiente de prueba integrada. La eliminación es irreversible. |
+| CP4-20 | Revisar resumen y catálogo en escritorio (≥ 1024 px), tablet y móvil (320–430 px); filtrar y ordenar productos | Navegación adaptada, sin desbordamiento horizontal global; indicadores usan datos MySQL, el costo se oculta si hay costos faltantes, filtros respetan categorías/stock y los permisos permanecen iguales. | Las plantillas/rutas se renderizaron con un MySQL simulado y se verificó el guard de rol. Pendiente inspección visual en navegador y validación con MySQL/Railway reales. |
 
 ## Evidencia a adjuntar
 

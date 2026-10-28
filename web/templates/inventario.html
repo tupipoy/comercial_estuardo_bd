@@ -3,90 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comercial Estuardo - Inventario y Catálogo</title>
+    <title>Inventario - Comercial Estuardo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header class="navbar">
-        <div class="nav-brand">
-            <h1>Comercial Estuardo</h1>
-            <p>Sistema de Gestión de Ventas, Compras e Inventario</p>
-        </div>
-        <nav class="nav-links" aria-label="Navegación principal">
-            <a class="active" href="{{ url_for('inventario') }}">Inventario</a>
-            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
-            <a href="{{ url_for('productos') }}">Productos</a>
-            <a href="{{ url_for('proveedores') }}">Proveedores</a>
-            <a href="{{ url_for('compras') }}">Compras</a>
-            {% endif %}
-            {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}
-            <a href="{{ url_for('clientes') }}">Clientes</a>
-            <a href="{{ url_for('ventas') }}">Ventas</a>
-            {% endif %}
-            {% if session.get('user_role') == 'Administrador' %}
-            <a href="{{ url_for('categorias') }}">Categorías</a>
-            <a href="{{ url_for('sucursales') }}">Sucursales</a>
-            <a href="{{ url_for('empleados') }}">Empleados</a>
-            {% endif %}
-        </nav>
-        <div class="nav-user">
-            <span>{{ session.get('user_name', '') }}</span>
-            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
-        </div>
-    </header>
+{% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
+<main class="main-content">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}" role="status">{{ mensaje }}</div>{% endfor %}{% endwith %}
+    <div class="page-heading">
+        <div><p class="eyebrow">CATÁLOGO</p><h1>Inventario</h1><p class="muted">Consulta existencias actuales y alertas según el mínimo de cada producto.</p></div>
+        {% if session.get('user_role') in ['Administrador', 'Bodega'] %}<a href="{{ url_for('nuevo_producto') }}" class="button button-primary">＋ Agregar producto</a>{% endif %}
+    </div>
+    <form class="filter-panel" method="GET" action="{{ url_for('inventario') }}">
+        <div class="search-field"><label class="visually-hidden" for="buscar-inventario">Buscar producto</label><span aria-hidden="true">⌕</span><input id="buscar-inventario" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, SKU o categoría"></div>
+        <label class="visually-hidden" for="categoria-inventario">Categoría</label>
+        <select id="categoria-inventario" name="categoria"><option value="">Todas las categorías</option>{% for c in categorias %}<option value="{{ c.id_categoria }}" {% if categoria|string == c.id_categoria|string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}</select>
+        <label class="visually-hidden" for="estado-inventario">Estado</label>
+        <select id="estado-inventario" name="estado"><option value="todos" {% if estado_stock == 'todos' %}selected{% endif %}>Todos los estados</option><option value="disponible" {% if estado_stock == 'disponible' %}selected{% endif %}>Disponible</option><option value="bajo" {% if estado_stock == 'bajo' %}selected{% endif %}>Stock bajo</option><option value="agotado" {% if estado_stock == 'agotado' %}selected{% endif %}>Agotado</option></select>
+        <button class="button button-primary" type="submit">Filtrar</button>
+        {% if busqueda or categoria or estado_stock != 'todos' %}<a class="button button-secondary" href="{{ url_for('inventario') }}">Limpiar</a>{% endif %}
+    </form>
 
-    <main>
-        <section class="toolbar">
-            <h2>Catálogo de Productos y Existencias</h2>
-            <div class="actions">
-                <a href="{{ url_for('inventario') }}" class="btn {% if solo_stock_bajo != '1' %}active{% endif %}">Todos los Productos</a>
-                <a href="{{ url_for('inventario', stock_bajo=1) }}" class="btn btn-warning {% if solo_stock_bajo == '1' %}active{% endif %}">Alerta: Stock Mínimo</a>
-            </div>
-        </section>
-        <form class="busqueda-form" method="GET" action="{{ url_for('inventario') }}">
-            {% if solo_stock_bajo == '1' %}<input type="hidden" name="stock_bajo" value="1">{% endif %}
-            <label for="buscar-inventario">Buscar producto, código o categoría</label>
-            <input id="buscar-inventario" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, SKU o categoría">
-            <button class="btn active" type="submit">Buscar</button>
-            {% if busqueda %}<a class="btn" href="{{ url_for('inventario', stock_bajo=1 if solo_stock_bajo == '1' else None) }}">Limpiar</a>{% endif %}
-        </form>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Código / SKU</th>
-                    <th>Categoría</th>
-                    <th>Descripción del Producto</th>
-                    <th>Precio de Venta</th>
-                    <th>Stock Actual</th>
-                    <th>Stock Mínimo</th>
-                    <th>Estado de Alerta</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prod in productos %}
-                <tr>
-                    <td>{{ prod.codigo_barra if prod.codigo_barra else 'N/A' }}</td>
-                    <td>{{ prod.categoria }}</td>
-                    <td><strong>{{ prod.nombre }}</strong></td>
-                    <td>Q {{ "%.2f"|format(prod.precio_venta) }}</td>
-                    <td>{{ prod.stock_actual }}</td>
-                    <td>{{ prod.stock_minimo }}</td>
-                    <td>
-                        {% if prod.stock_actual <= prod.stock_minimo %}
-                            <span class="badge badge-danger">Reordenar</span>
-                        {% else %}
-                            <span class="badge badge-success">Óptimo</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" class="text-center">No hay productos registrados o no se encontraron coincidencias.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </main>
+    <section class="panel inventory-panel">
+        <div class="panel-heading"><div><h2>Existencias</h2><p class="muted">{{ productos|length }} productos encontrados</p></div></div>
+        {% if error_datos %}<div class="empty-state"><strong>No se pudo consultar MySQL</strong><p>Comprueba la conexión e intenta cargar el inventario nuevamente.</p></div>
+        {% elif productos %}
+        <div class="responsive-table"><table class="data-table">
+            <thead><tr><th>Producto</th><th>Código</th><th>Categoría</th><th>Precio</th><th>Existencias</th><th>Estado</th></tr></thead>
+            <tbody>{% for p in productos %}<tr>
+                <td><div class="product-cell"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><strong>{{ p.nombre }}</strong></div></td>
+                <td>{{ p.codigo_barra or '—' }}</td><td>{{ p.categoria }}</td><td>Q {{ "%.2f"|format(p.precio_venta) }}</td>
+                <td><strong>{{ p.stock_actual }}</strong><small class="table-subtext">Mínimo {{ p.stock_minimo }}</small></td>
+                <td>{% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</td>
+            </tr>{% endfor %}</tbody>
+        </table></div>
+        <div class="mobile-product-list">{% for p in productos %}
+            <article class="mobile-product-card">
+                <div class="mobile-product-top"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><span class="mobile-product-title"><strong>{{ p.nombre }}</strong><small>{{ p.codigo_barra or 'Sin código' }} · {{ p.categoria }}</small></span>
+                    {% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</div>
+                <div class="mobile-product-meta"><span>Existencias <strong>{{ p.stock_actual }}</strong> <small>(mín. {{ p.stock_minimo }})</small></span><strong>Q {{ "%.2f"|format(p.precio_venta) }}</strong></div>
+            </article>
+        {% endfor %}</div>
+        {% else %}<div class="empty-state"><strong>{% if busqueda or categoria or estado_stock != 'todos' %}No encontramos productos{% else %}El inventario está vacío{% endif %}</strong><p>{% if busqueda or categoria or estado_stock != 'todos' %}Prueba cambiar la búsqueda o los filtros.{% else %}Cuando agregues productos, sus existencias aparecerán aquí.{% endif %}</p>{% if session.get('user_role') in ['Administrador', 'Bodega'] and not busqueda and not categoria %}<a class="button button-primary" href="{{ url_for('nuevo_producto') }}">Agregar el primer producto</a>{% endif %}</div>{% endif %}
+    </section>
+</main>
 </body>
 </html>

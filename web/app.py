@@ -73,6 +73,8 @@ def requiere_rol(*roles):
 @app.route("/", methods=["GET", "POST"])
 def login():
     """Consulta el empleado activo en MySQL y valida sus credenciales."""
+    if request.method == "GET" and "user_id" in session:
+        return redirect(url_for("resumen"))
     error = None
     if request.method == "POST":
         identificador = request.form.get("username", "").strip()
@@ -114,7 +116,7 @@ def login():
                 )
                 session["user_role"] = empleado["cargo"]
                 session["user_branch"] = empleado["sucursal"]
-                return redirect(url_for("inventario"))
+                return redirect(url_for("resumen"))
 
             error = "Usuario o contraseña incorrectos."
         except Exception:
@@ -145,38 +147,164 @@ def fechas_filtro_transacciones():
     return desde, hasta, fecha_desde, fecha_hasta, None
 
 
+@app.route("/resumen")
+@requiere_rol("Administrador", "Vendedor", "Bodega")
+def resumen():
+    """Resume inventario y actividad a partir de registros reales de MySQL."""
+    try:
+        periodo = int(request.args.get("dias", "30"))
+    except ValueError:
+        periodo = 30
+    if periodo not in {7, 30, 90}:
+        periodo = 30
+    fecha_inicio = date.today() - timedelta(days=periodo - 1)
+    fecha_fin = date.today() + timedelta(days=1)
+    fecha_inicio_anterior = fecha_inicio - timedelta(days=periodo)
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT COUNT(*) AS total_productos,
+                       COALESCE(SUM(stock_actual > 0 AND stock_actual <= stock_minimo), 0) AS stock_bajo,
+                       COALESCE(SUM(stock_actual = 0), 0) AS agotados,
+                       COALESCE(SUM(stock_actual > 0 AND precio_costo <= 0), 0) AS costos_pendientes,
+                       COALESCE(SUM(stock_actual * precio_costo), 0) AS valor_inventario
+                FROM PRODUCTO
+                WHERE estado = 1
+            """)
+            indicadores = cursor.fetchone()
+
+            cursor.execute("""
+                SELECT
+                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s) AS ventas_periodo,
+                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s) AS compras_periodo,
+                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s) AS ventas_periodo_anterior,
+                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s) AS compras_periodo_anterior
+            """, (
+                fecha_inicio, fecha_fin, fecha_inicio, fecha_fin,
+                fecha_inicio_anterior, fecha_inicio, fecha_inicio_anterior, fecha_inicio,
+            ))
+            actividad = cursor.fetchone()
+
+            cursor.execute("""
+                SELECT c.nombre, COUNT(p.id_producto) AS total
+                FROM CATEGORIA c
+                LEFT JOIN PRODUCTO p ON p.id_categoria = c.id_categoria AND p.estado = 1
+                WHERE c.estado = 1
+                GROUP BY c.id_categoria, c.nombre
+                ORDER BY total DESC, c.nombre
+                LIMIT 6
+            """)
+            categorias = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT p.id_producto, p.nombre, p.codigo_barra, p.stock_actual,
+                       p.stock_minimo, c.nombre AS categoria
+                FROM PRODUCTO p
+                INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
+                WHERE p.estado = 1 AND p.stock_actual <= p.stock_minimo
+                ORDER BY p.stock_actual ASC, p.nombre
+                LIMIT 6
+            """)
+            alertas = cursor.fetchall()
+
+            cursor.execute("""
+                (SELECT 'Venta' AS tipo, v.fecha_venta AS fecha,
+                        CONCAT(v.serie_factura, '-', v.numero_factura) AS referencia,
+                        v.total_venta AS total
+                 FROM VENTA v ORDER BY v.fecha_venta DESC LIMIT 6)
+                UNION ALL
+                (SELECT 'Compra' AS tipo, c.fecha_compra AS fecha,
+                        c.numero_orden AS referencia, c.total_compra AS total
+                 FROM COMPRA c ORDER BY c.fecha_compra DESC LIMIT 6)
+                ORDER BY fecha DESC
+                LIMIT 8
+            """)
+            recientes = cursor.fetchall()
+    except Exception:
+        app.logger.exception("No se pudo cargar el resumen de inventario")
+        return render_template(
+            "resumen.html", error_datos=True, periodo=periodo,
+            fecha_inicio=fecha_inicio,
+        )
+    finally:
+        if connection is not None:
+            connection.close()
+
+    max_categoria = max((fila["total"] for fila in categorias), default=0)
+    valor_inventario = (
+        indicadores["valor_inventario"]
+        if indicadores["costos_pendientes"] == 0
+        else None
+    )
+    return render_template(
+        "resumen.html", periodo=periodo, indicadores=indicadores,
+        actividad=actividad, total_operaciones=actividad["ventas_periodo"] + actividad["compras_periodo"],
+        operaciones_anteriores=actividad["ventas_periodo_anterior"] + actividad["compras_periodo_anterior"],
+        fecha_inicio=fecha_inicio, categorias=categorias,
+        max_categoria=max_categoria, alertas=alertas, recientes=recientes,
+        valor_inventario=valor_inventario, error_datos=False,
+    )
+
+
 @app.route("/inventario")
 @requiere_rol("Administrador", "Vendedor", "Bodega")
 def inventario():
-    """Consulta productos y existencias con filtros parametrizados."""
+    """Consulta existencias con búsqueda, filtros de categoría y estado."""
     solo_stock_bajo = "1" if request.args.get("stock_bajo") == "1" else "0"
     busqueda = request.args.get("q", "").strip()[:100]
     condiciones = ["p.estado = 1"]
     parametros = []
-    if solo_stock_bajo == "1":
-        condiciones.append("p.stock_actual <= p.stock_minimo")
+    estado_stock = request.args.get("estado", "todos")
+    if estado_stock not in {"todos", "disponible", "bajo", "agotado"}:
+        estado_stock = "todos"
+    if solo_stock_bajo == "1" or estado_stock == "bajo":
+        condiciones.append("p.stock_actual > 0 AND p.stock_actual <= p.stock_minimo")
+        estado_stock = "bajo"
+    elif estado_stock == "agotado":
+        condiciones.append("p.stock_actual = 0")
+    elif estado_stock == "disponible":
+        condiciones.append("p.stock_actual > p.stock_minimo")
+    categoria = request.args.get("categoria", "").strip()
+    if categoria.isdigit():
+        condiciones.append("p.id_categoria = %s")
+        parametros.append(int(categoria))
     patron = patron_busqueda(busqueda)
     if patron:
         condiciones.append("(p.nombre LIKE %s ESCAPE '!' OR p.codigo_barra LIKE %s ESCAPE '!' OR c.nombre LIKE %s ESCAPE '!')")
         parametros.extend([patron, patron, patron])
-    connection = get_db_connection()
+    connection = None
     try:
+        connection = get_db_connection()
         with connection.cursor() as cursor:
-            orden = "p.stock_actual ASC" if solo_stock_bajo == "1" else "c.nombre, p.nombre"
+            orden = "p.stock_actual ASC, p.nombre" if estado_stock in {"bajo", "agotado"} else "c.nombre, p.nombre"
             cursor.execute(f"""
                 SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
-                       p.stock_actual, p.stock_minimo, c.nombre AS categoria
+                       p.stock_actual, p.stock_minimo, p.precio_costo,
+                       p.id_categoria, c.nombre AS categoria
                 FROM PRODUCTO p
                 INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
                 WHERE {' AND '.join(condiciones)}
                 ORDER BY {orden};
             """, parametros)
             productos = cursor.fetchall()
+            categorias = cargar_categorias(cursor)
+    except Exception:
+        app.logger.exception("No se pudo cargar el inventario")
+        return render_template(
+            "inventario.html", productos=[], solo_stock_bajo=solo_stock_bajo,
+            busqueda=busqueda, categorias=[], categoria=categoria,
+            estado_stock=estado_stock, error_datos=True,
+        )
     finally:
-        connection.close()
+        if connection is not None:
+            connection.close()
 
     return render_template("inventario.html", productos=productos,
-                           solo_stock_bajo=solo_stock_bajo, busqueda=busqueda)
+                           solo_stock_bajo=solo_stock_bajo, busqueda=busqueda,
+                           categorias=categorias, categoria=categoria,
+                           estado_stock=estado_stock)
 
 
 def validar_datos_categoria(form):
@@ -647,12 +775,56 @@ def validar_datos_producto(form):
 @app.route("/productos")
 @requiere_rol("Administrador", "Bodega")
 def productos():
-    """Consulta productos activos y aplica el filtro de búsqueda."""
+    """Lista productos activos con filtros, orden y paginación."""
     busqueda = request.args.get("q", "").strip()[:100]
     patron = patron_busqueda(busqueda)
-    connection = get_db_connection()
+    categoria = request.args.get("categoria", "").strip()
+    estado_stock = request.args.get("estado", "todos")
+    if estado_stock not in {"todos", "disponible", "bajo", "agotado"}:
+        estado_stock = "todos"
+    ordenes = {
+        "nombre": "p.nombre ASC",
+        "stock": "p.stock_actual ASC, p.nombre ASC",
+        "precio": "p.precio_venta ASC, p.nombre ASC",
+    }
+    orden = request.args.get("orden", "nombre")
+    if orden not in ordenes:
+        orden = "nombre"
     try:
+        pagina = max(1, int(request.args.get("pagina", "1")))
+    except ValueError:
+        pagina = 1
+    por_pagina = 24
+    condiciones = ["p.estado = 1"]
+    parametros = []
+    if patron:
+        condiciones.append("(p.nombre LIKE %s ESCAPE '!' OR p.codigo_barra LIKE %s ESCAPE '!' OR c.nombre LIKE %s ESCAPE '!')")
+        parametros.extend([patron] * 3)
+    if categoria.isdigit():
+        condiciones.append("p.id_categoria = %s")
+        parametros.append(int(categoria))
+    if estado_stock == "disponible":
+        condiciones.append("p.stock_actual > p.stock_minimo")
+    elif estado_stock == "bajo":
+        condiciones.append("p.stock_actual > 0 AND p.stock_actual <= p.stock_minimo")
+    elif estado_stock == "agotado":
+        condiciones.append("p.stock_actual = 0")
+    where = " AND ".join(condiciones)
+    connection = None
+    try:
+        connection = get_db_connection()
         with connection.cursor() as cursor:
+            categorias = cargar_categorias(cursor)
+            cursor.execute(f"""
+                SELECT COUNT(*) AS total
+                FROM PRODUCTO p
+                INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
+                WHERE {where}
+            """, parametros)
+            total_productos = cursor.fetchone()["total"]
+            paginas = max(1, (total_productos + por_pagina - 1) // por_pagina)
+            pagina = min(pagina, paginas)
+            offset = (pagina - 1) * por_pagina
             cursor.execute("""
                 SELECT
                     p.id_producto,
@@ -668,18 +840,28 @@ def productos():
                 FROM PRODUCTO p
                 INNER JOIN CATEGORIA c
                     ON p.id_categoria = c.id_categoria
-                WHERE p.estado = 1
-                  AND (%s = '' OR p.nombre LIKE %s ESCAPE '!'
-                       OR p.codigo_barra LIKE %s ESCAPE '!'
-                       OR c.nombre LIKE %s ESCAPE '!')
-                ORDER BY p.nombre;
-            """, (patron, patron, patron, patron))
+                WHERE """ + where + f" ORDER BY {ordenes[orden]} LIMIT %s OFFSET %s",
+                (*parametros, por_pagina, offset),
+            )
             lista_productos = cursor.fetchall()
-
+    except Exception:
+        app.logger.exception("No se pudo cargar el catálogo de productos")
+        return render_template(
+            "productos.html", productos=[], busqueda=busqueda,
+            categorias=[], categoria=categoria, estado_stock=estado_stock,
+            orden=orden, pagina=1, paginas=1, total_productos=0,
+            error_datos=True,
+        )
     finally:
-        connection.close()
+        if connection is not None:
+            connection.close()
 
-    return render_template("productos.html", productos=lista_productos, busqueda=busqueda)
+    return render_template(
+        "productos.html", productos=lista_productos, busqueda=busqueda,
+        categorias=categorias, categoria=categoria, estado_stock=estado_stock,
+        orden=orden, pagina=pagina, paginas=paginas,
+        total_productos=total_productos,
+    )
 
 
 @app.route("/productos/nuevo", methods=["GET", "POST"])
@@ -712,6 +894,7 @@ def nuevo_producto():
                             datos["stock_minimo"], datos["id_categoria"],
                         ))
                         connection.commit()
+                        flash("Producto creado correctamente.", "success")
                         return redirect(url_for("productos"))
                     except Exception as exc:
                         connection.rollback()
@@ -770,6 +953,7 @@ def editar_producto(id_producto):
                             datos["stock_minimo"], datos["id_categoria"], id_producto,
                         ))
                         connection.commit()
+                        flash("Producto actualizado correctamente.", "success")
                         return redirect(url_for("productos"))
                     except Exception as exc:
                         connection.rollback()

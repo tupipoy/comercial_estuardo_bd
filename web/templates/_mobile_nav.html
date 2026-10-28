@@ -1,0 +1,22 @@
+<header class="mobile-brandbar">
+    <a href="{{ url_for('resumen') }}"><span class="brand-mark">CE</span><strong>Comercial Estuardo</strong></a>
+    <span class="user-avatar" aria-label="Usuario {{ session.get('user_name', '') }}">{{ session.get('user_name', 'U')[:1]|upper }}</span>
+</header>
+<nav class="mobile-nav" aria-label="Navegación móvil">
+    <a href="{{ url_for('resumen') }}" class="{% if request.endpoint == 'resumen' %}is-active{% endif %}"><svg><use href="#icon-home"/></svg><span>Inicio</span></a>
+    <a href="{{ url_for('inventario') }}" class="{% if request.endpoint == 'inventario' %}is-active{% endif %}"><svg><use href="#icon-box"/></svg><span>Stock</span></a>
+    {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}
+    <a href="{{ url_for('ventas') }}" class="{% if request.endpoint in ['ventas', 'detalle_venta', 'nueva_venta'] %}is-active{% endif %}"><svg><use href="#icon-receipt"/></svg><span>Ventas</span></a>
+    {% elif session.get('user_role') == 'Bodega' %}
+    <a href="{{ url_for('compras') }}" class="{% if request.endpoint in ['compras', 'detalle_compra', 'nueva_compra'] %}is-active{% endif %}"><svg><use href="#icon-receipt"/></svg><span>Compras</span></a>
+    {% endif %}
+    <details class="mobile-more">
+        <summary><span class="more-dots">•••</span><span>Más</span></summary>
+        <div class="more-menu">
+            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}<a href="{{ url_for('productos') }}">Productos</a><a href="{{ url_for('compras') }}">Compras</a><a href="{{ url_for('proveedores') }}">Proveedores</a>{% endif %}
+            {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}<a href="{{ url_for('clientes') }}">Clientes</a>{% endif %}
+            {% if session.get('user_role') == 'Administrador' %}<a href="{{ url_for('categorias') }}">Categorías</a><a href="{{ url_for('sucursales') }}">Sucursales</a><a href="{{ url_for('empleados') }}">Empleados</a>{% endif %}
+            <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>
+        </div>
+    </details>
+</nav>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen del inventario - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
+<main class="main-content dashboard-page">
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">PANEL DE CONTROL · {{ session.get('user_branch', '') }}</p>
+            <h1>Resumen del inventario</h1>
+            <p class="muted">Hola, {{ session.get('user_name', '') }}. Aquí tienes el estado actual de tu operación.</p>
+        </div>
+        <div class="heading-actions">
+            <a class="button button-secondary" href="{{ url_for('inventario') }}">Ver inventario</a>
+            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
+            <a class="button button-primary" href="{{ url_for('nuevo_producto') }}">＋ Agregar producto</a>
+            {% elif session.get('user_role') == 'Vendedor' %}
+            <a class="button button-primary" href="{{ url_for('nueva_venta') }}">＋ Nueva venta</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <form class="global-search" method="GET" action="{{ url_for('inventario') }}">
+        <label for="global-search">⌕</label>
+        <input id="global-search" name="q" type="search" placeholder="Buscar producto, código o categoría" aria-label="Buscar en inventario">
+        <button type="submit">Buscar</button>
+    </form>
+
+    {% if error_datos %}
+    <div class="alert-danger" role="alert">No pudimos cargar el resumen. Comprueba la conexión y vuelve a intentarlo.</div>
+    {% else %}
+    <section class="metric-grid" aria-label="Indicadores de inventario">
+        <article class="metric-card">
+            <span class="metric-icon metric-icon-blue"><svg><use href="#icon-box"/></svg></span>
+            <p>Productos activos</p>
+            <strong>{{ indicadores.total_productos }}</strong>
+            <small>Referencias en catálogo</small>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon metric-icon-amber">!</span>
+            <p>Stock bajo</p>
+            <strong>{{ indicadores.stock_bajo }}</strong>
+            <small>{{ indicadores.agotados }} agotados · umbral por producto</small>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon metric-icon-teal">Q</span>
+            <p>Valor del inventario</p>
+            {% if valor_inventario is not none %}
+            <strong>Q {{ "%.2f"|format(valor_inventario) }}</strong>
+            <small>Existencias × costo registrado</small>
+            {% else %}
+            <strong class="metric-unavailable">No disponible</strong>
+            <small>{{ indicadores.costos_pendientes }} productos con stock no tienen costo fiable</small>
+            {% endif %}
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon metric-icon-violet">↗</span>
+            <p>Operaciones · últimos {{ periodo }} días</p>
+            <strong>{{ total_operaciones }}</strong>
+            <small>{{ actividad.ventas_periodo }} ventas · {{ actividad.compras_periodo }} compras</small>
+            <small>Período anterior: {{ operaciones_anteriores }} operaciones</small>
+        </article>
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="panel category-panel">
+            <div class="panel-heading">
+                <div><h2>Productos por categoría</h2><p class="muted">Conteo de productos activos</p></div>
+                <a href="{{ url_for('inventario') }}">Ver inventario</a>
+            </div>
+            {% if categorias %}
+            <div class="category-bars">
+                {% for categoria in categorias %}
+                <div class="category-bar-row">
+                    <div class="category-bar-label"><span>{{ categoria.nombre }}</span><strong>{{ categoria.total }}</strong></div>
+                    <div class="bar-track" title="{{ categoria.total }} productos"><span style="width: {{ (categoria.total * 100 / max_categoria)|round|int if max_categoria else 0 }}%"></span></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="empty-state"><strong>Aún no hay categorías activas</strong><p>Cuando registres productos, su distribución aparecerá aquí.</p></div>{% endif %}
+        </article>
+
+        <article class="panel activity-panel">
+            <div class="panel-heading">
+                <div><h2>Actividad reciente</h2><p class="muted">Compras y ventas registradas</p></div>
+                <form method="GET" action="{{ url_for('resumen') }}">
+                    <label class="visually-hidden" for="periodo">Período</label>
+                    <select id="periodo" name="dias">
+                        {% for dias in [7, 30, 90] %}<option value="{{ dias }}" {% if periodo == dias %}selected{% endif %}>{{ dias }} días</option>{% endfor %}
+                    </select>
+                    <button class="button button-secondary" type="submit">Aplicar</button>
+                </form>
+            </div>
+            {% if recientes %}
+            <ul class="activity-list">
+                {% for item in recientes %}
+                <li>
+                    <span class="activity-mark {% if item.tipo == 'Venta' %}activity-sale{% else %}activity-purchase{% endif %}">{% if item.tipo == 'Venta' %}−{% else %}+{% endif %}</span>
+                    <span class="activity-description"><strong>{{ item.tipo }} · {{ item.referencia }}</strong><small>{{ item.fecha }}</small></span>
+                    <strong class="activity-amount">Q {{ "%.2f"|format(item.total) }}</strong>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}<div class="empty-state"><strong>Sin actividad registrada</strong><p>Las compras y ventas aparecerán aquí al registrarse.</p></div>{% endif %}
+        </article>
+    </section>
+
+    <section class="panel low-stock-panel">
+        <div class="panel-heading">
+            <div><h2>Requieren atención</h2><p class="muted">Productos en o por debajo de su stock mínimo</p></div>
+            <a href="{{ url_for('inventario', estado='bajo') }}">Ver todos</a>
+        </div>
+        {% if alertas %}
+        <div class="low-stock-list">
+            {% for producto in alertas %}
+            <a class="low-stock-item" href="{{ url_for('inventario', q=producto.codigo_barra or producto.nombre) }}">
+                <span class="product-avatar">{{ producto.nombre[:1]|upper }}</span>
+                <span class="low-stock-name"><strong>{{ producto.nombre }}</strong><small>{{ producto.codigo_barra or producto.categoria }}</small></span>
+                <span class="stock-pill {% if producto.stock_actual == 0 %}stock-out{% else %}stock-low{% endif %}">{{ producto.stock_actual }} / mín. {{ producto.stock_minimo }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state"><strong>Todo en orden</strong><p>No hay productos bajo su mínimo de stock.</p></div>{% endif %}
+    </section>
+    {% endif %}
+</main>
+</body>
+</html>

@@ -10,6 +10,10 @@
 3. El menú disponible depende del cargo asignado: Administrador, Vendedor o Bodega.
 4. Para salir, seleccionar **Cerrar sesión**.
 
+## Resumen del inventario
+
+Al iniciar sesión se abre el resumen con el total de productos activos, referencias bajo mínimo, productos agotados y operaciones de compra/venta del período seleccionado. El valor del inventario solo se muestra cuando los productos con existencias tienen un costo registrado mayor que cero. La distribución por categoría y la lista de alertas se calculan con el catálogo actual. En teléfonos, usa la barra inferior y **Más** para navegar los demás módulos habilitados por tu cargo.
+
 ## Inventario
 
 Abrir **Inventario** para consultar productos activos, categoría, precio y existencias. Usar el campo de búsqueda para filtrar por nombre, código o categoría. El filtro de stock bajo se puede combinar con la búsqueda para localizar existencias críticas de un producto o categoría.

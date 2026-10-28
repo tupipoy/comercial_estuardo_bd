@@ -7,23 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="receipt-page">
-    <header class="navbar screen-only">
-        <div class="nav-brand">
-            <h1>Comercial Estuardo</h1>
-            <p>Recibo de venta</p>
-        </div>
-        <nav class="nav-links" aria-label="Navegación principal">
-            <a href="{{ url_for('inventario') }}">Inventario</a>
-            <a href="{{ url_for('ventas') }}">Ventas</a>
-        </nav>
-        <div class="nav-user">
-            <span>{{ session.get('user_name', '') }}</span>
-            <form method="POST" action="{{ url_for('logout') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit">Cerrar sesión</button>
-            </form>
-        </div>
-    </header>
+    {% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
 
     <main class="receipt-layout">
         <div class="receipt-actions screen-only">

@@ -1,0 +1,40 @@
+{% include "_icons.html" %}
+<aside class="app-sidebar" aria-label="Navegación principal">
+    <a class="brand-lockup" href="{{ url_for('resumen') }}">
+        <span class="brand-mark">CE</span>
+        <span><strong>Comercial Estuardo</strong><small>Inventario y ventas</small></span>
+    </a>
+    <div class="sidebar-section-label">GENERAL</div>
+    <nav class="sidebar-nav">
+        <a class="side-link {% if request.endpoint == 'resumen' %}is-active{% endif %}" href="{{ url_for('resumen') }}"><svg><use href="#icon-home"/></svg><span>Resumen</span></a>
+        <a class="side-link {% if request.endpoint == 'inventario' %}is-active{% endif %}" href="{{ url_for('inventario') }}"><svg><use href="#icon-box"/></svg><span>Inventario</span></a>
+        {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
+        <a class="side-link {% if request.endpoint in ['productos', 'nuevo_producto', 'editar_producto'] %}is-active{% endif %}" href="{{ url_for('productos') }}"><svg><use href="#icon-tag"/></svg><span>Productos</span></a>
+        {% endif %}
+        {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}
+        <a class="side-link {% if request.endpoint in ['ventas', 'detalle_venta', 'nueva_venta'] %}is-active{% endif %}" href="{{ url_for('ventas') }}"><svg><use href="#icon-receipt"/></svg><span>Ventas</span></a>
+        <a class="side-link {% if request.endpoint in ['clientes', 'nuevo_cliente', 'editar_cliente'] %}is-active{% endif %}" href="{{ url_for('clientes') }}"><svg><use href="#icon-users"/></svg><span>Clientes</span></a>
+        {% endif %}
+        {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
+        <a class="side-link {% if request.endpoint in ['compras', 'detalle_compra', 'nueva_compra'] %}is-active{% endif %}" href="{{ url_for('compras') }}"><svg><use href="#icon-receipt"/></svg><span>Compras</span></a>
+        <a class="side-link {% if request.endpoint in ['proveedores', 'nuevo_proveedor', 'editar_proveedor'] %}is-active{% endif %}" href="{{ url_for('proveedores') }}"><svg><use href="#icon-store"/></svg><span>Proveedores</span></a>
+        {% endif %}
+    </nav>
+    {% if session.get('user_role') == 'Administrador' %}
+    <div class="sidebar-section-label">ADMINISTRACIÓN</div>
+    <nav class="sidebar-nav">
+        <a class="side-link {% if request.endpoint in ['categorias', 'nueva_categoria', 'editar_categoria'] %}is-active{% endif %}" href="{{ url_for('categorias') }}"><svg><use href="#icon-tag"/></svg><span>Categorías</span></a>
+        <a class="side-link {% if request.endpoint in ['sucursales', 'nueva_sucursal', 'editar_sucursal'] %}is-active{% endif %}" href="{{ url_for('sucursales') }}"><svg><use href="#icon-store"/></svg><span>Sucursales</span></a>
+        <a class="side-link {% if request.endpoint in ['empleados', 'nuevo_empleado', 'editar_empleado'] %}is-active{% endif %}" href="{{ url_for('empleados') }}"><svg><use href="#icon-users-admin"/></svg><span>Empleados</span></a>
+    </nav>
+    {% endif %}
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-profile">
+        <span class="user-avatar">{{ session.get('user_name', 'U')[:1]|upper }}</span>
+        <span class="user-summary"><strong>{{ session.get('user_name', '') }}</strong><small>{{ session.get('user_role', '') }}</small></span>
+        <form method="POST" action="{{ url_for('logout') }}" aria-label="Cerrar sesión">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="logout-button" type="submit" title="Cerrar sesión" aria-label="Cerrar sesión">↪</button>
+        </form>
+    </div>
+</aside>

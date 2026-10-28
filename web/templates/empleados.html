@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Empleados - Comercial Estuardo</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
-<body><header class="navbar"><div class="nav-brand"><h1>Comercial Estuardo</h1><p>Administración de empleados</p></div>
-<nav class="nav-links" aria-label="Navegación principal"><a href="{{ url_for('inventario') }}">Inventario</a><a href="{{ url_for('categorias') }}">Categorías</a><a href="{{ url_for('sucursales') }}">Sucursales</a><a class="active" href="{{ url_for('empleados') }}">Empleados</a></nav>
-<div class="nav-user"><span>{{ session.get('user_name', '') }}</span><form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form></div></header>
+<body>{% include "_sidebar.html" %}
+{% include "_mobile_nav.html" %}
 <main>{% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}">{{ mensaje }}</div>{% endfor %}{% endwith %}
 <section class="toolbar"><h2>Empleados activos</h2><a href="{{ url_for('nuevo_empleado') }}" class="btn active">Nuevo empleado</a></section>
 <table><thead><tr><th>CUI</th><th>Nombre</th><th>Cargo</th><th>Teléfono</th><th>Correo</th><th>Sucursal</th><th>Ingreso</th><th>Acciones</th></tr></thead><tbody>
