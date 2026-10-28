@@ -20,7 +20,7 @@ Abrir **Inventario** para consultar productos activos, categoría, precio y exis
 
 ## Productos
 
-Los usuarios autorizados pueden consultar, buscar por nombre, código o categoría, crear, editar y desactivar productos. Antes de guardar, completar los campos obligatorios y seleccionar una categoría activa. La desactivación conserva el historial y oculta el producto de los listados operativos.
+Los usuarios autorizados pueden consultar, buscar por nombre, código o categoría, crear, editar y desactivar productos. Antes de guardar, completar los campos obligatorios y seleccionar una categoría activa. El precio de venta debe ser igual o mayor que el costo; además, el sistema no permite aplicar un descuento que deje una línea de venta por debajo de su costo. La desactivación conserva el historial y oculta el producto de los listados operativos.
 
 ## Clientes
 

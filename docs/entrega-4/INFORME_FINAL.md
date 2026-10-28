@@ -14,11 +14,11 @@ El proyecto centraliza datos de productos, existencias, clientes, proveedores, c
 
 ## Resultados técnicos
 
-La base cuenta con ocho entidades principales y dos entidades asociativas, datos de prueba, vistas, dos triggers, cuatro procedimientos (versiones de una línea y mult producto) y tres roles de base de datos. La aplicación web incluye inventario, CRUD de Productos, Clientes, Proveedores, Categorías, Sucursales y Empleados, operaciones de compra y venta mult producto y vistas de solo lectura de sus detalles. Los flujos SQL mult producto aún requieren prueba integrada con MySQL.
+La base cuenta con ocho entidades principales y dos entidades asociativas, datos de prueba, vistas, triggers de validación de stock y margen, cuatro procedimientos (versiones de una línea y mult producto) y tres roles de base de datos. La aplicación web incluye inventario, CRUD de Productos, Clientes, Proveedores, Categorías, Sucursales y Empleados, operaciones de compra y venta mult producto y vistas de solo lectura de sus detalles. El usuario confirmó en Railway la existencia de los tres triggers que protegen las ventas y que no quedaron productos con precio por debajo del costo; los flujos de compra/venta mult producto aún requieren prueba funcional integrada.
 
 ## Despliegue y validación
 
-La aplicación está desplegada y accesible en Railway con Gunicorn. URL pública: https://comercialestuardobd-production.up.railway.app. El usuario confirmó que el dominio abre, que el login y los módulos funcionan, y que pudo crear y editar clientes. Falta registrar la versión exacta probada, validar compras/ventas en el despliegue y documentar la instalación limpia y los demás casos de aceptación.
+La aplicación está desplegada y accesible en Railway con Gunicorn. URL pública: https://comercialestuardobd-production.up.railway.app. El usuario confirmó que el dominio abre, que el login y los módulos funcionan, que pudo crear y editar clientes, y que aplicó la migración de margen y verificó los triggers en la base productiva. Falta registrar el commit exacto activo, validar compras/ventas en el despliegue y documentar la instalación limpia y los demás casos de aceptación.
 
 ## Limitaciones conocidas
 

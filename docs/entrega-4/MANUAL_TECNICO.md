@@ -35,7 +35,7 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
 ## Objetos SQL
 
-La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada` y `sp_registrar_compra_detallada` reciben un arreglo JSON de líneas para registrar una transacción con varios productos; los triggers validan stock, costo y descuentos. Para una base ya desplegada, aplicar `sql/migrations/04_enforce_product_margin.sql` en Railway/MySQL antes de probar ventas; el DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
+La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada` y `sp_registrar_compra_detallada` reciben un arreglo JSON de líneas para registrar una transacción con varios productos; los triggers validan stock, costo y descuentos. Para una base ya desplegada, el usuario ejecutó `sql/migrations/04_enforce_product_margin.sql` en Railway/MySQL el 28/10/2026. Reportó que la consulta de productos bajo costo quedó vacía y verificó los triggers `trg_validar_stock_venta`, `trg_descontar_stock_venta` y `trg_validar_margen_venta`. Falta registrar una venta funcional posterior a la migración. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
 
 ## Módulos administrativos
 
@@ -53,4 +53,4 @@ Las rutas `/categorias`, `/sucursales` y `/empleados` se limitan al cargo Admini
 
 ## Estado de cierre
 
-La aplicación está desplegada y accesible en Railway en https://comercialestuardobd-production.up.railway.app. El usuario confirmó el dominio, login, módulos y alta/edición de clientes. No se registran credenciales ni valores de configuración productiva en este manual. Falta registrar la evidencia de compras/ventas, instalación limpia y aceptación completa antes de certificar la versión final.
+La aplicación está desplegada y accesible en Railway en https://comercialestuardobd-production.up.railway.app. El usuario confirmó el dominio, login, módulos y alta/edición de clientes; también reportó la instalación en MySQL de Railway de los tres triggers de venta requeridos. No se registran credenciales ni valores de configuración productiva en este manual. Falta registrar la aceptación de compras/ventas, instalación limpia y pruebas integrales antes de certificar la versión final.
