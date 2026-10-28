@@ -87,6 +87,7 @@ CREATE TABLE PRODUCTO (
         ON DELETE RESTRICT,
     CONSTRAINT chk_producto_precio CHECK (precio_venta > 0),
     CONSTRAINT chk_producto_precio_costo CHECK (precio_costo >= 0),
+    CONSTRAINT chk_producto_margen CHECK (precio_venta >= precio_costo),
     CONSTRAINT chk_producto_stock_actual CHECK (stock_actual >= 0),
     CONSTRAINT chk_producto_stock_minimo CHECK (stock_minimo >= 0),
     CONSTRAINT chk_producto_estado CHECK (estado IN (0, 1))

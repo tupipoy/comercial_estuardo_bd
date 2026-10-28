@@ -10,6 +10,9 @@ USE comercial_estuardo_db;
 -- Permite volver a aplicar el archivo para actualizar estos triggers.
 DROP TRIGGER IF EXISTS trg_descontar_stock_venta;
 DROP TRIGGER IF EXISTS trg_validar_stock_venta;
+DROP TRIGGER IF EXISTS trg_validar_margen_venta;
+DROP TRIGGER IF EXISTS trg_producto_margen_insert;
+DROP TRIGGER IF EXISTS trg_producto_margen_update;
 
 DELIMITER $$
 
@@ -53,6 +56,54 @@ BEGIN
     UPDATE PRODUCTO
        SET stock_actual = stock_actual - NEW.cantidad
      WHERE id_producto = NEW.id_producto;
+END$$
+
+-- =========================================================
+-- TRIGGER 3: IMPEDIR VENTAS BAJO COSTO
+-- Incluye descuentos aplicados a toda la línea.
+-- =========================================================
+CREATE TRIGGER trg_validar_margen_venta
+BEFORE INSERT ON DETALLE_VENTA
+FOR EACH ROW
+BEGIN
+    DECLARE v_costo DECIMAL(10,2) DEFAULT NULL;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_costo = NULL;
+
+    SELECT precio_costo INTO v_costo
+      FROM PRODUCTO
+     WHERE id_producto = NEW.id_producto
+     FOR UPDATE;
+
+    IF v_costo IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No se pudo validar el costo del producto';
+    END IF;
+
+    IF NEW.cantidad * NEW.precio_unitario - NEW.descuento < NEW.cantidad * v_costo THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La venta y el descuento no pueden quedar por debajo del costo';
+    END IF;
+END$$
+
+-- Impiden registrar o cambiar productos dejando el precio por debajo del costo.
+CREATE TRIGGER trg_producto_margen_insert
+BEFORE INSERT ON PRODUCTO
+FOR EACH ROW
+BEGIN
+    IF NEW.precio_venta < NEW.precio_costo THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El precio de venta no puede ser menor que el costo';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_producto_margen_update
+BEFORE UPDATE ON PRODUCTO
+FOR EACH ROW
+BEGIN
+    IF NEW.precio_venta < NEW.precio_costo THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El precio de venta no puede ser menor que el costo';
+    END IF;
 END$$
 
 DELIMITER ;

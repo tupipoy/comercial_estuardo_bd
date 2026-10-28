@@ -58,7 +58,7 @@ También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el 
 
 `02_bulk_data.sql` está preparado para ejecutarse una vez después del esquema y los datos semilla. Completa 50 registros en las ocho entidades principales y agrega detalles de compra y venta.
 
-La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes esas migraciones después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. En bases antiguas, revisa primero si cada columna ya existe antes de ejecutar su migración.
+La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. La migración 04 agrega controles de margen y debe aplicarse en bases ya existentes; en instalaciones limpias, esos controles ya vienen en el DDL y `sql/triggers/01_triggers.sql`. En bases antiguas, revisa primero si cada columna ya existe antes de ejecutar su migración.
 
 ## 5. Crear una contraseña inicial para el administrador
 

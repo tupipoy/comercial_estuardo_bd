@@ -35,7 +35,7 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
 ## Objetos SQL
 
-La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada` y `sp_registrar_compra_detallada` reciben un arreglo JSON de líneas para registrar una transacción con varios productos; la venta activa los triggers de stock por cada detalle. El DDL elimina y crea el esquema: no usarlo para actualizar una base con datos que se deban conservar.
+La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada` y `sp_registrar_compra_detallada` reciben un arreglo JSON de líneas para registrar una transacción con varios productos; los triggers validan stock, costo y descuentos. Para una base ya desplegada, aplicar `sql/migrations/04_enforce_product_margin.sql` en Railway/MySQL antes de probar ventas; el DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
 
 ## Módulos administrativos
 

@@ -746,7 +746,8 @@ def validar_datos_producto(form):
     ):
         try:
             precio = Decimal(datos[campo])
-            if not precio.is_finite() or precio < 0 or (not permitir_cero and precio == 0):
+            if (not precio.is_finite() or precio < 0 or precio > Decimal("99999999.99")
+                    or (not permitir_cero and precio == 0)):
                 raise InvalidOperation
             if precio.as_tuple().exponent < -2:
                 raise InvalidOperation
@@ -754,6 +755,10 @@ def validar_datos_producto(form):
         except (InvalidOperation, ValueError):
             limite = "igual o mayor que cero" if permitir_cero else "mayor que cero"
             errores.append(f"El precio de {etiqueta} debe ser un número {limite} con máximo dos decimales.")
+
+    if isinstance(datos["precio_costo"], Decimal) and isinstance(datos["precio_venta"], Decimal):
+        if datos["precio_venta"] < datos["precio_costo"]:
+            errores.append("El precio de venta no puede ser menor que el precio de costo.")
 
     for campo, etiqueta in (("stock_actual", "stock actual"), ("stock_minimo", "stock mínimo")):
         try:
@@ -1193,10 +1198,11 @@ def faltan_triggers_venta(cursor):
         WHERE TRIGGER_SCHEMA = DATABASE()
           AND TRIGGER_NAME IN (
               'trg_validar_stock_venta',
-              'trg_descontar_stock_venta'
+              'trg_descontar_stock_venta',
+              'trg_validar_margen_venta'
           );
     """)
-    return cursor.fetchone()["cantidad"] != 2
+    return cursor.fetchone()["cantidad"] != 3
 
 #ventas
 @app.route("/ventas")
@@ -1413,7 +1419,8 @@ def nueva_venta():
                 if not triggers_disponibles:
                     errores.append(
                         "No se puede registrar la venta: instala primero los triggers "
-                        "de control de inventario desde sql/triggers/01_triggers.sql."
+                        "de inventario y margen desde sql/triggers/01_triggers.sql "
+                        "o aplica sql/migrations/04_enforce_product_margin.sql en una base existente."
                     )
 
                 cliente_ids = {c["id_cliente"] for c in clientes_activos}
@@ -1426,6 +1433,11 @@ def nueva_venta():
                         errores.append("Uno de los productos no existe, está inactivo o no tiene stock.")
                         break
                     linea["precio_unitario"] = str(producto["precio_venta"])
+                    ingreso_linea = Decimal(producto["precio_venta"]) * linea["cantidad"] - linea["descuento"]
+                    costo_linea = Decimal(producto["precio_costo"]) * linea["cantidad"]
+                    if ingreso_linea < costo_linea:
+                        errores.append("El precio de venta y el descuento no pueden dejar la línea por debajo de su costo.")
+                        break
                     if linea["descuento"] > Decimal(producto["precio_venta"]) * linea["cantidad"]:
                         errores.append("El descuento de una línea supera el importe de esa línea.")
                         break
@@ -1516,7 +1528,7 @@ def cargar_opciones_compra(cursor):
     proveedores_activos = cursor.fetchall()
 
     cursor.execute("""
-        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.stock_actual
+        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta, p.stock_actual
         FROM PRODUCTO p
         INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
         WHERE p.estado = 1 AND c.estado = 1
@@ -1679,6 +1691,14 @@ def nueva_compra():
                     errores.append("El proveedor seleccionado no existe o está inactivo.")
                 if any(linea["id_producto"] not in producto_por_id for linea in lineas_validas):
                     errores.append("Uno de los productos no existe o está inactivo.")
+                for linea in lineas_validas:
+                    producto = producto_por_id.get(linea["id_producto"])
+                    if producto and Decimal(linea["costo_unitario"]) > Decimal(producto["precio_venta"]):
+                        errores.append(
+                            f"El costo de compra de {producto['nombre']} supera su precio de venta. "
+                            "Actualiza el precio de venta antes de registrar esta compra."
+                        )
+                        break
 
                 cursor.execute("""
                     SELECT id_empleado
