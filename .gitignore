@@ -23,3 +23,6 @@ __pycache__/
 
 *.log
 *.tmp
+
+# Respaldo local previo a cambios de inventario por sucursal
+version1/

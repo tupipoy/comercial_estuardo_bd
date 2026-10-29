@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ traslado.numero_traslado }} - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include "_sidebar.html" %}
+    {% include "_mobile_nav.html" %}
+    <main>
+        <section class="toolbar"><h2>Traslado {{ traslado.numero_traslado }}</h2><a class="btn" href="{{ url_for('traslados') }}">Volver a traslados</a></section>
+        <section class="product-form-page">
+            <p><strong>Fecha:</strong> {{ traslado.fecha_traslado }}</p>
+            <p><strong>Origen:</strong> {{ traslado.sucursal_origen }}</p>
+            <p><strong>Destino:</strong> {{ traslado.sucursal_destino }}</p>
+            <p><strong>Registrado por:</strong> {{ traslado.empleado }}</p>
+            <p><strong>Estado:</strong> {{ traslado.estado }}</p>
+        </section>
+        <div class="transfer-table"><table><thead><tr><th>Producto</th><th>Código</th><th>Cantidad trasladada</th></tr></thead><tbody>
+        {% for d in detalles %}<tr><td>{{ d.producto }}</td><td>{{ d.codigo_barra or '-' }}</td><td>{{ d.cantidad }}</td></tr>{% else %}<tr><td colspan="3" class="text-center">Sin productos en el traslado.</td></tr>{% endfor %}</tbody></table></div>
+        <div class="transfer-mobile-list">{% for d in detalles %}<article class="directory-card"><h3>{{ d.producto }}</h3><dl class="directory-details"><div><dt>Código</dt><dd>{{ d.codigo_barra or '-' }}</dd></div><div><dt>Cantidad trasladada</dt><dd>{{ d.cantidad }}</dd></div></dl></article>{% else %}<p class="directory-empty">Sin productos en el traslado.</p>{% endfor %}</div>
+    </main>
+</body>
+</html>

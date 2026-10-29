@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo traslado - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include "_sidebar.html" %}
+    {% include "_mobile_nav.html" %}
+    <main><section class="product-form-page">
+        <h2>Nuevo traslado</h2>
+        {% if errores %}<div class="alert-danger" role="alert"><ul>{% for error in errores %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+        <form class="product-form" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if session.get('user_role') == 'Administrador' %}<div class="form-group"><label for="id_sucursal_origen">Sucursal de origen</label><select id="id_sucursal_origen" name="id_sucursal_origen" required>{% for s in sucursales %}<option value="{{ s.id_sucursal }}" {% if datos.id_sucursal_origen|string == s.id_sucursal|string %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select></div>
+            {% else %}<div class="form-group"><label>Sucursal de origen</label><input value="{{ sucursales|selectattr('id_sucursal', 'equalto', datos.id_sucursal_origen|int)|map(attribute='nombre')|first or 'Mi sucursal' }}" disabled></div>{% endif %}
+            <div class="form-group"><label for="id_sucursal_destino">Sucursal de destino</label><select id="id_sucursal_destino" name="id_sucursal_destino" required><option value="">Selecciona destino</option>{% for s in destinos %}<option value="{{ s.id_sucursal }}" {% if datos.id_sucursal_destino|string == s.id_sucursal|string %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select></div>
+            <div id="lineas-traslado">{% for linea in lineas %}<fieldset class="form-group linea-transaccion"><legend>Producto {{ loop.index }}</legend><label>Producto<select name="id_producto" required><option value="">Selecciona producto</option>{% for p in productos %}<option value="{{ p.id_producto }}" {% if linea.id_producto|string == p.id_producto|string %}selected{% endif %}>{{ p.nombre }}{% if p.codigo_barra %} ({{ p.codigo_barra }}){% endif %} — disponible {{ p.stock_actual }}</option>{% endfor %}</select></label><label>Cantidad<input name="cantidad" type="number" min="1" max="{{ productos|selectattr('id_producto', 'equalto', linea.id_producto|int)|map(attribute='stock_actual')|first or '' }}" step="1" value="{{ linea.cantidad }}" required></label><button type="button" class="quitar-linea">Quitar producto</button></fieldset>{% endfor %}</div>
+            <button type="button" id="agregar-linea">Agregar otro producto</button>
+            <button class="btn-submit" type="submit" {% if not productos or not destinos %}disabled{% endif %}>Completar traslado</button>
+            <a class="btn" href="{{ url_for('traslados') }}">Cancelar</a>
+        </form>
+    </section></main>
+    <script>
+        const contenedor = document.getElementById('lineas-traslado');
+        document.getElementById('id_sucursal_origen')?.addEventListener('change', (event) => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('origen', event.target.value);
+            window.location.assign(url);
+        });
+        document.getElementById('agregar-linea').addEventListener('click', () => {
+            if (contenedor.children.length >= 50) return;
+            const fila = contenedor.querySelector('.linea-transaccion').cloneNode(true);
+            fila.querySelector('legend').textContent = `Producto ${contenedor.children.length + 1}`;
+            fila.querySelector('select').selectedIndex = 0;
+            fila.querySelector('input').value = '1';
+            contenedor.appendChild(fila);
+        });
+        contenedor.addEventListener('click', (event) => {
+            if (event.target.matches('.quitar-linea') && contenedor.children.length > 1) event.target.closest('.linea-transaccion').remove();
+        });
+    </script>
+</body>
+</html>

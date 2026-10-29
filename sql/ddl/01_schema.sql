@@ -79,7 +79,6 @@ CREATE TABLE PRODUCTO (
     descripcion TEXT NULL,
     precio_costo DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     precio_venta DECIMAL(10,2) NOT NULL,
-    stock_actual INT NOT NULL DEFAULT 0,
     stock_minimo INT NOT NULL DEFAULT 1,
     id_categoria INT NOT NULL,
     estado TINYINT(1) NOT NULL DEFAULT 1,
@@ -90,9 +89,52 @@ CREATE TABLE PRODUCTO (
     CONSTRAINT chk_producto_precio CHECK (precio_venta > 0),
     CONSTRAINT chk_producto_precio_costo CHECK (precio_costo >= 0),
     CONSTRAINT chk_producto_margen CHECK (precio_venta >= precio_costo),
-    CONSTRAINT chk_producto_stock_actual CHECK (stock_actual >= 0),
     CONSTRAINT chk_producto_stock_minimo CHECK (stock_minimo >= 0),
     CONSTRAINT chk_producto_estado CHECK (estado IN (0, 1))
+) ENGINE=InnoDB;
+
+CREATE TABLE INVENTARIO_SUCURSAL (
+    id_sucursal INT NOT NULL,
+    id_producto INT NOT NULL,
+    stock_actual INT NOT NULL DEFAULT 0,
+    actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_sucursal, id_producto),
+    CONSTRAINT fk_inventario_sucursal FOREIGN KEY (id_sucursal)
+        REFERENCES SUCURSAL(id_sucursal) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_inventario_producto FOREIGN KEY (id_producto)
+        REFERENCES PRODUCTO(id_producto) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_inventario_stock CHECK (stock_actual >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE TRASLADO (
+    id_traslado INT AUTO_INCREMENT PRIMARY KEY,
+    numero_traslado VARCHAR(30) NOT NULL UNIQUE,
+    fecha_traslado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) NOT NULL DEFAULT 'Completado',
+    id_sucursal_origen INT NOT NULL,
+    id_sucursal_destino INT NOT NULL,
+    id_empleado INT NOT NULL,
+    CONSTRAINT fk_traslado_origen FOREIGN KEY (id_sucursal_origen)
+        REFERENCES SUCURSAL(id_sucursal) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_traslado_destino FOREIGN KEY (id_sucursal_destino)
+        REFERENCES SUCURSAL(id_sucursal) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_traslado_empleado FOREIGN KEY (id_empleado)
+        REFERENCES EMPLEADO(id_empleado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_traslado_sucursales CHECK (id_sucursal_origen <> id_sucursal_destino),
+    CONSTRAINT chk_traslado_estado CHECK (estado IN ('Completado', 'Anulado'))
+) ENGINE=InnoDB;
+
+CREATE TABLE DETALLE_TRASLADO (
+    id_detalle_traslado INT AUTO_INCREMENT PRIMARY KEY,
+    id_traslado INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad INT NOT NULL,
+    CONSTRAINT fk_dettraslado_traslado FOREIGN KEY (id_traslado)
+        REFERENCES TRASLADO(id_traslado) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_dettraslado_producto FOREIGN KEY (id_producto)
+        REFERENCES PRODUCTO(id_producto) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT uq_dettraslado_producto UNIQUE (id_traslado, id_producto),
+    CONSTRAINT chk_dettraslado_cantidad CHECK (cantidad > 0)
 ) ENGINE=InnoDB;
 
 
@@ -117,6 +159,7 @@ CREATE TABLE COMPRA (
     estado_recepcion VARCHAR(20) NOT NULL,
     id_proveedor INT NOT NULL,
     id_empleado INT NOT NULL,
+    id_sucursal INT NOT NULL,
     CONSTRAINT fk_compra_proveedor FOREIGN KEY (id_proveedor) 
         REFERENCES PROVEEDOR(id_proveedor) 
         ON UPDATE CASCADE 
@@ -124,6 +167,10 @@ CREATE TABLE COMPRA (
     CONSTRAINT fk_compra_empleado FOREIGN KEY (id_empleado) 
         REFERENCES EMPLEADO(id_empleado) 
         ON UPDATE CASCADE 
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_compra_sucursal FOREIGN KEY (id_sucursal)
+        REFERENCES SUCURSAL(id_sucursal)
+        ON UPDATE CASCADE
         ON DELETE RESTRICT,
     CONSTRAINT chk_compra_total CHECK (total_compra >= 0),
     CONSTRAINT chk_compra_estado CHECK (estado_recepcion IN ('Pendiente', 'Recibido', 'Cancelado'))

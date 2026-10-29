@@ -21,8 +21,8 @@ GRANT ALL PRIVILEGES ON comercial_estuardo_db.*
 GRANT SELECT ON comercial_estuardo_db.CATEGORIA
     TO 'rol_ventas';
 GRANT SELECT (
-    id_producto, codigo_barra, nombre, precio_venta,
-    stock_actual, stock_minimo, id_categoria, estado
+    id_producto, codigo_barra, nombre, precio_costo, precio_venta,
+    stock_minimo, id_categoria, estado
 ) ON comercial_estuardo_db.PRODUCTO
     TO 'rol_ventas';
 GRANT SELECT (
@@ -32,6 +32,8 @@ GRANT SELECT (
 GRANT SELECT ON comercial_estuardo_db.SUCURSAL
     TO 'rol_ventas';
 GRANT SELECT, INSERT, UPDATE ON comercial_estuardo_db.CLIENTE
+    TO 'rol_ventas';
+GRANT SELECT ON comercial_estuardo_db.INVENTARIO_SUCURSAL
     TO 'rol_ventas';
 GRANT SELECT ON comercial_estuardo_db.VENTA
     TO 'rol_ventas';
@@ -47,7 +49,17 @@ GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_venta_detallada
 -- costo actual se actualicen dentro de una sola transacción.
 GRANT SELECT ON comercial_estuardo_db.CATEGORIA
     TO 'rol_bodega';
+GRANT SELECT ON comercial_estuardo_db.SUCURSAL
+    TO 'rol_bodega';
 GRANT SELECT, INSERT, UPDATE ON comercial_estuardo_db.PRODUCTO
+    TO 'rol_bodega';
+GRANT SELECT, INSERT, UPDATE ON comercial_estuardo_db.INVENTARIO_SUCURSAL
+    TO 'rol_bodega';
+GRANT SELECT ON comercial_estuardo_db.TRASLADO
+    TO 'rol_bodega';
+GRANT SELECT ON comercial_estuardo_db.DETALLE_TRASLADO
+    TO 'rol_bodega';
+GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_traslado
     TO 'rol_bodega';
 GRANT SELECT, INSERT, UPDATE ON comercial_estuardo_db.PROVEEDOR
     TO 'rol_bodega';

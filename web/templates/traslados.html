@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traslados - Comercial Estuardo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% include "_sidebar.html" %}
+    {% include "_mobile_nav.html" %}
+    <main>
+        {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}">{{ mensaje }}</div>{% endfor %}{% endwith %}
+        <section class="toolbar"><h2>Traslados entre sucursales</h2><a class="btn active" href="{{ url_for('nuevo_traslado') }}">Nuevo traslado</a></section>
+        <div class="transfer-table"><table><thead><tr><th>Número</th><th>Fecha</th><th>Origen</th><th>Destino</th><th>Empleado</th><th>Estado</th></tr></thead><tbody>
+        {% for traslado in traslados %}<tr><td><a href="{{ url_for('detalle_traslado', id_traslado=traslado.id_traslado) }}">{{ traslado.numero_traslado }}</a></td><td>{{ traslado.fecha_traslado }}</td><td>{{ traslado.sucursal_origen }}</td><td>{{ traslado.sucursal_destino }}</td><td>{{ traslado.empleado }}</td><td>{{ traslado.estado }}</td></tr>
+        {% else %}<tr><td colspan="6" class="text-center">Todavía no hay traslados.</td></tr>{% endfor %}</tbody></table></div>
+        <div class="transfer-mobile-list" aria-label="Historial de traslados">
+        {% for traslado in traslados %}<article class="directory-card"><h3><a href="{{ url_for('detalle_traslado', id_traslado=traslado.id_traslado) }}">{{ traslado.numero_traslado }}</a></h3><dl class="directory-details"><div><dt>Fecha</dt><dd>{{ traslado.fecha_traslado }}</dd></div><div><dt>Estado</dt><dd>{{ traslado.estado }}</dd></div><div><dt>Origen</dt><dd>{{ traslado.sucursal_origen }}</dd></div><div><dt>Destino</dt><dd>{{ traslado.sucursal_destino }}</dd></div><div class="directory-wide"><dt>Empleado</dt><dd>{{ traslado.empleado }}</dd></div></dl></article>
+        {% else %}<p class="directory-empty">Todavía no hay traslados.</p>{% endfor %}</div>
+    </main>
+</body>
+</html>

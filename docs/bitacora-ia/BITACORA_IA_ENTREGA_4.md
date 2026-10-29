@@ -152,3 +152,14 @@ Esta bitácora registra el apoyo de IA, los cambios realizados y la evidencia di
 - MySQL de Railway: el usuario reportó la aplicación de `sql/migrations/04_enforce_product_margin.sql`, consulta sin productos con precio bajo costo y presencia de `trg_validar_stock_venta`, `trg_descontar_stock_venta` y `trg_validar_margen_venta` el 28/10/2026.
 
 Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunque los triggers de margen se verificaron en la base productiva, el equipo debe ejecutar una instalación limpia en un esquema temporal, probar casos de compra/venta con varias líneas, reversión por stock insuficiente, permisos MySQL y aceptación visual en Railway, y actualizar esta bitácora con los resultados reales.
+
+
+### 29 de octubre de 2026
+
+#### Inventario y traslados entre sucursales
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Separar existencias por sucursal, habilitar traslados y permitir que Administración consulte el consolidado.
+- **Resultado:** Snapshot local `version1/` del commit `9467202`; cambios de modelo con `INVENTARIO_SUCURSAL`, compras/ventas por sucursal, traslados multiproducto y filtrado por rol. La migración propuesta asigna el stock existente a Sucursal Central, según decisión del usuario.
+- **Validación:** `py_compile`, compilación Jinja de plantillas nuevas y `git diff --check`; no se ejecutó MySQL ni se modificó Railway.
+- **Seguimiento:** Respaldar MySQL, ejecutar la migración en base temporal, probar CP4-21 a CP4-24 y aplicar objetos SQL actualizados antes de desplegar.

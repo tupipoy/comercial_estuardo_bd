@@ -16,7 +16,7 @@ Al iniciar sesión se abre el resumen con el total de productos activos, referen
 
 ## Inventario
 
-Abrir **Inventario** para consultar productos activos, categoría, precio y existencias. Usar el campo de búsqueda para filtrar por nombre, código o categoría. El filtro de stock bajo se puede combinar con la búsqueda para localizar existencias críticas de un producto o categoría.
+Abrir **Inventario** para consultar productos activos, categoría, precio y existencias. Vendedores y Bodega ven las cantidades de su sucursal asignada; el Administrador ve el total consolidado de todas las sucursales. Usar el campo de búsqueda para filtrar por nombre, código o categoría. El filtro de stock bajo se puede combinar con la búsqueda para localizar existencias críticas de un producto o categoría.
 
 ## Productos
 
@@ -40,7 +40,11 @@ Los usuarios autorizados pueden consultar ventas, filtrarlas por factura, client
 
 ## Compras
 
-Los usuarios autorizados pueden consultar compras, filtrarlas por número de orden, proveedor, empleado o rango de fechas, abrir **Ver orden** para revisar sus líneas y registrar una recepción seleccionando proveedor y número de orden, y agregando una o más líneas con producto, cantidad y costo unitario. Al confirmar, el procedimiento almacena la compra y actualiza stock y costo vigente dentro de una transacción.
+Los usuarios autorizados pueden consultar compras de su sucursal (el Administrador puede consultar todas), filtrarlas por número de orden, proveedor, empleado o rango de fechas, abrir **Ver orden** para revisar sus líneas y registrar una recepción en su sucursal, agregando una o más líneas con producto, cantidad y costo unitario. Al confirmar, el procedimiento almacena la compra y actualiza las existencias de esa sucursal y el costo vigente dentro de una transacción.
+
+## Traslados entre sucursales
+
+Administrador y Bodega pueden registrar traslados. Bodega solo puede elegir su sucursal asignada como origen; el Administrador puede elegir cualquier origen. Selecciona una sucursal destino distinta, agrega productos y cantidades disponibles y completa el traslado. El sistema descuenta del origen y acredita el destino dentro de una sola transacción; si falta stock, no se completa ninguna línea. El historial muestra traslados de las sucursales involucradas y el Administrador puede consultar todos.
 
 ## Mensajes y problemas comunes
 

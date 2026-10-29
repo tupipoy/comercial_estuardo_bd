@@ -10,36 +10,42 @@ USE comercial_estuardo_db;
 -- =========================================================
 CREATE OR REPLACE VIEW vw_inventario_valorizado AS
 SELECT
+    s.id_sucursal,
+    s.nombre AS sucursal,
     p.id_producto,
     p.codigo_barra,
     p.nombre,
     c.nombre AS categoria,
     p.precio_costo,
     p.precio_venta,
-    p.stock_actual,
+    i.stock_actual,
     p.stock_minimo,
-    (p.stock_actual * p.precio_costo) AS valor_inventario
-FROM PRODUCTO AS p
-INNER JOIN CATEGORIA AS c
-    ON p.id_categoria = c.id_categoria
-WHERE p.estado = 1;
+    (i.stock_actual * p.precio_costo) AS valor_inventario
+FROM INVENTARIO_SUCURSAL AS i
+INNER JOIN PRODUCTO AS p ON p.id_producto = i.id_producto
+INNER JOIN SUCURSAL AS s ON s.id_sucursal = i.id_sucursal
+INNER JOIN CATEGORIA AS c ON c.id_categoria = p.id_categoria
+WHERE p.estado = 1 AND s.estado = 1;
 
 -- =========================================================
--- VISTA 2: PRODUCTOS BAJO PUNTO DE REORDEN
+-- VISTA 2: PRODUCTOS BAJO PUNTO DE REORDEN POR SUCURSAL
 -- =========================================================
 CREATE OR REPLACE VIEW vw_productos_stock_critico AS
 SELECT
+    s.id_sucursal,
+    s.nombre AS sucursal,
     p.id_producto,
     p.codigo_barra,
     p.nombre,
     c.nombre AS categoria,
-    p.stock_actual,
+    i.stock_actual,
     p.stock_minimo
-FROM PRODUCTO AS p
-INNER JOIN CATEGORIA AS c
-    ON p.id_categoria = c.id_categoria
-WHERE p.estado = 1
-  AND p.stock_actual <= p.stock_minimo;
+FROM INVENTARIO_SUCURSAL AS i
+INNER JOIN PRODUCTO AS p ON p.id_producto = i.id_producto
+INNER JOIN SUCURSAL AS s ON s.id_sucursal = i.id_sucursal
+INNER JOIN CATEGORIA AS c ON c.id_categoria = p.id_categoria
+WHERE p.estado = 1 AND s.estado = 1
+  AND i.stock_actual <= p.stock_minimo;
 
 -- =========================================================
 -- VISTA 3: VENTAS DETALLADAS

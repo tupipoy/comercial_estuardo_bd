@@ -12,7 +12,7 @@
 
 ## Resumen y catálogo
 
-`/resumen` consulta totales de productos, alertas por el stock mínimo configurado, costos disponibles, compras/ventas por rango seleccionado y productos por categoría. No se presenta un historial de movimientos porque el esquema no tiene una tabla de movimientos; la actividad reciente muestra únicamente compras y ventas existentes. `/productos` aplica búsqueda, filtros y orden parametrizados y pagina a 24 resultados. La navegación común se renderiza desde parciales Jinja y usa CSS responsive sin dependencias adicionales.
+`INVENTARIO_SUCURSAL` almacena el stock por producto y sucursal. Administración consulta totales consolidados; Vendedores y Bodega quedan limitados a la sucursal de su empleado. Compras y ventas actualizan existencias en la sucursal del empleado. Los traslados usan `TRASLADO`, `DETALLE_TRASLADO` y `sp_registrar_traslado` para descontar origen y acreditar destino en una sola transacción. `/resumen` y `/productos` aplican el mismo alcance de inventario.
 
 ## Ejecución local
 
@@ -35,7 +35,7 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
 ## Objetos SQL
 
-La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada` y `sp_registrar_compra_detallada` reciben un arreglo JSON de líneas para registrar una transacción con varios productos; los triggers validan stock, costo y descuentos. Para una base ya desplegada, el usuario ejecutó `sql/migrations/04_enforce_product_margin.sql` en Railway/MySQL el 28/10/2026. Reportó que la consulta de productos bajo costo quedó vacía y verificó los triggers `trg_validar_stock_venta`, `trg_descontar_stock_venta` y `trg_validar_margen_venta`. Falta registrar una venta funcional posterior a la migración. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
+La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada`, `sp_registrar_compra_detallada` y `sp_registrar_traslado` procesan operaciones atómicas. La migración 06 asigna el stock global existente a Sucursal Central; antes de aplicarla en producción se debe respaldar y verificar esa sucursal. Después se vuelven a instalar triggers, vistas, procedimientos y roles. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
 
 ## Módulos administrativos
 

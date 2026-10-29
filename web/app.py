@@ -107,6 +107,7 @@ def login():
                             e.apellidos,
                             e.cargo,
                             e.password_hash,
+                            e.id_sucursal,
                             e.intentos_login_fallidos,
                             (e.bloqueado_hasta IS NOT NULL
                              AND e.bloqueado_hasta > NOW()) AS suspendido,
@@ -175,6 +176,7 @@ def login():
             ):
                 session.clear()
                 session["user_id"] = empleado["id_empleado"]
+                session["user_branch_id"] = empleado["id_sucursal"]
                 session["user_name"] = (
                     f'{empleado["nombres"]} {empleado["apellidos"]}'
                 )
@@ -211,6 +213,35 @@ def fechas_filtro_transacciones():
     return desde, hasta, fecha_desde, fecha_hasta, None
 
 
+def obtener_sucursal_empleado(cursor, id_empleado=None):
+    """Obtiene la sucursal asignada al empleado autenticado."""
+    empleado_id = id_empleado or session.get("user_id")
+    cursor.execute(
+        "SELECT id_sucursal FROM EMPLEADO WHERE id_empleado = %s AND estado = 1",
+        (empleado_id,),
+    )
+    fila = cursor.fetchone()
+    return fila["id_sucursal"] if fila else None
+
+
+def consulta_existencias(cursor, id_empleado=None, consolidar_admin=True):
+    """Devuelve el SQL de existencias globales para Administración o de sucursal."""
+    if consolidar_admin and session.get("user_role") == "Administrador":
+        return (
+            "SELECT i.id_producto, SUM(i.stock_actual) AS stock_actual "
+            "FROM INVENTARIO_SUCURSAL AS i "
+            "INNER JOIN SUCURSAL AS s ON s.id_sucursal = i.id_sucursal "
+            "WHERE s.estado = 1 GROUP BY i.id_producto",
+            (),
+        )
+    sucursal = obtener_sucursal_empleado(cursor, id_empleado)
+    return (
+        "SELECT id_producto, stock_actual FROM INVENTARIO_SUCURSAL "
+        "WHERE id_sucursal = %s",
+        (sucursal,),
+    )
+
+
 @app.route("/resumen")
 @requiere_rol("Administrador", "Vendedor", "Bodega")
 def resumen():
@@ -228,26 +259,38 @@ def resumen():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            stock_sql, stock_params = consulta_existencias(cursor)
+            id_sucursal_scope = (
+                None if session.get("user_role") == "Administrador"
+                else obtener_sucursal_empleado(cursor)
+            )
             cursor.execute("""
                 SELECT COUNT(*) AS total_productos,
-                       COALESCE(SUM(stock_actual > 0 AND stock_actual <= stock_minimo), 0) AS stock_bajo,
-                       COALESCE(SUM(stock_actual = 0), 0) AS agotados,
-                       COALESCE(SUM(stock_actual > 0 AND precio_costo <= 0), 0) AS costos_pendientes,
-                       COALESCE(SUM(stock_actual * precio_costo), 0) AS valor_inventario
-                FROM PRODUCTO
-                WHERE estado = 1
-            """)
+                       COALESCE(SUM(COALESCE(existencias.stock_actual, 0) > 0 AND COALESCE(existencias.stock_actual, 0) <= p.stock_minimo), 0) AS stock_bajo,
+                       COALESCE(SUM(COALESCE(existencias.stock_actual, 0) = 0), 0) AS agotados,
+                       COALESCE(SUM(COALESCE(existencias.stock_actual, 0) > 0 AND p.precio_costo <= 0), 0) AS costos_pendientes,
+                       COALESCE(SUM(COALESCE(existencias.stock_actual, 0) * p.precio_costo), 0) AS valor_inventario
+                FROM PRODUCTO AS p
+                LEFT JOIN (""" + stock_sql + """) AS existencias ON existencias.id_producto = p.id_producto
+                WHERE p.estado = 1
+            """, stock_params)
             indicadores = cursor.fetchone()
 
             cursor.execute("""
                 SELECT
-                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s) AS ventas_periodo,
-                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s) AS compras_periodo,
-                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s) AS ventas_periodo_anterior,
-                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s) AS compras_periodo_anterior
+                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s
+                     AND (%s IS NULL OR id_sucursal = %s)) AS ventas_periodo,
+                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s
+                     AND (%s IS NULL OR id_sucursal = %s)) AS compras_periodo,
+                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s
+                     AND (%s IS NULL OR id_sucursal = %s)) AS ventas_periodo_anterior,
+                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s
+                     AND (%s IS NULL OR id_sucursal = %s)) AS compras_periodo_anterior
             """, (
-                fecha_inicio, fecha_fin, fecha_inicio, fecha_fin,
-                fecha_inicio_anterior, fecha_inicio, fecha_inicio_anterior, fecha_inicio,
+                fecha_inicio, fecha_fin, id_sucursal_scope, id_sucursal_scope,
+                fecha_inicio, fecha_fin, id_sucursal_scope, id_sucursal_scope,
+                fecha_inicio_anterior, fecha_inicio, id_sucursal_scope, id_sucursal_scope,
+                fecha_inicio_anterior, fecha_inicio, id_sucursal_scope, id_sucursal_scope,
             ))
             actividad = cursor.fetchone()
 
@@ -265,26 +308,36 @@ def resumen():
             cursor.execute("""
                 SELECT p.id_producto, p.nombre, p.codigo_barra, p.stock_actual,
                        p.stock_minimo, c.nombre AS categoria
-                FROM PRODUCTO p
+                FROM (
+                    SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
+                    FROM PRODUCTO AS base
+                    LEFT JOIN (""" + stock_sql + """) AS existencias
+                      ON existencias.id_producto = base.id_producto
+                ) AS p
                 INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
                 WHERE p.estado = 1 AND p.stock_actual <= p.stock_minimo
                 ORDER BY p.stock_actual ASC, p.nombre
                 LIMIT 6
-            """)
+            """, stock_params)
             alertas = cursor.fetchall()
 
             cursor.execute("""
                 (SELECT 'Venta' AS tipo, v.fecha_venta AS fecha,
                         CONCAT(v.serie_factura, '-', v.numero_factura) AS referencia,
                         v.total_venta AS total
-                 FROM VENTA v ORDER BY v.fecha_venta DESC LIMIT 6)
+                 FROM VENTA v WHERE (%s IS NULL OR v.id_sucursal = %s)
+                 ORDER BY v.fecha_venta DESC LIMIT 6)
                 UNION ALL
                 (SELECT 'Compra' AS tipo, c.fecha_compra AS fecha,
                         c.numero_orden AS referencia, c.total_compra AS total
-                 FROM COMPRA c ORDER BY c.fecha_compra DESC LIMIT 6)
+                 FROM COMPRA c WHERE (%s IS NULL OR c.id_sucursal = %s)
+                 ORDER BY c.fecha_compra DESC LIMIT 6)
                 ORDER BY fecha DESC
                 LIMIT 8
-            """)
+            """, (
+                id_sucursal_scope, id_sucursal_scope,
+                id_sucursal_scope, id_sucursal_scope,
+            ))
             recientes = cursor.fetchall()
     except Exception:
         app.logger.exception("No se pudo cargar el resumen de inventario")
@@ -342,12 +395,19 @@ def inventario():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            stock_sql, stock_params = consulta_existencias(cursor)
+            parametros = [*stock_params, *parametros]
             orden = "p.stock_actual ASC, p.nombre" if estado_stock in {"bajo", "agotado"} else "c.nombre, p.nombre"
             cursor.execute(f"""
                 SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
                        p.stock_actual, p.stock_minimo, p.precio_costo,
                        p.id_categoria, c.nombre AS categoria
-                FROM PRODUCTO p
+                FROM (
+                    SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
+                    FROM PRODUCTO AS base
+                    LEFT JOIN ({stock_sql}) AS existencias
+                      ON existencias.id_producto = base.id_producto
+                ) AS p
                 INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
                 WHERE {' AND '.join(condiciones)}
                 ORDER BY {orden};
@@ -577,6 +637,13 @@ def desactivar_sucursal(id_sucursal):
             if cursor.fetchone()["total"]:
                 flash("Reasigna o desactiva primero los empleados activos de esta sucursal.", "warning")
                 return redirect(url_for("sucursales"))
+            cursor.execute("""
+                SELECT COALESCE(SUM(stock_actual), 0) AS total
+                FROM INVENTARIO_SUCURSAL WHERE id_sucursal = %s
+            """, (id_sucursal,))
+            if cursor.fetchone()["total"]:
+                flash("Traslada primero todas las existencias fuera de esta sucursal.", "warning")
+                return redirect(url_for("sucursales"))
             cursor.execute("UPDATE SUCURSAL SET estado = 0 WHERE id_sucursal = %s AND estado = 1", (id_sucursal,))
             connection.commit()
         flash("Sucursal desactivada; el historial asociado se conservó.", "success")
@@ -790,7 +857,6 @@ def validar_datos_producto(form):
         "descripcion": form.get("descripcion", "").strip() or None,
         "precio_costo": form.get("precio_costo", "").strip(),
         "precio_venta": form.get("precio_venta", "").strip(),
-        "stock_actual": form.get("stock_actual", "").strip(),
         "stock_minimo": form.get("stock_minimo", "").strip(),
         "id_categoria": form.get("id_categoria", "").strip(),
     }
@@ -824,7 +890,7 @@ def validar_datos_producto(form):
         if datos["precio_venta"] < datos["precio_costo"]:
             errores.append("El precio de venta no puede ser menor que el precio de costo.")
 
-    for campo, etiqueta in (("stock_actual", "stock actual"), ("stock_minimo", "stock mínimo")):
+    for campo, etiqueta in (("stock_minimo", "stock mínimo"),):
         try:
             valor = int(datos[campo])
             if valor < 0:
@@ -883,10 +949,17 @@ def productos():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
+            stock_sql, stock_params = consulta_existencias(cursor)
+            parametros = [*stock_params, *parametros]
             categorias = cargar_categorias(cursor)
             cursor.execute(f"""
                 SELECT COUNT(*) AS total
-                FROM PRODUCTO p
+                FROM (
+                    SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
+                    FROM PRODUCTO AS base
+                    LEFT JOIN ({stock_sql}) AS existencias
+                      ON existencias.id_producto = base.id_producto
+                ) AS p
                 INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
                 WHERE {where}
             """, parametros)
@@ -906,11 +979,21 @@ def productos():
                     p.stock_minimo,
                     p.id_categoria,
                     c.nombre AS categoria
-                FROM PRODUCTO p
+                FROM (
+                    SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
+                    FROM PRODUCTO AS base
+                    LEFT JOIN ({stock_sql}) AS existencias
+                      ON existencias.id_producto = base.id_producto
+                ) AS p
                 INNER JOIN CATEGORIA c
                     ON p.id_categoria = c.id_categoria
                 WHERE """ + where + f" ORDER BY {ordenes[orden]} LIMIT %s OFFSET %s",
-                (*parametros, por_pagina, offset),
+                (
+                    *stock_params,
+                    *parametros[len(stock_params):],
+                    por_pagina,
+                    offset,
+                ),
             )
             lista_productos = cursor.fetchall()
     except Exception:
@@ -955,13 +1038,18 @@ def nuevo_producto():
                         cursor.execute("""
                             INSERT INTO PRODUCTO (
                                 codigo_barra, nombre, descripcion, precio_costo, precio_venta,
-                                stock_actual, stock_minimo, id_categoria, estado
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1);
+                                stock_minimo, id_categoria, estado
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, 1);
                         """, (
                             datos["codigo_barra"], datos["nombre"], datos["descripcion"],
-                            datos["precio_costo"], datos["precio_venta"], datos["stock_actual"],
+                            datos["precio_costo"], datos["precio_venta"],
                             datos["stock_minimo"], datos["id_categoria"],
                         ))
+                        id_producto = cursor.lastrowid
+                        cursor.execute("""
+                            INSERT INTO INVENTARIO_SUCURSAL (id_sucursal, id_producto, stock_actual)
+                            SELECT id_sucursal, %s, 0 FROM SUCURSAL WHERE estado = 1
+                        """, (id_producto,))
                         connection.commit()
                         flash("Producto creado correctamente.", "success")
                         return redirect(url_for("productos"))
@@ -1012,13 +1100,12 @@ def editar_producto(id_producto):
                                 descripcion = %s,
                                 precio_costo = %s,
                                 precio_venta = %s,
-                                stock_actual = %s,
                                 stock_minimo = %s,
                                 id_categoria = %s
                             WHERE id_producto = %s AND estado = 1;
                         """, (
                             datos["codigo_barra"], datos["nombre"], datos["descripcion"],
-                            datos["precio_costo"], datos["precio_venta"], datos["stock_actual"],
+                            datos["precio_costo"], datos["precio_venta"],
                             datos["stock_minimo"], datos["id_categoria"], id_producto,
                         ))
                         connection.commit()
@@ -1232,7 +1319,7 @@ def desactivar_cliente(id_cliente):
     return redirect(url_for("clientes"))
 
 
-def cargar_opciones_venta(cursor):
+def cargar_opciones_venta(cursor, id_sucursal):
     """Consulta clientes y productos elegibles para una venta."""
     cursor.execute("""
         SELECT id_cliente, nit, nombres, apellidos
@@ -1244,12 +1331,13 @@ def cargar_opciones_venta(cursor):
 
     cursor.execute("""
         SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta,
-               p.stock_actual, c.nombre AS categoria
+               i.stock_actual, c.nombre AS categoria
         FROM PRODUCTO p
         INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
-        WHERE p.estado = 1 AND p.stock_actual > 0 AND c.estado = 1
+        INNER JOIN INVENTARIO_SUCURSAL i ON i.id_producto = p.id_producto
+        WHERE p.estado = 1 AND i.id_sucursal = %s AND i.stock_actual > 0 AND c.estado = 1
         ORDER BY p.nombre;
-    """)
+    """, (id_sucursal,))
     productos_disponibles = cursor.fetchall()
     return clientes_activos, productos_disponibles
 
@@ -1290,10 +1378,13 @@ def ventas():
         if fecha_hasta:
             condiciones.append("v.fecha_venta < %s")
             parametros.append((fecha_hasta + timedelta(days=1)).isoformat())
-    where = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
+            if session.get("user_role") != "Administrador":
+                condiciones.append("v.id_sucursal = %s")
+                parametros.append(obtener_sucursal_empleado(cursor))
+            where = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
             cursor.execute(f"""
                 SELECT
                     v.id_venta,
@@ -1334,7 +1425,7 @@ def detalle_venta(id_venta):
                        v.total_venta, v.tipo_pago, v.estado,
                        CONCAT_WS(' ', c.nombres, c.apellidos) AS cliente,
                        e.nombres AS empleado_nombres, e.apellidos AS empleado_apellidos,
-                       s.nombre AS sucursal
+                       s.id_sucursal, s.nombre AS sucursal
                 FROM VENTA v
                 INNER JOIN CLIENTE c ON c.id_cliente = v.id_cliente
                 INNER JOIN EMPLEADO e ON e.id_empleado = v.id_empleado
@@ -1343,6 +1434,9 @@ def detalle_venta(id_venta):
             """, (id_venta,))
             venta = cursor.fetchone()
             if not venta:
+                return "Venta no encontrada", 404
+            if (session.get("user_role") != "Administrador"
+                    and venta["id_sucursal"] != obtener_sucursal_empleado(cursor)):
                 return "Venta no encontrada", 404
             cursor.execute("""
                 SELECT d.id_detalle_venta, p.codigo_barra, p.nombre AS producto,
@@ -1367,7 +1461,7 @@ def eliminar_venta(id_venta):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id_venta FROM VENTA WHERE id_venta = %s FOR UPDATE",
+                "SELECT id_venta, id_sucursal FROM VENTA WHERE id_venta = %s FOR UPDATE",
                 (id_venta,),
             )
             venta = cursor.fetchone()
@@ -1390,11 +1484,11 @@ def eliminar_venta(id_venta):
             for detalle in detalles:
                 cursor.execute(
                     """
-                    UPDATE PRODUCTO
+                    UPDATE INVENTARIO_SUCURSAL
                     SET stock_actual = stock_actual + %s
-                    WHERE id_producto = %s
+                    WHERE id_producto = %s AND id_sucursal = %s
                     """,
-                    (detalle["cantidad"], detalle["id_producto"]),
+                    (detalle["cantidad"], detalle["id_producto"], venta["id_sucursal"]),
                 )
 
             cursor.execute("DELETE FROM VENTA WHERE id_venta = %s", (id_venta,))
@@ -1476,7 +1570,8 @@ def nueva_venta():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            clientes_activos, productos_disponibles = cargar_opciones_venta(cursor)
+            id_sucursal_venta = obtener_sucursal_empleado(cursor)
+            clientes_activos, productos_disponibles = cargar_opciones_venta(cursor, id_sucursal_venta)
             triggers_disponibles = not faltan_triggers_venta(cursor)
 
             if request.method == "POST" and not errores:
@@ -1581,7 +1676,7 @@ def nueva_venta():
     )
 
 
-def cargar_opciones_compra(cursor):
+def cargar_opciones_compra(cursor, id_sucursal):
     """Consulta proveedores y productos activos para una compra."""
     cursor.execute("""
         SELECT id_proveedor, razon_social
@@ -1592,12 +1687,15 @@ def cargar_opciones_compra(cursor):
     proveedores_activos = cursor.fetchall()
 
     cursor.execute("""
-        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta, p.stock_actual
+        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta,
+               COALESCE(i.stock_actual, 0) AS stock_actual
         FROM PRODUCTO p
         INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
+        LEFT JOIN INVENTARIO_SUCURSAL i
+          ON i.id_producto = p.id_producto AND i.id_sucursal = %s
         WHERE p.estado = 1 AND c.estado = 1
         ORDER BY p.nombre;
-    """)
+    """, (id_sucursal,))
     productos_activos = cursor.fetchall()
     return proveedores_activos, productos_activos
 
@@ -1623,10 +1721,13 @@ def compras():
         if fecha_hasta:
             condiciones.append("c.fecha_compra < %s")
             parametros.append((fecha_hasta + timedelta(days=1)).isoformat())
-    where = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
+            if session.get("user_role") != "Administrador":
+                condiciones.append("c.id_sucursal = %s")
+                parametros.append(obtener_sucursal_empleado(cursor))
+            where = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
             cursor.execute(f"""
                 SELECT
                     c.id_compra,
@@ -1659,7 +1760,7 @@ def detalle_compra(id_compra):
     try:
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT c.id_compra, c.numero_orden, c.fecha_compra, c.total_compra,
+                SELECT c.id_compra, c.id_sucursal, c.numero_orden, c.fecha_compra, c.total_compra,
                        c.estado_recepcion, p.razon_social AS proveedor,
                        e.nombres AS empleado_nombres, e.apellidos AS empleado_apellidos
                 FROM COMPRA c
@@ -1669,6 +1770,9 @@ def detalle_compra(id_compra):
             """, (id_compra,))
             compra = cursor.fetchone()
             if not compra:
+                return "Compra no encontrada", 404
+            if (session.get("user_role") != "Administrador"
+                    and compra["id_sucursal"] != obtener_sucursal_empleado(cursor)):
                 return "Compra no encontrada", 404
             cursor.execute("""
                 SELECT d.id_detalle_compra, p.codigo_barra, p.nombre AS producto,
@@ -1746,7 +1850,8 @@ def nueva_compra():
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            proveedores, productos = cargar_opciones_compra(cursor)
+            id_sucursal_compra = obtener_sucursal_empleado(cursor)
+            proveedores, productos = cargar_opciones_compra(cursor, id_sucursal_compra)
 
             if request.method == "POST" and not errores:
                 proveedor_ids = {p["id_proveedor"] for p in proveedores}
@@ -1778,6 +1883,7 @@ def nueva_compra():
                         datos["numero_orden"],
                         datos["id_proveedor"],
                         session["user_id"],
+                        id_sucursal_compra,
                         json.dumps(lineas_validas),
                     ))
                     while cursor.nextset():
@@ -1807,6 +1913,189 @@ def nueva_compra():
         productos=productos,
         datos=datos,
         lineas=lineas_formulario,
+        errores=errores,
+    )
+
+
+@app.route("/traslados")
+@requiere_rol("Administrador", "Bodega")
+def traslados():
+    """Lista movimientos entre sucursales, limitados a las sucursales del empleado."""
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT t.id_traslado, t.numero_traslado, t.fecha_traslado, t.estado,
+                       origen.nombre AS sucursal_origen,
+                       destino.nombre AS sucursal_destino,
+                       CONCAT(e.nombres, ' ', e.apellidos) AS empleado
+                FROM TRASLADO AS t
+                INNER JOIN SUCURSAL AS origen ON origen.id_sucursal = t.id_sucursal_origen
+                INNER JOIN SUCURSAL AS destino ON destino.id_sucursal = t.id_sucursal_destino
+                INNER JOIN EMPLEADO AS e ON e.id_empleado = t.id_empleado
+            """
+            parametros = ()
+            if session.get("user_role") != "Administrador":
+                id_sucursal = obtener_sucursal_empleado(cursor)
+                sql += " WHERE t.id_sucursal_origen = %s OR t.id_sucursal_destino = %s"
+                parametros = (id_sucursal, id_sucursal)
+            sql += " ORDER BY t.fecha_traslado DESC, t.id_traslado DESC LIMIT 200"
+            cursor.execute(sql, parametros)
+            lista = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("traslados.html", traslados=lista)
+
+
+@app.route("/traslados/<int:id_traslado>")
+@requiere_rol("Administrador", "Bodega")
+def detalle_traslado(id_traslado):
+    """Muestra los productos y cantidades del traslado."""
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT t.id_traslado, t.numero_traslado, t.fecha_traslado, t.estado,
+                       t.id_sucursal_origen, t.id_sucursal_destino,
+                       origen.nombre AS sucursal_origen, destino.nombre AS sucursal_destino,
+                       CONCAT(e.nombres, ' ', e.apellidos) AS empleado
+                FROM TRASLADO AS t
+                INNER JOIN SUCURSAL AS origen ON origen.id_sucursal = t.id_sucursal_origen
+                INNER JOIN SUCURSAL AS destino ON destino.id_sucursal = t.id_sucursal_destino
+                INNER JOIN EMPLEADO AS e ON e.id_empleado = t.id_empleado
+                WHERE t.id_traslado = %s
+            """, (id_traslado,))
+            traslado = cursor.fetchone()
+            if not traslado:
+                return "Traslado no encontrado", 404
+            if session.get("user_role") != "Administrador":
+                id_sucursal = obtener_sucursal_empleado(cursor)
+                if id_sucursal not in (traslado["id_sucursal_origen"], traslado["id_sucursal_destino"]):
+                    return "Traslado no encontrado", 404
+            cursor.execute("""
+                SELECT p.nombre AS producto, p.codigo_barra, d.cantidad
+                FROM DETALLE_TRASLADO AS d
+                INNER JOIN PRODUCTO AS p ON p.id_producto = d.id_producto
+                WHERE d.id_traslado = %s ORDER BY p.nombre
+            """, (id_traslado,))
+            detalles = cursor.fetchall()
+    finally:
+        connection.close()
+    return render_template("traslado_detalle.html", traslado=traslado, detalles=detalles)
+
+
+@app.route("/traslados/nuevo", methods=["GET", "POST"])
+@requiere_rol("Administrador", "Bodega")
+def nuevo_traslado():
+    """Transfiere existencias desde la sucursal asignada a la elegida."""
+    errores = []
+    datos = {"id_sucursal_origen": "", "id_sucursal_destino": ""}
+    lineas = [{"id_producto": "", "cantidad": "1"}]
+    sucursales = []
+    productos = []
+    connection = None
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            id_sucursal_empleado = obtener_sucursal_empleado(cursor)
+            cursor.execute("SELECT id_sucursal, nombre FROM SUCURSAL WHERE estado = 1 ORDER BY nombre")
+            sucursales = cursor.fetchall()
+            if session.get("user_role") == "Administrador":
+                datos["id_sucursal_origen"] = request.form.get(
+                    "id_sucursal_origen",
+                    request.args.get(
+                        "origen",
+                        str(sucursales[0]["id_sucursal"]) if sucursales else "",
+                    ),
+                ).strip()
+            else:
+                datos["id_sucursal_origen"] = str(id_sucursal_empleado)
+            datos["id_sucursal_destino"] = request.form.get(
+                "id_sucursal_destino", ""
+            ).strip()
+
+            try:
+                origen = int(datos["id_sucursal_origen"])
+            except (TypeError, ValueError):
+                origen = id_sucursal_empleado
+                errores.append("Selecciona una sucursal de origen válida.")
+            try:
+                destino = int(datos["id_sucursal_destino"])
+            except (TypeError, ValueError):
+                destino = None
+                if request.method == "POST":
+                    errores.append("Selecciona una sucursal de destino válida.")
+
+            sucursal_ids = {s["id_sucursal"] for s in sucursales}
+            if origen not in sucursal_ids:
+                errores.append("La sucursal de origen no está activa.")
+            if destino is not None and destino not in sucursal_ids:
+                errores.append("La sucursal de destino no está activa.")
+            if session.get("user_role") != "Administrador" and origen != id_sucursal_empleado:
+                errores.append("Solo puedes trasladar productos desde tu sucursal asignada.")
+            if destino == origen:
+                errores.append("El origen y destino deben ser sucursales distintas.")
+
+            cursor.execute("""
+                SELECT p.id_producto, p.nombre, p.codigo_barra, i.stock_actual
+                FROM PRODUCTO AS p
+                INNER JOIN INVENTARIO_SUCURSAL AS i ON i.id_producto = p.id_producto
+                WHERE p.estado = 1 AND i.id_sucursal = %s AND i.stock_actual > 0
+                ORDER BY p.nombre
+            """, (origen,))
+            productos = cursor.fetchall()
+
+            if request.method == "POST":
+                producto_ids = request.form.getlist("id_producto")
+                cantidades = request.form.getlist("cantidad")
+                if len(producto_ids) != len(cantidades) or len(producto_ids) > 50:
+                    errores.append("Las líneas del traslado no son válidas.")
+                lineas = []
+                lineas_validas = []
+                inventario = {p["id_producto"]: p for p in productos}
+                for id_producto, cantidad in zip(producto_ids, cantidades):
+                    lineas.append({"id_producto": id_producto, "cantidad": cantidad})
+                    try:
+                        id_num = int(id_producto)
+                        cantidad_num = int(cantidad)
+                        producto = inventario.get(id_num)
+                        if (not producto or cantidad_num <= 0
+                                or cantidad_num > producto["stock_actual"]):
+                            raise ValueError
+                        lineas_validas.append({"id_producto": id_num, "cantidad": cantidad_num})
+                    except (TypeError, ValueError):
+                        errores.append("Revisa que cada producto tenga existencias suficientes y cantidad válida.")
+                        break
+                if not lineas_validas:
+                    errores.append("Agrega al menos un producto al traslado.")
+                if len(lineas_validas) != len({l["id_producto"] for l in lineas_validas}):
+                    errores.append("Cada producto debe aparecer una sola vez en el traslado.")
+
+                if not errores:
+                    numero = f"TR-{date.today():%Y%m%d}-{secrets.token_hex(3).upper()}"
+                    cursor.callproc("sp_registrar_traslado", (
+                        numero, origen, destino, session["user_id"],
+                        json.dumps(lineas_validas),
+                    ))
+                    while cursor.nextset():
+                        pass
+                    connection.commit()
+                    flash(f"Traslado {numero} completado correctamente.", "success")
+                    return redirect(url_for("traslados"))
+    except Exception:
+        if connection:
+            connection.rollback()
+        app.logger.exception("No se pudo registrar el traslado")
+        errores.append("No se pudo registrar el traslado. Verifica las existencias e inténtalo de nuevo.")
+    finally:
+        if connection:
+            connection.close()
+
+    destinos = [s for s in sucursales if str(s["id_sucursal"]) != str(datos["id_sucursal_origen"])]
+    return render_template(
+        "traslado_form.html", datos=datos, lineas=lineas,
+        sucursales=sucursales, destinos=destinos, productos=productos,
         errores=errores,
     )
 

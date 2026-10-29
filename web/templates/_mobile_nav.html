@@ -13,7 +13,7 @@
     <details class="mobile-more">
         <summary><span class="more-dots">•••</span><span>Más</span></summary>
         <div class="more-menu">
-            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}<a href="{{ url_for('productos') }}">Productos</a><a href="{{ url_for('compras') }}">Compras</a><a href="{{ url_for('proveedores') }}">Proveedores</a>{% endif %}
+            {% if session.get('user_role') in ['Administrador', 'Bodega'] %}<a href="{{ url_for('productos') }}">Productos</a><a href="{{ url_for('compras') }}">Compras</a><a href="{{ url_for('proveedores') }}">Proveedores</a><a href="{{ url_for('traslados') }}">Traslados</a>{% endif %}
             {% if session.get('user_role') in ['Administrador', 'Vendedor'] %}<a href="{{ url_for('clientes') }}">Clientes</a>{% endif %}
             {% if session.get('user_role') == 'Administrador' %}<a href="{{ url_for('categorias') }}">Categorías</a><a href="{{ url_for('sucursales') }}">Sucursales</a><a href="{{ url_for('empleados') }}">Empleados</a>{% endif %}
             <form method="POST" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Cerrar sesión</button></form>

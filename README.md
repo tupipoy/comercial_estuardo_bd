@@ -17,10 +17,11 @@ Sistema académico de gestión de inventario, compras y ventas para Comercial Es
 
 - Inicio de sesión con contraseñas guardadas como hash y sesiones Flask.
 - Acceso por cargo: Administrador, Vendedor y Bodega.
-- Inventario con consulta de existencias y alerta de stock mínimo.
+- Inventario por sucursal: Vendedores y Bodega ven su ubicación; Administración consulta el total consolidado.
 - CRUD de Productos, Clientes y Proveedores, con desactivación lógica.
 - Consulta y registro web de Ventas de varios productos mediante `sp_registrar_venta_detallada`; los triggers validan y descuentan existencias.
-- Consulta y registro web de Compras de varios productos mediante `sp_registrar_compra_detallada`; el procedimiento actualiza existencias y costo.
+- Consulta y registro web de Compras de varios productos mediante `sp_registrar_compra_detallada`; el procedimiento actualiza existencias de la sucursal asignada y costo.
+- Traslados multiproducto entre sucursales con validación de stock y actualización transaccional de origen y destino.
 - Administración de Categorías, Sucursales y Empleados para el rol Administrador.
 - Scripts SQL para datos semilla y masivos, vistas de negocio, triggers, procedimientos y roles MySQL.
 

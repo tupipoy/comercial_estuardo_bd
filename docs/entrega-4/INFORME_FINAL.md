@@ -14,7 +14,7 @@ El proyecto centraliza datos de productos, existencias, clientes, proveedores, c
 
 ## Resultados técnicos
 
-La base cuenta con ocho entidades principales y dos entidades asociativas, datos de prueba, vistas, triggers de validación de stock y margen, cuatro procedimientos (versiones de una línea y mult producto) y tres roles de base de datos. La aplicación web incluye inventario, CRUD de Productos, Clientes, Proveedores, Categorías, Sucursales y Empleados, operaciones de compra y venta mult producto y vistas de solo lectura de sus detalles. El usuario confirmó en Railway la existencia de los tres triggers que protegen las ventas y que no quedaron productos con precio por debajo del costo; los flujos de compra/venta mult producto aún requieren prueba funcional integrada.
+El modelo agrega inventario por sucursal, cabeceras y detalles de traslado, asigna compras y ventas a sucursales y conserva ocho entidades principales del negocio. Incluye vistas, triggers de stock/margen, cinco procedimientos y tres roles de base de datos. Administración ve el stock consolidado; Vendedores y Bodega consultan el de su sucursal. El código y los scripts están implementados localmente; falta migrar y probar la base de Railway antes de desplegar esta versión. La aplicación web incluye inventario, CRUD de Productos, Clientes, Proveedores, Categorías, Sucursales y Empleados, operaciones de compra y venta mult producto y vistas de solo lectura de sus detalles. El usuario confirmó en Railway la existencia de los tres triggers que protegen las ventas y que no quedaron productos con precio por debajo del costo; los flujos de compra/venta mult producto aún requieren prueba funcional integrada.
 
 ## Despliegue y validación
 
@@ -23,7 +23,7 @@ La aplicación está desplegada y accesible en Railway con Gunicorn. URL públic
 ## Limitaciones conocidas
 
 - Las tablas asociativas se gestionan dentro de sus transacciones y tienen vistas de solo lectura; no se ofrece edición/borrado independiente del historial.
-- La ejecución integrada de procedimientos y transacciones mult producto sigue pendiente de registrar. Railway tiene servicio MySQL, pero no se debe usar el DDL destructivo de instalación sobre la base productiva; validar en un esquema o servicio temporal.
+- La migración 06 requiere respaldo previo y asigna el stock histórico global a Sucursal Central; luego debe redistribuirse mediante traslados según el conteo físico. No se ha ejecutado en Railway ni se han probado transacciones por sucursal. El DDL de instalación es destructivo; validar en un esquema temporal.
 - La trazabilidad VIN/motor está modelada y el formulario exige seriales al vender productos en categoría cuyo nombre contenga “moto”; debe validarse en MySQL.
 
 ## Declaración de integridad académica
@@ -33,5 +33,6 @@ La aplicación está desplegada y accesible en Railway con Gunicorn. URL públic
 ## Referencias de entrega
 
 - **Tag Git:** pendiente (`entrega-4`).
+- **Respaldo previo local:** directorio `version1/`, snapshot del commit `9467202`, ignorado por Git y no desplegado.
 - **URL pública:** https://comercialestuardobd-production.up.railway.app
 - **Fecha de cierre:** pendiente.

@@ -28,15 +28,18 @@ BEGIN
     DECLARE v_stock_actual INT DEFAULT NULL;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_stock_actual = NULL;
 
-    SELECT stock_actual
+    SELECT i.stock_actual
       INTO v_stock_actual
-      FROM PRODUCTO
-     WHERE id_producto = NEW.id_producto
+      FROM VENTA AS v
+      INNER JOIN INVENTARIO_SUCURSAL AS i
+        ON i.id_sucursal = v.id_sucursal
+       AND i.id_producto = NEW.id_producto
+     WHERE v.id_venta = NEW.id_venta
      FOR UPDATE;
 
     IF v_stock_actual IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El producto indicado no existe';
+            SET MESSAGE_TEXT = 'El producto no tiene inventario en la sucursal de la venta';
     END IF;
 
     IF v_stock_actual < NEW.cantidad THEN
@@ -53,9 +56,11 @@ CREATE TRIGGER trg_descontar_stock_venta
 AFTER INSERT ON DETALLE_VENTA
 FOR EACH ROW
 BEGIN
-    UPDATE PRODUCTO
-       SET stock_actual = stock_actual - NEW.cantidad
-     WHERE id_producto = NEW.id_producto;
+    UPDATE INVENTARIO_SUCURSAL AS i
+    INNER JOIN VENTA AS v ON v.id_sucursal = i.id_sucursal
+       SET i.stock_actual = i.stock_actual - NEW.cantidad
+     WHERE v.id_venta = NEW.id_venta
+       AND i.id_producto = NEW.id_producto;
 END$$
 
 -- =========================================================

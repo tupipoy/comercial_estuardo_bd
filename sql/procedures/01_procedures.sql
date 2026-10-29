@@ -10,6 +10,7 @@ DROP PROCEDURE IF EXISTS sp_registrar_venta;
 DROP PROCEDURE IF EXISTS sp_registrar_compra;
 DROP PROCEDURE IF EXISTS sp_registrar_venta_detallada;
 DROP PROCEDURE IF EXISTS sp_registrar_compra_detallada;
+DROP PROCEDURE IF EXISTS sp_registrar_traslado;
 
 DELIMITER $$
 
@@ -75,6 +76,13 @@ BEGIN
     IF p_descuento IS NULL OR p_descuento < 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El descuento no puede ser negativo';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM EMPLEADO
+        WHERE id_empleado = p_id_empleado AND id_sucursal = p_id_sucursal AND estado = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La sucursal no corresponde al empleado activo';
     END IF;
 
     SET v_total_bruto = p_cantidad * p_precio_unitario;
@@ -142,6 +150,7 @@ CREATE PROCEDURE sp_registrar_compra(
     IN p_numero_orden VARCHAR(30),
     IN p_id_proveedor INT,
     IN p_id_empleado INT,
+    IN p_id_sucursal INT,
     IN p_id_producto INT,
     IN p_cantidad INT,
     IN p_costo_unitario DECIMAL(10,2)
@@ -172,6 +181,17 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El costo unitario debe ser mayor que cero';
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM PRODUCTO WHERE id_producto = p_id_producto AND estado = 1) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El producto indicado no existe o está inactivo';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM EMPLEADO
+        WHERE id_empleado = p_id_empleado AND id_sucursal = p_id_sucursal AND estado = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La sucursal no corresponde al empleado activo';
+    END IF;
 
     SET v_subtotal = p_cantidad * p_costo_unitario;
 
@@ -181,14 +201,16 @@ BEGIN
         total_compra,
         estado_recepcion,
         id_proveedor,
-        id_empleado
+        id_empleado,
+        id_sucursal
     ) VALUES (
         p_numero_orden,
         NOW(),
         v_subtotal,
         'Recibido',
         p_id_proveedor,
-        p_id_empleado
+        p_id_empleado,
+        p_id_sucursal
     );
 
     SET v_id_compra = LAST_INSERT_ID();
@@ -207,15 +229,13 @@ BEGIN
         v_subtotal
     );
 
-    UPDATE PRODUCTO
-       SET stock_actual = stock_actual + p_cantidad,
-           precio_costo = p_costo_unitario
-     WHERE id_producto = p_id_producto;
+    INSERT INTO INVENTARIO_SUCURSAL (id_sucursal, id_producto, stock_actual)
+    VALUES (p_id_sucursal, p_id_producto, p_cantidad)
+    ON DUPLICATE KEY UPDATE stock_actual = stock_actual + p_cantidad;
 
-    IF ROW_COUNT() = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El producto indicado no existe';
-    END IF;
+    UPDATE PRODUCTO
+       SET precio_costo = p_costo_unitario
+     WHERE id_producto = p_id_producto;
 
     COMMIT;
 END$$
@@ -253,6 +273,13 @@ BEGIN
     END IF;
     IF p_tipo_pago NOT IN ('Efectivo', 'Transferencia', 'Depósito Bancario') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El tipo de pago no es válido';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM EMPLEADO
+        WHERE id_empleado = p_id_empleado AND id_sucursal = p_id_sucursal AND estado = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La sucursal no corresponde al empleado activo';
     END IF;
 
     SELECT COUNT(*), COALESCE(SUM(cantidad * precio_unitario - descuento), 0)
@@ -311,6 +338,7 @@ CREATE PROCEDURE sp_registrar_compra_detallada(
     IN p_numero_orden VARCHAR(30),
     IN p_id_proveedor INT,
     IN p_id_empleado INT,
+    IN p_id_sucursal INT,
     IN p_detalles JSON
 )
 BEGIN
@@ -328,6 +356,13 @@ BEGIN
 
     IF p_numero_orden IS NULL OR CHAR_LENGTH(TRIM(p_numero_orden)) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de orden es obligatorio';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM EMPLEADO
+        WHERE id_empleado = p_id_empleado AND id_sucursal = p_id_sucursal AND estado = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La sucursal no corresponde al empleado activo';
     END IF;
     IF p_detalles IS NULL OR JSON_TYPE(p_detalles) <> 'ARRAY'
        OR JSON_LENGTH(p_detalles) = 0 THEN
@@ -361,8 +396,8 @@ BEGIN
       )) AS linea;
 
     INSERT INTO COMPRA (numero_orden, fecha_compra, total_compra,
-                        estado_recepcion, id_proveedor, id_empleado)
-    VALUES (p_numero_orden, NOW(), v_total, 'Recibido', p_id_proveedor, p_id_empleado);
+                        estado_recepcion, id_proveedor, id_empleado, id_sucursal)
+    VALUES (p_numero_orden, NOW(), v_total, 'Recibido', p_id_proveedor, p_id_empleado, p_id_sucursal);
     SET v_id_compra = LAST_INSERT_ID();
 
     INSERT INTO DETALLE_COMPRA (id_compra, id_producto, cantidad, costo_unitario, subtotal)
@@ -373,18 +408,117 @@ BEGIN
           costo_unitario DECIMAL(10,2) PATH '$.costo_unitario'
       )) AS linea;
 
+    INSERT INTO INVENTARIO_SUCURSAL (id_sucursal, id_producto, stock_actual)
+    SELECT p_id_sucursal, id_producto, cantidad
+      FROM JSON_TABLE(p_detalles, '$[*]' COLUMNS (
+        id_producto INT PATH '$.id_producto',
+        cantidad INT PATH '$.cantidad'
+    )) AS linea
+    ON DUPLICATE KEY UPDATE stock_actual = INVENTARIO_SUCURSAL.stock_actual + VALUES(stock_actual);
+
     UPDATE PRODUCTO AS p
     INNER JOIN JSON_TABLE(p_detalles, '$[*]' COLUMNS (
         id_producto INT PATH '$.id_producto',
-        cantidad INT PATH '$.cantidad',
         costo_unitario DECIMAL(10,2) PATH '$.costo_unitario'
     )) AS linea ON linea.id_producto = p.id_producto
-       SET p.stock_actual = p.stock_actual + linea.cantidad,
-           p.precio_costo = linea.costo_unitario;
+       SET p.precio_costo = linea.costo_unitario;
 
-    IF ROW_COUNT() = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se actualizaron productos de la compra';
+    COMMIT;
+END$$
+
+-- =========================================================
+-- PROCEDIMIENTO 5: TRASLADAR EXISTENCIAS ENTRE SUCURSALES
+-- Valida existencias de origen y aplica salida/entrada atómicas.
+-- =========================================================
+CREATE PROCEDURE sp_registrar_traslado(
+    IN p_numero_traslado VARCHAR(30),
+    IN p_id_sucursal_origen INT,
+    IN p_id_sucursal_destino INT,
+    IN p_id_empleado INT,
+    IN p_detalles JSON
+)
+BEGIN
+    DECLARE v_id_traslado INT;
+    DECLARE v_filas_actualizadas INT DEFAULT 0;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+    IF NOT EXISTS (
+        SELECT 1 FROM SUCURSAL
+        WHERE id_sucursal = p_id_sucursal_origen AND estado = 1
+    ) OR NOT EXISTS (
+        SELECT 1 FROM SUCURSAL
+        WHERE id_sucursal = p_id_sucursal_destino AND estado = 1
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Las sucursales del traslado deben estar activas';
     END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM EMPLEADO
+        WHERE id_empleado = p_id_empleado AND estado = 1
+          AND (cargo = 'Administrador' OR id_sucursal = p_id_sucursal_origen)
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El empleado no puede trasladar desde esa sucursal';
+    END IF;
+    IF p_id_sucursal_origen = p_id_sucursal_destino THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El origen y destino deben ser distintos';
+    END IF;
+    IF p_detalles IS NULL OR JSON_TYPE(p_detalles) <> 'ARRAY'
+       OR JSON_LENGTH(p_detalles) = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El traslado debe incluir productos';
+    END IF;
+    IF JSON_LENGTH(p_detalles) <> (
+        SELECT COUNT(DISTINCT id_producto)
+        FROM JSON_TABLE(p_detalles, '$[*]' COLUMNS (
+            id_producto INT PATH '$.id_producto'
+        )) AS lineas
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cada producto debe aparecer una sola vez en el traslado';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM JSON_TABLE(p_detalles, '$[*]' COLUMNS (
+            id_producto INT PATH '$.id_producto',
+            cantidad INT PATH '$.cantidad'
+        )) AS linea
+        WHERE id_producto IS NULL OR cantidad IS NULL OR cantidad <= 0
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Las líneas del traslado no son válidas';
+    END IF;
+
+    INSERT INTO TRASLADO (numero_traslado, id_sucursal_origen, id_sucursal_destino, id_empleado)
+    VALUES (p_numero_traslado, p_id_sucursal_origen, p_id_sucursal_destino, p_id_empleado);
+    SET v_id_traslado = LAST_INSERT_ID();
+
+    UPDATE INVENTARIO_SUCURSAL AS i
+    INNER JOIN JSON_TABLE(p_detalles, '$[*]' COLUMNS (
+        id_producto INT PATH '$.id_producto',
+        cantidad INT PATH '$.cantidad'
+    )) AS linea ON linea.id_producto = i.id_producto
+       SET i.stock_actual = i.stock_actual - linea.cantidad
+     WHERE i.id_sucursal = p_id_sucursal_origen
+       AND i.stock_actual >= linea.cantidad;
+    SET v_filas_actualizadas = ROW_COUNT();
+    IF v_filas_actualizadas <> JSON_LENGTH(p_detalles) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Existencias insuficientes en la sucursal de origen';
+    END IF;
+
+    INSERT INTO DETALLE_TRASLADO (id_traslado, id_producto, cantidad)
+    SELECT v_id_traslado, id_producto, cantidad
+      FROM JSON_TABLE(p_detalles, '$[*]' COLUMNS (
+          id_producto INT PATH '$.id_producto',
+          cantidad INT PATH '$.cantidad'
+      )) AS linea;
+
+    INSERT INTO INVENTARIO_SUCURSAL (id_sucursal, id_producto, stock_actual)
+    SELECT p_id_sucursal_destino, id_producto, cantidad
+      FROM JSON_TABLE(p_detalles, '$[*]' COLUMNS (
+          id_producto INT PATH '$.id_producto',
+          cantidad INT PATH '$.cantidad'
+      )) AS linea
+    ON DUPLICATE KEY UPDATE stock_actual = INVENTARIO_SUCURSAL.stock_actual + VALUES(stock_actual);
 
     COMMIT;
 END$$

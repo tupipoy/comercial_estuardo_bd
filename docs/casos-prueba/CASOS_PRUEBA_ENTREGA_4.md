@@ -9,7 +9,7 @@ Los resultados se deben completar con fecha, entorno y evidencia real. No consid
 
 | ID | Escenario | Resultado esperado | Estado |
 |---|---|---|---|
-| CP4-01 | Instalación limpia con los scripts de `INSTALL.md` | Diez tablas con 50 registros por conjunto; vistas, triggers, cuatro procedimientos y roles instalados. | Pendiente de evidencia de instalación limpia Entrega 4. Ejecutar solo en una base temporal desechable; el DDL elimina y recrea `comercial_estuardo_db`. |
+| CP4-01 | Instalación limpia con los scripts de `INSTALL.md` | Trece tablas, datos base, tres vistas, cinco triggers, cinco procedimientos y roles instalados; stock de demostración repartido en las dos sucursales. | Pendiente de evidencia de instalación limpia Entrega 4. Ejecutar solo en una base temporal desechable; el DDL elimina y recrea `comercial_estuardo_db`. |
 | CP4-02 | Inicializar empleado Administrador con hash y autenticarse | Login exitoso y acceso al inventario; contraseña en BD almacenada como hash. | Pendiente MySQL |
 | CP4-03 | Intentar POST sin token CSRF en login y formulario protegido | Respuesta HTTP 400 sin cambio en datos. | Verificado con Flask test client; falta evidencia integrada |
 | CP4-04 | Acceder como Vendedor a administración de Categorías/Sucursales/Empleados | Respuesta HTTP 403. | Pendiente MySQL/app integrada |
@@ -29,6 +29,10 @@ Los resultados se deben completar con fecha, entorno y evidencia real. No consid
 | CP4-18 | Vender producto de categoría `Repuestos de Motor` sin seriales | No se exige VIN/motor; estos seriales se exigen solo en categorías de motocicletas. | La corrección está en el commit `124f52e`; falta confirmar que ese commit esté desplegado en Railway y registrar la prueba funcional. |
 | CP4-19 | Eliminar un recibo como Administrador y tratar de eliminarlo como Vendedor | Administrador elimina cabecera/detalles y el stock de cada línea se restaura en una transacción; Vendedor recibe HTTP 403 y no se modifica ningún dato. | Pendiente de prueba integrada. La eliminación es irreversible. |
 | CP4-20 | Revisar resumen, catálogo y ventas en escritorio (≥ 1024 px), tablet y móvil (320–430 px); filtrar y ordenar productos y abrir una factura desde tarjeta | Navegación adaptada, sin desbordamiento horizontal global; en móvil cada recibo muestra sus datos y el botón Ver factura sin desplazamiento lateral. | Vista de tarjetas y filtros móviles implementados; pendiente inspección visual en navegador y aceptación con Railway real. |
+| CP4-21 | Ver inventario con Vendedor/Bodega de cada sucursal y Administrador | Cada empleado ve su sucursal; Administrador ve suma global. No hay acceso cruzado mediante filtros o URL. | Pendiente de migración 06 y prueba integrada. |
+| CP4-22 | Recibir compra en sucursal asignada y vender productos desde esa sucursal | Compra suma y venta resta únicamente existencias de esa sucursal; queda historial asociado a sucursal. | Pendiente de migración 06 y prueba integrada. |
+| CP4-23 | Traslado multiproducto con stock suficiente | Descuenta origen, acredita destino, conserva cabecera/detalle y se confirma todo en una transacción. | Pendiente de migración 06 y prueba integrada. |
+| CP4-24 | Traslado con una línea sin stock suficiente, sucursales iguales o empleado ajeno al origen | Operación rechazada completa; existencias de ambas sucursales no cambian. | Pendiente de migración 06 y prueba integrada. |
 
 ## Evidencia a adjuntar
 

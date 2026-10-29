@@ -56,9 +56,11 @@ También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el 
 
 > **Advertencia:** `sql/ddl/01_schema.sql` elimina y vuelve a crear la base `comercial_estuardo_db`. No lo ejecutes sobre una base que quieras conservar.
 
-`02_bulk_data.sql` está preparado para ejecutarse una vez después del esquema y los datos semilla. Completa 50 registros en las ocho entidades principales y agrega detalles de compra y venta.
+`02_bulk_data.sql` está preparado para ejecutarse una vez después del esquema y los datos semilla. Completa 50 registros en las ocho entidades principales y agrega detalles de compra y venta; asigna el inventario de demostración a las dos sucursales.
 
-La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión y deben aplicarse en bases ya existentes; en instalaciones limpias, esos cambios ya vienen en el DDL actual y los triggers. Cada migración se ejecuta una sola vez. En bases antiguas, revisa primero si cada objeto ya existe antes de ejecutarla. La aplicación nueva requiere las columnas de login de la migración 05.
+Para actualizar una base existente al inventario por sucursal: primero respalda la base y confirma que el stock global actual se encuentra físicamente en Sucursal Central. Ejecuta una sola vez `sql/migrations/06_inventory_by_branch.sql`; después vuelve a ejecutar `sql/triggers/01_triggers.sql`, `sql/views/01_views.sql`, `sql/procedures/01_procedures.sql` y `sql/security/01_roles.sql`. La aplicación nueva requiere que este paso termine antes de desplegarla. Las compras históricas se asignan a la sucursal actual del empleado relacionado porque las versiones anteriores no guardaban esa ubicación.
+
+La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión; la migración 06 convierte el stock global en existencias por sucursal y agrega traslados. Cada migración se ejecuta una sola vez. La 06 asigna el stock global existente a **Sucursal Central** y completa la sucursal histórica de compras según la sucursal actual del empleado. Antes de aplicarla, genera un respaldo completo de MySQL y valida la distribución física; después ejecuta de nuevo triggers, vistas, procedimientos y roles actualizados. En instalaciones limpias, todos estos cambios ya vienen en el DDL y scripts actuales.
 
 ## 5. Crear una contraseña inicial para el administrador
 
@@ -143,7 +145,7 @@ SHOW TRIGGERS;
 SHOW PROCEDURE STATUS WHERE Db = 'comercial_estuardo_db';
 ```
 
-La instalación limpia de la versión anterior (Entrega 3) se verificó el 29 de septiembre de 2026 en un esquema temporal independiente: los diez conjuntos de datos tuvieron 50 filas, y se instalaron tres vistas, dos triggers y dos procedimientos. También se ejecutaron los ocho casos funcionales de esa entrega. Esa evidencia histórica no valida los dos procedimientos mult producto añadidos para Entrega 4. Para aprobar esta entrega, ejecuta de nuevo desde cero los scripts anteriores en MySQL 8 y registra el resultado de los casos de `docs/casos-prueba/CASOS_PRUEBA_ENTREGA_4.md`; la integración Entrega 4 aún está pendiente de esa verificación.
+La instalación limpia de la versión anterior (Entrega 3) se verificó el 29 de septiembre de 2026 en un esquema temporal independiente: los diez conjuntos de datos tuvieron 50 filas, y se instalaron tres vistas, dos triggers y dos procedimientos. Esa evidencia corresponde a Entrega 3; la versión actual agrega INVENTARIO_SUCURSAL, TRASLADO y DETALLE_TRASLADO y aún requiere instalación limpia. También se ejecutaron los ocho casos funcionales de esa entrega. Esa evidencia histórica no valida los dos procedimientos mult producto añadidos para Entrega 4. Para aprobar esta entrega, ejecuta de nuevo desde cero los scripts anteriores en MySQL 8 y registra el resultado de los casos de `docs/casos-prueba/CASOS_PRUEBA_ENTREGA_4.md`; la integración Entrega 4 aún está pendiente de esa verificación.
 
 ## 10. Detener la aplicación
 
