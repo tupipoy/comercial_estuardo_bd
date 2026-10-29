@@ -115,9 +115,9 @@ CREATE TABLE TRASLADO (
     id_sucursal_destino INT NOT NULL,
     id_empleado INT NOT NULL,
     CONSTRAINT fk_traslado_origen FOREIGN KEY (id_sucursal_origen)
-        REFERENCES SUCURSAL(id_sucursal) ON UPDATE CASCADE ON DELETE RESTRICT,
+        REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_traslado_destino FOREIGN KEY (id_sucursal_destino)
-        REFERENCES SUCURSAL(id_sucursal) ON UPDATE CASCADE ON DELETE RESTRICT,
+        REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_traslado_empleado FOREIGN KEY (id_empleado)
         REFERENCES EMPLEADO(id_empleado) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_traslado_sucursales CHECK (id_sucursal_origen <> id_sucursal_destino),

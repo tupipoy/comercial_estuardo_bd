@@ -154,6 +154,15 @@ Esta bitácora registra el apoyo de IA, los cambios realizados y la evidencia di
 Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunque los triggers de margen se verificaron en la base productiva, el equipo debe ejecutar una instalación limpia en un esquema temporal, probar casos de compra/venta con varias líneas, reversión por stock insuficiente, permisos MySQL y aceptación visual en Railway, y actualizar esta bitácora con los resultados reales.
 
 
+#### Despliegue y migración de inventario por sucursal en Railway
+
+- **Fecha:** 29 de octubre de 2026.
+- **Objetivo:** Publicar la versión para prueba y migrar las existencias existentes a sucursales.
+- **Resultado:** Se publicó `main` en el commit `3c611bb` y Railway inició la aplicación nueva. Se respaldó la base productiva en `backups/railway_pre_migracion06_20261029.sql.gz` (directorio local excluido de Git); se verificó la integridad gzip y el encabezado del dump SQL. Se aplicó la migración 06, asignando 1,571 unidades de 53 productos a Sucursal Central. Después se actualizaron triggers, vistas, procedimientos y roles.
+- **Validación:** Consultas de solo lectura confirmaron 53 filas de inventario con 1,571 unidades en la sucursal 1, ausencia de `PRODUCTO.stock_actual`, las tres tablas de inventario/traslados, tres procedimientos nuevos/actualizados y tres triggers de venta. Railway informa el servicio `Online`; `/health` respondió HTTP 200 y `/` respondió HTTP 200. Una incompatibilidad entre `CHECK` y `ON UPDATE CASCADE` se corrigió cambiando las claves foráneas de origen/destino de traslado a `ON UPDATE RESTRICT` y se aplicó exitosamente la migración corregida.
+- **Seguimiento:** Probar con cuentas reales en Railway el alcance por rol, compras, ventas, traslados, alertas de stock y visualización móvil; confirmar el resultado funcional antes de cerrar los casos CP4-21 a CP4-24.
+
+
 ### 29 de octubre de 2026
 
 #### Inventario y traslados entre sucursales

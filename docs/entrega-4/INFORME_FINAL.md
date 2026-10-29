@@ -14,16 +14,16 @@ El proyecto centraliza datos de productos, existencias, clientes, proveedores, c
 
 ## Resultados técnicos
 
-El modelo agrega inventario por sucursal, cabeceras y detalles de traslado, asigna compras y ventas a sucursales y conserva ocho entidades principales del negocio. Incluye vistas, triggers de stock/margen, cinco procedimientos y tres roles de base de datos. Administración ve el stock consolidado; Vendedores y Bodega consultan el de su sucursal. El código y los scripts están implementados localmente; falta migrar y probar la base de Railway antes de desplegar esta versión. La aplicación web incluye inventario, CRUD de Productos, Clientes, Proveedores, Categorías, Sucursales y Empleados, operaciones de compra y venta mult producto y vistas de solo lectura de sus detalles. El usuario confirmó en Railway la existencia de los tres triggers que protegen las ventas y que no quedaron productos con precio por debajo del costo; los flujos de compra/venta mult producto aún requieren prueba funcional integrada.
+El modelo agrega inventario por sucursal, cabeceras y detalles de traslado, asigna compras y ventas a sucursales y conserva ocho entidades principales del negocio. Incluye vistas, triggers de stock/margen, cinco procedimientos y tres roles de base de datos. Administración ve el stock consolidado; Vendedores y Bodega consultan el de su sucursal. La migración 06 se aplicó en Railway después de generar y validar un respaldo completo; las 1,571 unidades de 53 productos se asignaron a Sucursal Central. La aplicación web incluye inventario, CRUD de Productos, Clientes, Proveedores, Categorías, Sucursales y Empleados, operaciones de compra y venta multiproducto y vistas de solo lectura de sus detalles. Los flujos por sucursal y las transacciones aún requieren prueba funcional integrada.
 
 ## Despliegue y validación
 
-La aplicación está desplegada y accesible en Railway con Gunicorn. URL pública: https://comercialestuardobd-production.up.railway.app. El usuario confirmó que el dominio abre, que el login y los módulos funcionan, que pudo crear y editar clientes, y que aplicó la migración de margen y verificó los triggers en la base productiva. Falta registrar el commit exacto activo, validar compras/ventas en el despliegue y documentar la instalación limpia y los demás casos de aceptación.
+La aplicación está desplegada y accesible en Railway con Gunicorn. URL pública: https://comercialestuardobd-production.up.railway.app. El commit desplegado al publicar fue `3c611bb`. Tras aplicar la migración 06 y actualizar los objetos SQL, se comprobó que `/health` responde HTTP 200 y que el inventario conserva las 1,571 unidades bajo Sucursal Central. Falta probar compras, ventas, traslados y permisos con usuarios de la aplicación y completar los demás casos de aceptación.
 
 ## Limitaciones conocidas
 
 - Las tablas asociativas se gestionan dentro de sus transacciones y tienen vistas de solo lectura; no se ofrece edición/borrado independiente del historial.
-- La migración 06 requiere respaldo previo y asigna el stock histórico global a Sucursal Central; luego debe redistribuirse mediante traslados según el conteo físico. No se ha ejecutado en Railway ni se han probado transacciones por sucursal. El DDL de instalación es destructivo; validar en un esquema temporal.
+- La migración 06 ya se ejecutó en Railway; el respaldo local previo está en `backups/railway_pre_migracion06_20261029.sql.gz` y está excluido de Git. El stock histórico se asignó a Sucursal Central; debe redistribuirse mediante traslados según el conteo físico. Las transacciones por sucursal aún no tienen prueba funcional integrada. El DDL de instalación es destructivo; validar en un esquema temporal.
 - La trazabilidad VIN/motor está modelada y el formulario exige seriales al vender productos en categoría cuyo nombre contenga “moto”; debe validarse en MySQL.
 
 ## Declaración de integridad académica
