@@ -84,6 +84,12 @@ input::placeholder { color: #94a3b8; }
 input:focus, select:focus, textarea:focus { border-color: var(--teal); outline: 3px solid rgb(13 148 136 / 12%); }
 .filter-panel, .busqueda-form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 13px; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .filter-panel select { min-width: 150px; }
+.inventory-view-tabs { display: flex; gap: 6px; padding-bottom: 1px; margin: -8px 0 16px; border-bottom: 1px solid var(--line); }
+.inventory-view-tabs a { display: inline-flex; align-items: center; min-height: 42px; padding: 0 15px; border-bottom: 3px solid transparent; color: var(--muted); font-size: 13px; font-weight: 650; }
+.inventory-view-tabs a:hover { color: var(--teal-dark); }
+.inventory-view-tabs a.is-active { border-bottom-color: var(--teal); color: var(--teal-dark); }
+.inventory-branch-label { padding-top: 9px; color: var(--muted); font-size: 11px; }
+.inventory-branch-label strong { color: var(--text); }
 .search-field, .global-search { display: flex; align-items: center; gap: 9px; min-width: 210px; flex: 1 1 280px; }
 .search-field { padding-left: 11px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; }
 .search-field:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px rgb(13 148 136 / 12%); }
@@ -256,6 +262,7 @@ tbody tr:hover { background: #fbfdfe; }
     .metric-grid { gap: 10px; }.metric-card { min-height: 142px; padding: 13px; }.metric-icon { width: 30px; height: 30px; margin-bottom: 9px; }.metric-card > strong { font-size: 21px; }.metric-card small { font-size: 9px; }
     .panel { padding: 16px; }.panel-heading { align-items: flex-start; }.activity-panel .panel-heading { align-items: center; }.category-bars { gap: 12px; }
     .filter-panel, .busqueda-form { align-items: stretch; padding: 11px; }.filter-panel > *, .busqueda-form > * { min-width: 0; }.filter-panel select { flex: 1 1 calc(50% - 6px); }.filter-panel .search-field { flex-basis: 100%; }.filter-panel .button { flex: 1; }
+    .inventory-view-tabs { margin-top: -8px; }.inventory-view-tabs a { flex: 1; justify-content: center; padding: 0 7px; font-size: 12px; }
     .sales-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .sales-filter-search, .sales-filter-actions { grid-column: 1 / -1; }
     .sales-filter-actions > * { flex: 1; min-height: 44px; }

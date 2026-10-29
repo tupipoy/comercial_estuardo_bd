@@ -16,11 +16,11 @@ Al iniciar sesión se abre el resumen con el total de productos activos, referen
 
 ## Inventario
 
-Abrir **Inventario** para consultar productos activos, categoría, precio y existencias. Vendedores y Bodega ven las cantidades de su sucursal asignada; el Administrador ve el total consolidado de todas las sucursales. Usar el campo de búsqueda para filtrar por nombre, código o categoría. El filtro de stock bajo se puede combinar con la búsqueda para localizar existencias críticas de un producto o categoría.
+Abrir **Inventario** para consultar productos activos, categoría, precio y existencias. Vendedores y Bodega ven las cantidades de su sucursal asignada; el Administrador ve el total consolidado de todas las sucursales. Bodega puede cambiar entre **Inventario local**, que muestra el stock de su sucursal, y **Inventario general**, que permite consultar el stock por producto y sucursal sin modificarlo. En el inventario general se puede filtrar por sucursal. Usar el campo de búsqueda para filtrar por nombre, código o categoría. El filtro de stock bajo se puede combinar con la búsqueda para localizar existencias críticas de un producto o categoría.
 
 ## Productos
 
-Los usuarios autorizados pueden consultar, buscar por nombre, código o categoría, crear, editar y desactivar productos. Antes de guardar, completar los campos obligatorios y seleccionar una categoría activa. El precio de venta debe ser igual o mayor que el costo; además, el sistema no permite aplicar un descuento que deje una línea de venta por debajo de su costo. La desactivación conserva el historial y oculta el producto de los listados operativos.
+Los usuarios autorizados pueden consultar, buscar por nombre, código o categoría, crear, editar y desactivar productos. En este catálogo, Bodega ve las existencias de su sucursal; para consultar las demás, debe usar **Inventario general**. Antes de guardar, completar los campos obligatorios y seleccionar una categoría activa. El precio de venta debe ser igual o mayor que el costo; además, el sistema no permite aplicar un descuento que deje una línea de venta por debajo de su costo. La desactivación conserva el historial y oculta el producto de los listados operativos.
 
 ## Clientes
 

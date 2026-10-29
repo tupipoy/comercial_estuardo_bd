@@ -369,6 +369,11 @@ def resumen():
 @requiere_rol("Administrador", "Vendedor", "Bodega")
 def inventario():
     """Consulta existencias con búsqueda, filtros de categoría y estado."""
+    es_bodega = session.get("user_role") == "Bodega"
+    vista = request.args.get("vista", "local") if es_bodega else "local"
+    if vista not in {"local", "general"}:
+        vista = "local"
+    vista_general = es_bodega and vista == "general"
     solo_stock_bajo = "1" if request.args.get("stock_bajo") == "1" else "0"
     busqueda = request.args.get("q", "").strip()[:100]
     condiciones = ["p.estado = 1"]
@@ -387,39 +392,102 @@ def inventario():
     if categoria.isdigit():
         condiciones.append("p.id_categoria = %s")
         parametros.append(int(categoria))
+    sucursal_filtro = request.args.get("sucursal", "").strip()
+    if vista_general and sucursal_filtro.isdigit():
+        condiciones.append("s.id_sucursal = %s")
+        parametros.append(int(sucursal_filtro))
     patron = patron_busqueda(busqueda)
     if patron:
         condiciones.append("(p.nombre LIKE %s ESCAPE '!' OR p.codigo_barra LIKE %s ESCAPE '!' OR c.nombre LIKE %s ESCAPE '!')")
         parametros.extend([patron, patron, patron])
     connection = None
+    sucursal_nombre = None
+    sucursales = []
+    pagina = 1
+    paginas = 1
+    total_productos = 0
+    por_pagina = 50
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            stock_sql, stock_params = consulta_existencias(cursor)
-            parametros = [*stock_params, *parametros]
-            orden = "p.stock_actual ASC, p.nombre" if estado_stock in {"bajo", "agotado"} else "c.nombre, p.nombre"
-            cursor.execute(f"""
-                SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
-                       p.stock_actual, p.stock_minimo, p.precio_costo,
-                       p.id_categoria, c.nombre AS categoria
-                FROM (
-                    SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
-                    FROM PRODUCTO AS base
-                    LEFT JOIN ({stock_sql}) AS existencias
-                      ON existencias.id_producto = base.id_producto
-                ) AS p
-                INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
-                WHERE {' AND '.join(condiciones)}
-                ORDER BY {orden};
-            """, parametros)
-            productos = cursor.fetchall()
+            if es_bodega:
+                cursor.execute("""
+                    SELECT s.nombre
+                    FROM EMPLEADO AS e
+                    INNER JOIN SUCURSAL AS s ON s.id_sucursal = e.id_sucursal
+                    WHERE e.id_empleado = %s AND e.estado = 1 AND s.estado = 1
+                """, (session.get("user_id"),))
+                sucursal = cursor.fetchone()
+                sucursal_nombre = sucursal["nombre"] if sucursal else None
+
+            if vista_general:
+                cursor.execute("SELECT id_sucursal, nombre FROM SUCURSAL WHERE estado = 1 ORDER BY nombre")
+                sucursales = cursor.fetchall()
+                condiciones_general = ["p.estado = 1", "s.estado = 1"]
+                # Los filtros de stock se aplican por cada sucursal, no al total combinado.
+                condiciones = [c for c in condiciones if c != "p.estado = 1"]
+                condiciones_general.extend(condiciones)
+                where_general = " AND ".join(condiciones_general)
+                parametros_general = tuple(parametros)
+                from_general = """
+                    FROM PRODUCTO AS p
+                    INNER JOIN CATEGORIA AS c ON c.id_categoria = p.id_categoria
+                    CROSS JOIN SUCURSAL AS s
+                    LEFT JOIN INVENTARIO_SUCURSAL AS i
+                      ON i.id_sucursal = s.id_sucursal AND i.id_producto = p.id_producto
+                """
+                stock_general = "COALESCE(i.stock_actual, 0)"
+                condiciones_general = [x.replace("p.stock_actual", stock_general) for x in condiciones_general]
+                where_general = " AND ".join(condiciones_general)
+                cursor.execute(f"SELECT COUNT(*) AS total {from_general} WHERE {where_general}", parametros_general)
+                total_productos = cursor.fetchone()["total"]
+                paginas = max(1, (total_productos + por_pagina - 1) // por_pagina)
+                try:
+                    pagina = max(1, int(request.args.get("pagina", "1")))
+                except ValueError:
+                    pagina = 1
+                pagina = min(pagina, paginas)
+                offset = (pagina - 1) * por_pagina
+                cursor.execute(f"""
+                    SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
+                           {stock_general} AS stock_actual, p.stock_minimo,
+                           p.precio_costo, p.id_categoria, c.nombre AS categoria,
+                           s.nombre AS sucursal
+                    {from_general}
+                    WHERE {where_general}
+                    ORDER BY c.nombre, p.nombre, s.nombre
+                    LIMIT %s OFFSET %s
+                """, (*parametros_general, por_pagina, offset))
+                productos = cursor.fetchall()
+            else:
+                stock_sql, stock_params = consulta_existencias(cursor)
+                parametros = [*stock_params, *parametros]
+                orden = "p.stock_actual ASC, p.nombre" if estado_stock in {"bajo", "agotado"} else "c.nombre, p.nombre"
+                cursor.execute(f"""
+                    SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
+                           p.stock_actual, p.stock_minimo, p.precio_costo,
+                           p.id_categoria, c.nombre AS categoria
+                    FROM (
+                        SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
+                        FROM PRODUCTO AS base
+                        LEFT JOIN ({stock_sql}) AS existencias
+                          ON existencias.id_producto = base.id_producto
+                    ) AS p
+                    INNER JOIN CATEGORIA c ON p.id_categoria = c.id_categoria
+                    WHERE {' AND '.join(condiciones)}
+                    ORDER BY {orden};
+                """, parametros)
+                productos = cursor.fetchall()
             categorias = cargar_categorias(cursor)
     except Exception:
         app.logger.exception("No se pudo cargar el inventario")
         return render_template(
             "inventario.html", productos=[], solo_stock_bajo=solo_stock_bajo,
             busqueda=busqueda, categorias=[], categoria=categoria,
-            estado_stock=estado_stock, error_datos=True,
+            estado_stock=estado_stock, error_datos=True, vista=vista,
+            vista_general=vista_general, sucursales=sucursales,
+            sucursal_filtro=sucursal_filtro, sucursal_nombre=sucursal_nombre,
+            pagina=pagina, paginas=paginas, total_productos=total_productos,
         )
     finally:
         if connection is not None:
@@ -428,7 +496,11 @@ def inventario():
     return render_template("inventario.html", productos=productos,
                            solo_stock_bajo=solo_stock_bajo, busqueda=busqueda,
                            categorias=categorias, categoria=categoria,
-                           estado_stock=estado_stock)
+                           estado_stock=estado_stock, vista=vista,
+                           vista_general=vista_general, sucursales=sucursales,
+                           sucursal_filtro=sucursal_filtro,
+                           sucursal_nombre=sucursal_nombre, pagina=pagina,
+                           paginas=paginas, total_productos=total_productos)
 
 
 def validar_datos_categoria(form):
@@ -967,7 +1039,7 @@ def productos():
             paginas = max(1, (total_productos + por_pagina - 1) // por_pagina)
             pagina = min(pagina, paginas)
             offset = (pagina - 1) * por_pagina
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT
                     p.id_producto,
                     p.codigo_barra,

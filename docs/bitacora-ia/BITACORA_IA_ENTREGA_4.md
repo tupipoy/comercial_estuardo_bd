@@ -1,7 +1,7 @@
 # Bitácora de herramientas de IA — Entrega 4
 
 **Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario — Comercial Estuardo  
-**Periodo registrado:** 14 al 28 de octubre de 2026
+**Periodo registrado:** 14 al 29 de octubre de 2026
 
 Esta bitácora registra el apoyo de IA, los cambios realizados y la evidencia disponible. Las validaciones pendientes se mantienen explícitas para que el equipo pueda completar el cierre con resultados verificables.
 
@@ -161,6 +161,14 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 - **Resultado:** Se publicó `main` en el commit `3c611bb` y Railway inició la aplicación nueva. Se respaldó la base productiva en `backups/railway_pre_migracion06_20261029.sql.gz` (directorio local excluido de Git); se verificó la integridad gzip y el encabezado del dump SQL. Se aplicó la migración 06, asignando 1,571 unidades de 53 productos a Sucursal Central. Después se actualizaron triggers, vistas, procedimientos y roles.
 - **Validación:** Consultas de solo lectura confirmaron 53 filas de inventario con 1,571 unidades en la sucursal 1, ausencia de `PRODUCTO.stock_actual`, las tres tablas de inventario/traslados, tres procedimientos nuevos/actualizados y tres triggers de venta. Railway informa el servicio `Online`; `/health` respondió HTTP 200 y `/` respondió HTTP 200. Una incompatibilidad entre `CHECK` y `ON UPDATE CASCADE` se corrigió cambiando las claves foráneas de origen/destino de traslado a `ON UPDATE RESTRICT` y se aplicó exitosamente la migración corregida.
 - **Seguimiento:** Probar con cuentas reales en Railway el alcance por rol, compras, ventas, traslados, alertas de stock y visualización móvil; confirmar el resultado funcional antes de cerrar los casos CP4-21 a CP4-24.
+
+#### Vistas general y local de inventario; corrección del catálogo
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Diferenciar existencias de la sucursal asignada de la consulta entre sucursales para el cargo Bodega y corregir el error del catálogo de productos.
+- **Resultado:** Se agregaron pestañas **Inventario local** y **Inventario general**. La vista general lista cada producto por sucursal, con filtro por sucursal y paginación; es de solo consulta. La vista local conserva el stock asignado al bodeguero. Los logs de Railway mostraron una cadena SQL sin interpolar en la consulta paginada de Productos; se corrigió para incorporar la consulta de existencias y sus parámetros.
+- **Validación:** `py_compile`, análisis sintáctico de las plantillas Jinja y `git diff --check`.
+- **Seguimiento:** Publicar en Railway y validar con un usuario Bodega que ambas vistas muestren cantidades por sucursal y que el catálogo de Productos abra sin error.
 
 
 ### 29 de octubre de 2026
