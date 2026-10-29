@@ -1,0 +1,4392 @@
+{
+  "fecha_utc": "2026-10-29T21:47:06.366642+00:00",
+  "entorno": "MySQL temporal aislado, no producción",
+  "esquema_temporal": "ce_acceptance_b3d19f69bba9",
+  "scripts": [
+    {
+      "ruta": "sql/ddl/01_schema.sql",
+      "sha256": "4b9127d9e027e1e1a7a3e7bb035fabb7e6be9521cdc7b67f8953cc9ae8eb1137"
+    },
+    {
+      "ruta": "sql/dml/01_seed_data.sql",
+      "sha256": "74345cea011f2139f3fbfa7207bba6dc8f45139567b90c77d07716fed294dfc1"
+    },
+    {
+      "ruta": "sql/dml/02_bulk_data.sql",
+      "sha256": "9ebf0cfc8fa9b65151d0c62a407ef38b5c9c825b04a8d7b6f976406b358da672"
+    },
+    {
+      "ruta": "sql/migrations/08_inventory_control.sql",
+      "sha256": "c7cec75af6159f9c6d93598062ba52cd7001dfc9d492c58f014da717019def4d"
+    },
+    {
+      "ruta": "sql/migrations/09_supplier_proposals.sql",
+      "sha256": "26c9d1b053796fdc6ef337b2c7df1d4c3adc1ada3be2ce6f73f3dc1c5b508b86"
+    },
+    {
+      "ruta": "sql/migrations/10_document_corrections.sql",
+      "sha256": "6f36d3cd946696c4e4f0a30feb6b4cbf8421df23456262781f2f7969fe1e1e6b"
+    },
+    {
+      "ruta": "sql/views/01_views.sql",
+      "sha256": "119f2c282e66fbaac4bd4cc0b4f05630af4ab7b87f124e7ba4e0732dc5549488"
+    },
+    {
+      "ruta": "sql/triggers/01_triggers.sql",
+      "sha256": "d489f7ec91f4b111b5cff7db6a81fceea2583a3a08c77382fff20cc917c7b703"
+    },
+    {
+      "ruta": "sql/triggers/02_inventory_control.sql",
+      "sha256": "c54b5422305f44da9d4ad17d58c5223a592484407613b61f10b00d76fde51d47"
+    },
+    {
+      "ruta": "sql/procedures/01_procedures.sql",
+      "sha256": "5aa36b57b882f5037e195e3011197d5350eed777276ca679a0147f288cf0e762"
+    },
+    {
+      "ruta": "sql/procedures/02_transfer_workflow.sql",
+      "sha256": "1a06d79cbe6597a51c8c6ccc4013f2525154e0b71e240d1938024d1973e6b5fd"
+    },
+    {
+      "ruta": "sql/security/01_roles.sql",
+      "sha256": "4b946141f2ecde99d2c56445e75b0edd89950f7e4e4f1555c5abd21dcf817031"
+    },
+    {
+      "ruta": "sql/security/02_inventory_control.sql",
+      "sha256": "8f9f55f8461a47ab24bc1a4b724caf631879f6768f5b3e1d35991c7b0cffc487"
+    },
+    {
+      "ruta": "sql/security/03_supplier_proposals.sql",
+      "sha256": "d5e984d76a9543728901bf0a18cd35bfffd657a6616d76ca07316ba2cb9e8ee0"
+    }
+  ],
+  "python": "3.11.15",
+  "dependencias": {
+    "Flask": "3.0.0",
+    "PyMySQL": "1.1.0",
+    "cryptography": "42.0.0",
+    "gunicorn": "23.0.0",
+    "python-dotenv": "1.0.0"
+  },
+  "mysql": "8.4.11",
+  "tablas": [
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "TABLE_TYPE": "BASE TABLE",
+      "ENGINE": "InnoDB"
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "TABLE_TYPE": "VIEW",
+      "ENGINE": null
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "TABLE_TYPE": "VIEW",
+      "ENGINE": null
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "TABLE_TYPE": "VIEW",
+      "ENGINE": null
+    }
+  ],
+  "columnas": [
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "COLUMN_NAME": "id_categoria",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "COLUMN_NAME": "nombre",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "COLUMN_NAME": "descripcion",
+      "COLUMN_TYPE": "varchar(255)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "id_cliente",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "nit",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "cui",
+      "COLUMN_TYPE": "varchar(13)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "nombres",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "apellidos",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "telefono",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "correo",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "direccion",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "numero_orden",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "fecha_compra",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "total_compra",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "estado_recepcion",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_proveedor",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_conteo",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "stock_sistema",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "reservado_sistema",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "revision_sistema",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "cantidad_contada",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "unidades_snapshot",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "unidades_presentes",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "unidades_nuevas",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "motivo",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "Pendiente",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_solicitante",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_responsable",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "fecha_resolucion",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "observacion",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_correccion",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP(6)",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "motivo",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "datos_anteriores",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "datos_nuevos",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "id_detalle_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "id_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "cantidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "costo_unitario",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "subtotal",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_detalle_reverso",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_reverso",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_detalle_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_detalle_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "cantidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "importe",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "id_detalle_traslado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "id_traslado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "cantidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "cantidad_recibida",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_detalle_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "vin_chasis",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "numero_motor",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "cantidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "precio_unitario",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "descuento",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "subtotal",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_unidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "cui",
+      "COLUMN_TYPE": "varchar(13)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "nombres",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "apellidos",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "cargo",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "telefono",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "correo",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "password_hash",
+      "COLUMN_TYPE": "varchar(255)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "intentos_login_fallidos",
+      "COLUMN_TYPE": "tinyint unsigned",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "bloqueado_hasta",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "fecha_ingreso",
+      "COLUMN_TYPE": "date",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_evento",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_propuesta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_proveedor",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "accion",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP(6)",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "observacion",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "datos_anteriores",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "datos_nuevos",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "id_evento",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "id_traslado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "accion",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "observacion",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP(6)",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_historial",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_unidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP(6)",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_sucursal_origen",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_sucursal_destino",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "estado_anterior",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "estado_nuevo",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "referencia",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "motivo",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "stock_actual",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "actualizado_en",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "stock_reservado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "stock_minimo",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "revision",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_movimiento",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP(6)",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "tipo",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "referencia",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "cantidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "saldo_anterior",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "saldo_posterior",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "reservado_anterior",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "reservado_posterior",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "motivo",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "codigo_barra",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "nombre",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "descripcion",
+      "COLUMN_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "precio_costo",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "precio_venta",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "stock_minimo",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "id_categoria",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "requiere_serie",
+      "COLUMN_TYPE": "tinyint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_propuesta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "nit",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "razon_social",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "contacto",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "telefono",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "correo",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "direccion",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "Pendiente",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_solicitante",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "fecha_solicitud",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP(6)",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_responsable",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "fecha_resolucion",
+      "COLUMN_TYPE": "datetime(6)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "observacion",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_proveedor",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "nit_pendiente",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "STORED GENERATED",
+      "GENERATION_EXPRESSION": "(case when (`estado` = _utf8mb4\\'Pendiente\\') then `nit` else NULL end)"
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "id_proveedor",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "nit",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "razon_social",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "contacto",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "telefono",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "correo",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "direccion",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "id_respaldo",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "inicio",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "fin",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "En proceso",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "restauracion_verificada",
+      "COLUMN_TYPE": "tinyint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "archivo",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "sha256",
+      "COLUMN_TYPE": "varchar(64)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "enlace",
+      "COLUMN_TYPE": "varchar(300)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "COLUMN_NAME": "detalle",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_reverso",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "tipo",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "fecha",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "motivo",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "importe",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "COLUMN_NAME": "nombre",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "COLUMN_NAME": "direccion",
+      "COLUMN_TYPE": "varchar(200)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "COLUMN_NAME": "telefono",
+      "COLUMN_TYPE": "varchar(15)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "COLUMN_NAME": "municipio",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_traslado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "numero_traslado",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "fecha_traslado",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "Pendiente de aprobación",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_sucursal_origen",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_sucursal_destino",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado_aprobacion",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "fecha_aprobacion",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "observacion_resolucion",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado_despacho",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "fecha_despacho",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado_recepcion",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "fecha_recepcion",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "observacion_recepcion",
+      "COLUMN_TYPE": "varchar(500)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "COLUMN_NAME": "id_traslado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "COLUMN_NAME": "id_unidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "COLUMN_NAME": "recibida",
+      "COLUMN_TYPE": "tinyint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_unidad",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "vin_chasis",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "numero_motor",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "Disponible",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_detalle_compra",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_detalle_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_traslado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "fecha_registro",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "serie_factura",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "numero_factura",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "fecha_venta",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "total_venta",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "tipo_pago",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "Emitida",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_cliente",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "sucursal",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "codigo_barra",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "nombre",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "categoria",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "precio_costo",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "precio_venta",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "stock_actual",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "stock_reservado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "stock_disponible",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "stock_minimo",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_inventario_valorizado",
+      "COLUMN_NAME": "valor_inventario",
+      "COLUMN_TYPE": "decimal(20,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "sucursal",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "id_producto",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "codigo_barra",
+      "COLUMN_TYPE": "varchar(50)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "nombre",
+      "COLUMN_TYPE": "varchar(150)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "categoria",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "stock_actual",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "stock_reservado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "stock_disponible",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_productos_stock_critico",
+      "COLUMN_NAME": "stock_minimo",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "id_venta",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "serie_factura",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "numero_factura",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "fecha_venta",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "total_venta",
+      "COLUMN_TYPE": "decimal(12,2)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "total_devuelto",
+      "COLUMN_TYPE": "decimal(34,2)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0.00",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "total_neto",
+      "COLUMN_TYPE": "decimal(35,2)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "tipo_pago",
+      "COLUMN_TYPE": "varchar(30)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "estado",
+      "COLUMN_TYPE": "varchar(20)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "Emitida",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "id_cliente",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "cliente",
+      "COLUMN_TYPE": "varchar(201)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "id_empleado",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "empleado",
+      "COLUMN_TYPE": "varchar(201)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "id_sucursal",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    },
+    {
+      "TABLE_NAME": "vw_ventas_detalladas",
+      "COLUMN_NAME": "sucursal",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": ""
+    }
+  ],
+  "restricciones": [
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "CONSTRAINT_NAME": "chk_categoria_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "CONSTRAINT_NAME": "nombre",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "CATEGORIA",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "CONSTRAINT_NAME": "chk_cliente_cui",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "CONSTRAINT_NAME": "chk_cliente_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "CONSTRAINT_NAME": "cui",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "CONSTRAINT_NAME": "nit",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "CLIENTE",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "chk_compra_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "chk_compra_total",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "fk_compra_empleado",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "fk_compra_proveedor",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "fk_compra_sucursal",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "numero_orden",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_chk_2",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_ibfk_4",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "CONSTRAINT_NAME": "CORRECCION_DOCUMENTO_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "CONSTRAINT_NAME": "CORRECCION_DOCUMENTO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "CONSTRAINT_NAME": "CORRECCION_DOCUMENTO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "CONSTRAINT_NAME": "CORRECCION_DOCUMENTO_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "CONSTRAINT_NAME": "chk_detcompra_cantidad",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "CONSTRAINT_NAME": "chk_detcompra_costo",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "CONSTRAINT_NAME": "chk_detcompra_subtotal",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "CONSTRAINT_NAME": "fk_detcompra_compra",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "CONSTRAINT_NAME": "fk_detcompra_producto",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "CONSTRAINT_NAME": "DETALLE_REVERSO_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "CONSTRAINT_NAME": "DETALLE_REVERSO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "CONSTRAINT_NAME": "DETALLE_REVERSO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "CONSTRAINT_NAME": "DETALLE_REVERSO_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "CONSTRAINT_NAME": "DETALLE_REVERSO_ibfk_4",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "CONSTRAINT_NAME": "chk_dettraslado_cantidad",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "CONSTRAINT_NAME": "chk_dettraslado_recibida",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "CONSTRAINT_NAME": "fk_dettraslado_producto",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "CONSTRAINT_NAME": "fk_dettraslado_traslado",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "CONSTRAINT_NAME": "uq_dettraslado_producto",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "chk_detventa_cantidad",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "chk_detventa_descuento",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "chk_detventa_precio",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "chk_detventa_subtotal",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "DETALLE_VENTA_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "fk_detventa_producto",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "fk_detventa_venta",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "CONSTRAINT_NAME": "chk_empleado_cui",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "CONSTRAINT_NAME": "chk_empleado_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "CONSTRAINT_NAME": "correo",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "CONSTRAINT_NAME": "cui",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "CONSTRAINT_NAME": "fk_empleado_sucursal",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "CONSTRAINT_NAME": "EVENTO_PROVEEDOR_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "CONSTRAINT_NAME": "EVENTO_PROVEEDOR_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "CONSTRAINT_NAME": "EVENTO_PROVEEDOR_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "CONSTRAINT_NAME": "EVENTO_PROVEEDOR_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "CONSTRAINT_NAME": "EVENTO_TRASLADO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "CONSTRAINT_NAME": "EVENTO_TRASLADO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "CONSTRAINT_NAME": "HISTORIAL_UNIDAD_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "CONSTRAINT_NAME": "HISTORIAL_UNIDAD_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "CONSTRAINT_NAME": "chk_inventario_stock",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "CONSTRAINT_NAME": "chk_minimo_sucursal",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "CONSTRAINT_NAME": "chk_reservas",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "CONSTRAINT_NAME": "fk_inventario_producto",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "CONSTRAINT_NAME": "fk_inventario_sucursal",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "CONSTRAINT_NAME": "MOVIMIENTO_INVENTARIO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "CONSTRAINT_NAME": "MOVIMIENTO_INVENTARIO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "CONSTRAINT_NAME": "MOVIMIENTO_INVENTARIO_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "chk_producto_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "chk_producto_margen",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "chk_producto_precio",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "chk_producto_precio_costo",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "chk_producto_serie",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "chk_producto_stock_minimo",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "codigo_barra",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "fk_producto_categoria",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "id_proveedor",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_chk_2",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "CONSTRAINT_NAME": "uq_propuesta_nit_pendiente",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "CONSTRAINT_NAME": "chk_proveedor_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "CONSTRAINT_NAME": "nit",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "PROVEEDOR",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "RESPALDO_EJECUCION",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_chk_2",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "CONSTRAINT_NAME": "chk_sucursal_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "CONSTRAINT_NAME": "chk_sucursal_telefono",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "CONSTRAINT_NAME": "nombre",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "SUCURSAL",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "chk_traslado_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "chk_traslado_sucursales",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "fk_traslado_aprobador",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "fk_traslado_despachador",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "fk_traslado_destino",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "fk_traslado_empleado",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "fk_traslado_origen",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "fk_traslado_receptor",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "numero_traslado",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "CONSTRAINT_NAME": "TRASLADO_UNIDAD_chk_1",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "CONSTRAINT_NAME": "TRASLADO_UNIDAD_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "CONSTRAINT_NAME": "TRASLADO_UNIDAD_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "chk_unidad_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "numero_motor",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "UNIDAD_PRODUCTO_ibfk_1",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "UNIDAD_PRODUCTO_ibfk_2",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "UNIDAD_PRODUCTO_ibfk_3",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "UNIDAD_PRODUCTO_ibfk_4",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "UNIDAD_PRODUCTO_ibfk_5",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "CONSTRAINT_NAME": "vin_chasis",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "chk_venta_estado",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "chk_venta_tipo_pago",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "chk_venta_total",
+      "CONSTRAINT_TYPE": "CHECK"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "fk_venta_cliente",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "fk_venta_empleado",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "fk_venta_sucursal",
+      "CONSTRAINT_TYPE": "FOREIGN KEY"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "PRIMARY",
+      "CONSTRAINT_TYPE": "PRIMARY KEY"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "CONSTRAINT_NAME": "uq_venta_factura",
+      "CONSTRAINT_TYPE": "UNIQUE"
+    }
+  ],
+  "fks": [
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_proveedor",
+      "REFERENCED_TABLE_NAME": "PROVEEDOR",
+      "REFERENCED_COLUMN_NAME": "id_proveedor",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "COMPRA",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_responsable",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_solicitante",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CONTEO_INVENTARIO",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_compra",
+      "REFERENCED_TABLE_NAME": "COMPRA",
+      "REFERENCED_COLUMN_NAME": "id_compra",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "CORRECCION_DOCUMENTO",
+      "COLUMN_NAME": "id_venta",
+      "REFERENCED_TABLE_NAME": "VENTA",
+      "REFERENCED_COLUMN_NAME": "id_venta",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "id_compra",
+      "REFERENCED_TABLE_NAME": "COMPRA",
+      "REFERENCED_COLUMN_NAME": "id_compra",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "DETALLE_COMPRA",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_detalle_compra",
+      "REFERENCED_TABLE_NAME": "DETALLE_COMPRA",
+      "REFERENCED_COLUMN_NAME": "id_detalle_compra",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_detalle_venta",
+      "REFERENCED_TABLE_NAME": "DETALLE_VENTA",
+      "REFERENCED_COLUMN_NAME": "id_detalle_venta",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_REVERSO",
+      "COLUMN_NAME": "id_reverso",
+      "REFERENCED_TABLE_NAME": "REVERSO_DOCUMENTO",
+      "REFERENCED_COLUMN_NAME": "id_reverso",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_TRASLADO",
+      "COLUMN_NAME": "id_traslado",
+      "REFERENCED_TABLE_NAME": "TRASLADO",
+      "REFERENCED_COLUMN_NAME": "id_traslado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_unidad",
+      "REFERENCED_TABLE_NAME": "UNIDAD_PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_unidad",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "DETALLE_VENTA",
+      "COLUMN_NAME": "id_venta",
+      "REFERENCED_TABLE_NAME": "VENTA",
+      "REFERENCED_COLUMN_NAME": "id_venta",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "CASCADE"
+    },
+    {
+      "TABLE_NAME": "EMPLEADO",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_propuesta",
+      "REFERENCED_TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "REFERENCED_COLUMN_NAME": "id_propuesta",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "EVENTO_PROVEEDOR",
+      "COLUMN_NAME": "id_proveedor",
+      "REFERENCED_TABLE_NAME": "PROVEEDOR",
+      "REFERENCED_COLUMN_NAME": "id_proveedor",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "EVENTO_TRASLADO",
+      "COLUMN_NAME": "id_traslado",
+      "REFERENCED_TABLE_NAME": "TRASLADO",
+      "REFERENCED_COLUMN_NAME": "id_traslado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "HISTORIAL_UNIDAD",
+      "COLUMN_NAME": "id_unidad",
+      "REFERENCED_TABLE_NAME": "UNIDAD_PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_unidad",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "INVENTARIO_SUCURSAL",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "MOVIMIENTO_INVENTARIO",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "PRODUCTO",
+      "COLUMN_NAME": "id_categoria",
+      "REFERENCED_TABLE_NAME": "CATEGORIA",
+      "REFERENCED_COLUMN_NAME": "id_categoria",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_proveedor",
+      "REFERENCED_TABLE_NAME": "PROVEEDOR",
+      "REFERENCED_COLUMN_NAME": "id_proveedor",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_responsable",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "PROPUESTA_PROVEEDOR",
+      "COLUMN_NAME": "id_solicitante",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_compra",
+      "REFERENCED_TABLE_NAME": "COMPRA",
+      "REFERENCED_COLUMN_NAME": "id_compra",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "REVERSO_DOCUMENTO",
+      "COLUMN_NAME": "id_venta",
+      "REFERENCED_TABLE_NAME": "VENTA",
+      "REFERENCED_COLUMN_NAME": "id_venta",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado_aprobacion",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado_despacho",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_empleado_recepcion",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_sucursal_destino",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO",
+      "COLUMN_NAME": "id_sucursal_origen",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "COLUMN_NAME": "id_traslado",
+      "REFERENCED_TABLE_NAME": "TRASLADO",
+      "REFERENCED_COLUMN_NAME": "id_traslado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "TRASLADO_UNIDAD",
+      "COLUMN_NAME": "id_unidad",
+      "REFERENCED_TABLE_NAME": "UNIDAD_PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_unidad",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_detalle_compra",
+      "REFERENCED_TABLE_NAME": "DETALLE_COMPRA",
+      "REFERENCED_COLUMN_NAME": "id_detalle_compra",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_detalle_venta",
+      "REFERENCED_TABLE_NAME": "DETALLE_VENTA",
+      "REFERENCED_COLUMN_NAME": "id_detalle_venta",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_producto",
+      "REFERENCED_TABLE_NAME": "PRODUCTO",
+      "REFERENCED_COLUMN_NAME": "id_producto",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "UNIDAD_PRODUCTO",
+      "COLUMN_NAME": "id_traslado",
+      "REFERENCED_TABLE_NAME": "TRASLADO",
+      "REFERENCED_COLUMN_NAME": "id_traslado",
+      "UPDATE_RULE": "RESTRICT",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_cliente",
+      "REFERENCED_TABLE_NAME": "CLIENTE",
+      "REFERENCED_COLUMN_NAME": "id_cliente",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_empleado",
+      "REFERENCED_TABLE_NAME": "EMPLEADO",
+      "REFERENCED_COLUMN_NAME": "id_empleado",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    },
+    {
+      "TABLE_NAME": "VENTA",
+      "COLUMN_NAME": "id_sucursal",
+      "REFERENCED_TABLE_NAME": "SUCURSAL",
+      "REFERENCED_COLUMN_NAME": "id_sucursal",
+      "UPDATE_RULE": "CASCADE",
+      "DELETE_RULE": "RESTRICT"
+    }
+  ],
+  "checks": [
+    {
+      "CONSTRAINT_NAME": "chk_categoria_estado",
+      "CHECK_CLAUSE": "(`estado` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_cliente_cui",
+      "CHECK_CLAUSE": "((`cui` is null) or (length(`cui`) = 13))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_cliente_estado",
+      "CHECK_CLAUSE": "(`estado` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_compra_estado",
+      "CHECK_CLAUSE": "(`estado_recepcion` in (_utf8mb4\\'Pendiente\\',_utf8mb4\\'Recibido\\',_utf8mb4\\'Cancelado\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_compra_total",
+      "CHECK_CLAUSE": "(`total_compra` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detcompra_cantidad",
+      "CHECK_CLAUSE": "(`cantidad` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detcompra_costo",
+      "CHECK_CLAUSE": "(`costo_unitario` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detcompra_subtotal",
+      "CHECK_CLAUSE": "(`subtotal` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_dettraslado_cantidad",
+      "CHECK_CLAUSE": "(`cantidad` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_dettraslado_recibida",
+      "CHECK_CLAUSE": "((`cantidad_recibida` is null) or ((`cantidad_recibida` >= 0) and (`cantidad_recibida` <= `cantidad`)))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detventa_cantidad",
+      "CHECK_CLAUSE": "(`cantidad` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detventa_descuento",
+      "CHECK_CLAUSE": "(`descuento` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detventa_precio",
+      "CHECK_CLAUSE": "(`precio_unitario` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_detventa_subtotal",
+      "CHECK_CLAUSE": "(`subtotal` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_empleado_cui",
+      "CHECK_CLAUSE": "(length(`cui`) = 13)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_empleado_estado",
+      "CHECK_CLAUSE": "(`estado` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_inventario_stock",
+      "CHECK_CLAUSE": "(`stock_actual` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_minimo_sucursal",
+      "CHECK_CLAUSE": "((`stock_minimo` is null) or (`stock_minimo` >= 0))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_producto_estado",
+      "CHECK_CLAUSE": "(`estado` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_producto_margen",
+      "CHECK_CLAUSE": "(`precio_venta` >= `precio_costo`)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_producto_precio",
+      "CHECK_CLAUSE": "(`precio_venta` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_producto_precio_costo",
+      "CHECK_CLAUSE": "(`precio_costo` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_producto_serie",
+      "CHECK_CLAUSE": "(`requiere_serie` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_producto_stock_minimo",
+      "CHECK_CLAUSE": "(`stock_minimo` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_proveedor_estado",
+      "CHECK_CLAUSE": "(`estado` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_reservas",
+      "CHECK_CLAUSE": "((`stock_reservado` >= 0) and (`stock_reservado` <= `stock_actual`))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_sucursal_estado",
+      "CHECK_CLAUSE": "(`estado` in (0,1))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_sucursal_telefono",
+      "CHECK_CLAUSE": "(length(`telefono`) >= 8)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_traslado_estado",
+      "CHECK_CLAUSE": "(`estado` in (_utf8mb4\\'Pendiente de aprobaciÃ³n\\',_utf8mb4\\'Rechazado\\',_utf8mb4\\'Aprobado\\',_utf8mb4\\'En trÃ¡nsito\\',_utf8mb4\\'Con diferencias\\',_utf8mb4\\'Completado\\',_utf8mb4\\'Anulado\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_traslado_sucursales",
+      "CHECK_CLAUSE": "(`id_sucursal_origen` <> `id_sucursal_destino`)"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_unidad_estado",
+      "CHECK_CLAUSE": "(`estado` in (_utf8mb4\\'Disponible\\',_utf8mb4\\'Reservada\\',_utf8mb4\\'En trÃ¡nsito\\',_utf8mb4\\'Vendida\\',_utf8mb4\\'Baja\\',_utf8mb4\\'Devuelta a proveedor\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_venta_estado",
+      "CHECK_CLAUSE": "(`estado` in (_utf8mb4\\'Emitida\\',_utf8mb4\\'Anulada\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_venta_tipo_pago",
+      "CHECK_CLAUSE": "(`tipo_pago` in (_utf8mb4\\'Efectivo\\',_utf8mb4\\'Transferencia\\',_utf8mb4\\'DepÃ³sito Bancario\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "chk_venta_total",
+      "CHECK_CLAUSE": "(`total_venta` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_chk_1",
+      "CHECK_CLAUSE": "(`cantidad_contada` >= 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "CONTEO_INVENTARIO_chk_2",
+      "CHECK_CLAUSE": "(`estado` in (_utf8mb4\\'Pendiente\\',_utf8mb4\\'Aprobado\\',_utf8mb4\\'Rechazado\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "CORRECCION_DOCUMENTO_chk_1",
+      "CHECK_CLAUSE": "(((`id_venta` is not null) and (`id_compra` is null)) or ((`id_venta` is null) and (`id_compra` is not null)))"
+    },
+    {
+      "CONSTRAINT_NAME": "DETALLE_REVERSO_chk_1",
+      "CHECK_CLAUSE": "(`cantidad` > 0)"
+    },
+    {
+      "CONSTRAINT_NAME": "EVENTO_PROVEEDOR_chk_1",
+      "CHECK_CLAUSE": "((`id_propuesta` is not null) or (`id_proveedor` is not null))"
+    },
+    {
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_chk_1",
+      "CHECK_CLAUSE": "(`estado` in (_utf8mb4\\'Pendiente\\',_utf8mb4\\'Aprobada\\',_utf8mb4\\'Rechazada\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "PROPUESTA_PROVEEDOR_chk_2",
+      "CHECK_CLAUSE": "(((`estado` = _utf8mb4\\'Pendiente\\') and (`id_responsable` is null) and (`fecha_resolucion` is null) and (`id_proveedor` is null)) or ((`estado` = _utf8mb4\\'Aprobada\\') and (`id_responsable` is not null) and (`fecha_resolucion` is not null) and (`id_proveedor` is not null)) or ((`estado` = _utf8mb4\\'Rechazada\\') and (`id_responsable` is not null) and (`fecha_resolucion` is not null) and (`id_proveedor` is null)))"
+    },
+    {
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_chk_1",
+      "CHECK_CLAUSE": "(`tipo` in (_utf8mb4\\'DevoluciÃ³n venta\\',_utf8mb4\\'AnulaciÃ³n venta\\',_utf8mb4\\'DevoluciÃ³n compra\\',_utf8mb4\\'AnulaciÃ³n compra\\'))"
+    },
+    {
+      "CONSTRAINT_NAME": "REVERSO_DOCUMENTO_chk_2",
+      "CHECK_CLAUSE": "(((`id_venta` is not null) and (`id_compra` is null)) or ((`id_compra` is not null) and (`id_venta` is null)))"
+    },
+    {
+      "CONSTRAINT_NAME": "TRASLADO_UNIDAD_chk_1",
+      "CHECK_CLAUSE": "(`recibida` in (0,1))"
+    }
+  ],
+  "triggers": [
+    {
+      "TRIGGER_NAME": "trg_compra_conservar",
+      "EVENT_MANIPULATION": "DELETE",
+      "EVENT_OBJECT_TABLE": "COMPRA",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_descontar_stock_venta",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "DETALLE_VENTA",
+      "ACTION_TIMING": "AFTER"
+    },
+    {
+      "TRIGGER_NAME": "trg_inventario_revision",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "INVENTARIO_SUCURSAL",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_kardex_insert",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "INVENTARIO_SUCURSAL",
+      "ACTION_TIMING": "AFTER"
+    },
+    {
+      "TRIGGER_NAME": "trg_kardex_update",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "INVENTARIO_SUCURSAL",
+      "ACTION_TIMING": "AFTER"
+    },
+    {
+      "TRIGGER_NAME": "trg_producto_identificacion_insert",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "PRODUCTO",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_producto_identificacion_update",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "PRODUCTO",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_producto_margen_insert",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "PRODUCTO",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_producto_margen_update",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "PRODUCTO",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_unidad_alta",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "UNIDAD_PRODUCTO",
+      "ACTION_TIMING": "AFTER"
+    },
+    {
+      "TRIGGER_NAME": "trg_unidad_historial",
+      "EVENT_MANIPULATION": "UPDATE",
+      "EVENT_OBJECT_TABLE": "UNIDAD_PRODUCTO",
+      "ACTION_TIMING": "AFTER"
+    },
+    {
+      "TRIGGER_NAME": "trg_validar_margen_venta",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "DETALLE_VENTA",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_validar_stock_venta",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "DETALLE_VENTA",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_venta_conservar",
+      "EVENT_MANIPULATION": "DELETE",
+      "EVENT_OBJECT_TABLE": "VENTA",
+      "ACTION_TIMING": "BEFORE"
+    },
+    {
+      "TRIGGER_NAME": "trg_venta_unidad",
+      "EVENT_MANIPULATION": "INSERT",
+      "EVENT_OBJECT_TABLE": "DETALLE_VENTA",
+      "ACTION_TIMING": "AFTER"
+    }
+  ],
+  "procedimientos": [
+    {
+      "ROUTINE_NAME": "sp_despachar_traslado",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_recibir_traslado",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_registrar_compra",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_registrar_compra_detallada",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_registrar_traslado",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_registrar_venta",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_registrar_venta_detallada",
+      "ROUTINE_TYPE": "PROCEDURE"
+    },
+    {
+      "ROUTINE_NAME": "sp_resolver_traslado",
+      "ROUTINE_TYPE": "PROCEDURE"
+    }
+  ],
+  "filas_principales": {
+    "SUCURSAL": 50,
+    "EMPLEADO": 50,
+    "CLIENTE": 50,
+    "CATEGORIA": 50,
+    "PRODUCTO": 50,
+    "PROVEEDOR": 50,
+    "COMPRA": 50,
+    "VENTA": 50
+  },
+  "roles_temporales": [
+    "ce_b3d19f69bba9_admin",
+    "ce_b3d19f69bba9_ventas",
+    "ce_b3d19f69bba9_bodega"
+  ],
+  "aceptacion": {
+    "ejecutadas": 8,
+    "fallos": 0,
+    "errores": 0,
+    "correcto": true
+  },
+  "esquema_y_roles_temporales_eliminados": true,
+  "fuentes_aplicacion_sha256": {
+    "web/db.py": "b164ea86996618d2fee179bccee95d5a880d209cb04dd0f49f459e90fe870e99",
+    "web/supplier_control.py": "36d9a910e008106e8153dd04a30e883ad995d32d59e76779a48a4db55639e72f",
+    "web/inventory_control.py": "4db687a2943a4eb2cf70b9ff95d5f0a6874a3ffecff6ac66c360cf2ea98e94cf",
+    "web/app.py": "124d23c1018eab2a4a8c08ce371d645fe598e26138e246de3a103255b40a5b6a",
+    "web/control_routes.py": "330f95d03d74353f4946b3f78aa32059ca9696cd9d7e87337e84068d9a20511a",
+    "web/templates/productos.html": "1f80cb6d5434a0779f7610ca1c80544e8f054bdc7bc496dac66c472f1c41a475",
+    "web/templates/ventas.html": "ae96f097717f3234cbf2a383f558789804036d39fd045f85db1a9be320190c10",
+    "web/templates/proveedor_form.html": "77be5b545121328edecef15c02b2f87fdfb1047efcfdc7a2688e7bcbb3dbd1a6",
+    "web/templates/proveedor_propuestas.html": "2f6e0c7514ef4a65933107cfdece0c2817d54a4e91df3fead55a67b982f5dbec",
+    "web/templates/producto_form.html": "dd190a5fedb08ba5e8d524453d9851184218accc5b28709311ed65df1a6efb1b",
+    "web/templates/empleado_form.html": "d6676a10db57e2883ffbb632a1ce686b33cfb1e4c572c7a6c4b5b59335455f5a",
+    "web/templates/venta_detalle.html": "a9185cd75cc667c92cf96fd6fefc84572abb2b03c6e5d3e86d71fbaf9e282f90",
+    "web/templates/control.html": "80c54232603fe8e34776548006544d6a8cb842df43b3f38f6d89efc97a5da97f",
+    "web/templates/venta_form.html": "012870010d2154b70eb7a5745d7a49be4cdc25a8548cf058867d58ca74d74428",
+    "web/templates/cliente_form.html": "850ecacc1a2eabb18ed37becf53865269da7ac78f114189d23a2bd91c3e63e22",
+    "web/templates/compra_detalle.html": "8c0ad515152c295d107517f59765c9c06a55a6c3c5913517740c764c434e8988",
+    "web/templates/resumen.html": "e66fce9455992aff54d53b0dd968057a18210f8a6baba9ab02c535c542364e12",
+    "web/templates/login.html": "f7643259baf5bb8c222da9ebaf5891350fe0412fece40b00f4f750c91f450f10",
+    "web/templates/compra_form.html": "1ec79e83b68057ee6148b17c9ba5075df88598e9cda123af1c644fc4ae9d7aa6",
+    "web/templates/_mobile_nav.html": "fb9e5929e21e14dde09a37a89f84db86574c2c2e9394638b695e260e29480488",
+    "web/templates/proveedores.html": "ad77913cbbf3b13648d256afb2b128a7926e8d8165713ae7f5e39abec21d3694",
+    "web/templates/_sidebar.html": "b25df3c0c76d51d6291152cfdfb8a26c16e2d8a0eb2c1076323b03bb833e00dc",
+    "web/templates/proveedor_propuesta_detalle.html": "16e322cca4847ccccfc088143267661799b1640f66594f73e4067ae310336a27",
+    "web/templates/traslado_detalle.html": "7bbcb87051a20349b24fbfdea638d1fc0a999f389154474f2cda4723412775d8",
+    "web/templates/clientes.html": "644ef5add35a17e0a65faa8a27e25251528e89be19d62ea9d7e345c19a19097f",
+    "web/templates/categorias.html": "bc6786c30b0a3fdddccd83a6ed81eabed7e2c33c3ea2b68ae08f4305416f1283",
+    "web/templates/traslado_form.html": "2b8458780a9246ac46908e8e6c2302852e5458a2bd336ede66ac54a7d1557cb5",
+    "web/templates/sucursales.html": "8616b14f190c5ee95ddc58c7aa379428ddaaba6e4d52510624d20a80c986e5ff",
+    "web/templates/inventario.html": "fcc4948c9e6483856345dffc20d2390996d374eed8681a856ba30e25e5b72d87",
+    "web/templates/empleados.html": "c6299978302a0359e403a75b48ee0c8e3360df9260ca552acdf7f446385427d7",
+    "web/templates/_proveedor_campos.html": "9239af641885b8d2bb1f48c57d7fca5175ebfa958a4a003b9a00232479173a2f",
+    "web/templates/_icons.html": "78bba7cd52ba65b607a8b877a833cb045cbb2031138c651ed32c7d4ef7b44784",
+    "web/templates/sucursal_form.html": "06b72d69bcc59d8ad8e0be646c27bf0dab590c9fec9876c8138fc2aa9c4c4368",
+    "web/templates/traslados.html": "d5d25e81e992ae404def139fafd8a02e975699c5319d56d32bc1729d2857c92d",
+    "web/templates/documento_corregir.html": "22a5f69cde4699ff4818aff6119e89a90822331acf130b4f15367ca738b271cc",
+    "web/templates/compras.html": "3ddff052384357581b3e95cb188710f98d4de3b1bb8ade27c600f04e5523ce38",
+    "web/templates/categoria_form.html": "0c324290dcc765d10403b1e80c13c174a69bbbeb4c94ef4c99829f9c2afc6631",
+    "web/static/style.css": "3870fb3481190cbc642333ae275d573993599603f686070d3734250bade406d4"
+  }
+}

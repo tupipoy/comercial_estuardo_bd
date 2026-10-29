@@ -29,6 +29,7 @@ def snapshot(row):
 
 
 def event(cursor, employee, action, proposal=None, provider=None, old=None, new=None, note=None):
+    """Registra el responsable y las versiones de una propuesta o proveedor."""
     cursor.execute("""INSERT INTO EVENTO_PROVEEDOR(id_propuesta,id_proveedor,id_empleado,accion,datos_anteriores,datos_nuevos,observacion)
                       VALUES(%s,%s,%s,%s,%s,%s,%s)""", (proposal, provider, employee, action,
                       json.dumps(snapshot(old), ensure_ascii=False) if old else None,
@@ -36,6 +37,7 @@ def event(cursor, employee, action, proposal=None, provider=None, old=None, new=
 
 
 def propose(cursor, employee, data):
+    """Crea una propuesta pendiente tras validar el cargo y los NIT existentes."""
     user = actor(cursor, employee)
     require(user["cargo"] in ("Administrador", "Bodega"), "No tienes permiso para proponer proveedores.")
     require(not validate(data), " ".join(validate(data)))
@@ -51,6 +53,7 @@ def propose(cursor, employee, data):
 
 
 def resolve(cursor, employee, proposal, approve, data=None, note=""):
+    """Bloquea y resuelve una propuesta; solo Administración crea el proveedor aprobado."""
     actor(cursor, employee, admin=True)
     cursor.execute("SELECT * FROM PROPUESTA_PROVEEDOR WHERE id_propuesta=%s FOR UPDATE", (proposal,))
     original = cursor.fetchone()
@@ -76,6 +79,7 @@ def resolve(cursor, employee, proposal, approve, data=None, note=""):
 
 
 def update(cursor, employee, provider, data):
+    """Actualiza datos del proveedor con autorización administrativa y auditoría."""
     actor(cursor, employee, admin=True)
     require(not validate(data), " ".join(validate(data)))
     cursor.execute("SELECT * FROM PROVEEDOR WHERE id_proveedor=%s FOR UPDATE", (provider,))
@@ -86,6 +90,7 @@ def update(cursor, employee, provider, data):
 
 
 def deactivate(cursor, employee, provider):
+    """Da de baja lógica al proveedor y conserva las compras vinculadas."""
     actor(cursor, employee, admin=True)
     cursor.execute("SELECT * FROM PROVEEDOR WHERE id_proveedor=%s FOR UPDATE", (provider,))
     original = cursor.fetchone()

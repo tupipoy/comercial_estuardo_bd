@@ -1,3 +1,7 @@
+-- Archivo: sql/migrations/07_transfer_workflow.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: actualiza de forma incremental el esquema existente.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 -- Agrega aprobacion, despacho y recepcion al flujo de traslados.
 -- Ejecutar una sola vez sobre una base que ya tenga sql/migrations/06.
 USE comercial_estuardo_db;

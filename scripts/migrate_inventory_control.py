@@ -13,11 +13,11 @@ DB = "comercial_estuardo_db"
 FILES = ("sql/migrations/08_inventory_control.sql", "sql/triggers/02_inventory_control.sql", "sql/views/01_views.sql")
 
 
-def main(suppliers=False):
-    files = ("sql/migrations/09_supplier_proposals.sql",) if suppliers else FILES
-    security = ("sql/security/03_supplier_proposals.sql",) if suppliers else ("sql/security/01_roles.sql", "sql/security/02_inventory_control.sql")
-    marker = "PROPUESTA_PROVEEDOR" if suppliers else "MOVIMIENTO_INVENTARIO"
-    migration = "09" if suppliers else "08"
+def main(suppliers=False, corrections=False):
+    files = ("sql/migrations/10_document_corrections.sql", "sql/triggers/02_inventory_control.sql") if corrections else (("sql/migrations/09_supplier_proposals.sql",) if suppliers else FILES)
+    security = () if corrections else (("sql/security/03_supplier_proposals.sql",) if suppliers else ("sql/security/01_roles.sql", "sql/security/02_inventory_control.sql"))
+    marker = "CORRECCION_DOCUMENTO" if corrections else ("PROPUESTA_PROVEEDOR" if suppliers else "MOVIMIENTO_INVENTARIO")
+    migration = "10" if corrections else ("09" if suppliers else "08")
     url = urlparse(os.environ["MYSQL_PUBLIC_URL"])
     env = os.environ.copy()
     env["MYSQL_PWD"] = unquote(url.password)
@@ -34,11 +34,11 @@ def main(suppliers=False):
             cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s", (marker,))
             if cursor.fetchone()[0]:
                 raise RuntimeError(f"La migración {migration} ya está iniciada o instalada; no se volvió a aplicar.")
-            if suppliers:
+            if suppliers or corrections:
                 return
             cursor.execute("""SELECT COUNT(*) FROM TRASLADO t JOIN DETALLE_TRASLADO d USING(id_traslado)
                 JOIN PRODUCTO p USING(id_producto) JOIN CATEGORIA c USING(id_categoria)
-                WHERE t.estado IN ('Pendiente de aprobación','Aprobado','En tránsito') AND LOWER(c.nombre) LIKE '%moto%'""")
+                WHERE t.estado IN ('Pendiente de aprobación','Aprobado','En tránsito') AND LOWER(c.nombre) REGEXP '(^|[^[:alpha:]])(motos?|motocicletas?)([^[:alpha:]]|$)'""")
             if cursor.fetchone()[0]:
                 raise RuntimeError("Hay traslados de motocicletas abiertos de la versión anterior. Conciliarlos antes de migrar.")
             cursor.execute("""SELECT COUNT(*) FROM (SELECT t.id_sucursal_origen,d.id_producto,SUM(d.cantidad) cantidad
@@ -52,7 +52,7 @@ def main(suppliers=False):
     clone = "ce_migration_check_" + uuid.uuid4().hex[:12]
     try:
         preflight()
-        backup = Path("backups") / f"railway_pre_{'supplier_proposals' if suppliers else 'inventory_control'}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.sql.gz"
+        backup = Path("backups") / f"railway_pre_{'document_corrections' if corrections else ('supplier_proposals' if suppliers else 'inventory_control')}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.sql.gz"
         backup.parent.mkdir(mode=0o700, exist_ok=True)
         dump = subprocess.Popen(["mysqldump", *args, "--single-transaction", "--routines", "--triggers", "--events", "--no-tablespaces", "--set-gtid-purged=OFF", "--databases", DB], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         with gzip.open(backup, "wb") as output:
@@ -89,4 +89,4 @@ def main(suppliers=False):
 
 
 if __name__ == "__main__":
-    main(suppliers="--suppliers" in sys.argv)
+    main(suppliers="--suppliers" in sys.argv, corrections="--document-corrections" in sys.argv)

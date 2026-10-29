@@ -13,6 +13,7 @@ def require(condition, message):
 
 
 def actor(cursor, employee, branch=None, admin=False):
+    """Consulta al empleado activo y verifica cargo y sucursal antes de modificar datos."""
     cursor.execute("SELECT id_empleado,cargo,id_sucursal FROM EMPLEADO WHERE id_empleado=%s AND estado=1", (employee,))
     user = cursor.fetchone()
     require(user, "La cuenta ya no está activa.")
@@ -27,17 +28,20 @@ def actor(cursor, employee, branch=None, admin=False):
 
 
 def context(cursor, employee, kind, reference, reason=None):
+    """Asocia responsable, referencia y motivo a los triggers de la sesión MySQL."""
     cursor.execute("SET @mov_actor=%s,@mov_tipo=%s,@mov_referencia=%s,@mov_motivo=%s",
                    (employee, kind, reference, reason))
 
 
 def stock(cursor, branch, product):
+    """Obtiene un bloqueo exclusivo sobre las existencias del producto y sucursal."""
     cursor.execute("INSERT INTO INVENTARIO_SUCURSAL(id_sucursal,id_producto) VALUES(%s,%s) ON DUPLICATE KEY UPDATE id_producto=VALUES(id_producto)", (branch, product))
     cursor.execute("SELECT * FROM INVENTARIO_SUCURSAL WHERE id_sucursal=%s AND id_producto=%s FOR UPDATE", (branch, product))
     return cursor.fetchone()
 
 
 def product(cursor, product_id):
+    """Consulta los datos del catálogo usados para validar una operación."""
     cursor.execute("SELECT * FROM PRODUCTO WHERE id_producto=%s", (product_id,))
     row = cursor.fetchone()
     require(row, "El producto no existe.")
@@ -59,12 +63,14 @@ def serial_pairs(text):
 
 
 def add_unit(cursor, product_id, branch, pair, purchase_detail=None):
+    """Inserta una unidad con VIN y motor únicos y su compra de origen."""
     cursor.execute("""INSERT INTO UNIDAD_PRODUCTO(id_producto,id_sucursal,vin_chasis,numero_motor,id_detalle_compra)
                       VALUES(%s,%s,%s,%s,%s)""", (product_id, branch, pair["vin"], pair["motor"], purchase_detail))
     return cursor.lastrowid
 
 
 def register_purchase(cursor, employee, branch, order, provider, lines):
+    """Registra compra, unidades y existencias en la transacción del llamador."""
     actor(cursor, employee, branch)
     cursor.execute("SELECT id_proveedor FROM PROVEEDOR WHERE id_proveedor=%s AND estado=1", (provider,))
     require(cursor.fetchone(), "El proveedor está inactivo.")
@@ -93,10 +99,12 @@ def register_purchase(cursor, employee, branch, order, provider, lines):
 
 
 def event(cursor, transfer_id, employee, action, note=None):
+    """Conserva las acciones y responsables del traslado."""
     cursor.execute("INSERT INTO EVENTO_TRASLADO(id_traslado,id_empleado,accion,observacion) VALUES(%s,%s,%s,%s)", (transfer_id, employee, action, note))
 
 
 def request_transfer(cursor, employee, origin, destination, number, lines):
+    """Registra una solicitud y sus unidades sin descontar existencias."""
     actor(cursor, employee, origin)
     require(origin != destination, "El origen y el destino deben ser diferentes.")
     cursor.execute("SELECT COUNT(*) n FROM SUCURSAL WHERE id_sucursal IN (%s,%s) AND estado=1", (origin, destination))
@@ -124,6 +132,7 @@ def request_transfer(cursor, employee, origin, destination, number, lines):
 
 
 def transfer_action(cursor, employee, transfer_id, action, note="", received=None):
+    """Valida estado y actor y aplica reserva, despacho o recepción acumulada."""
     cursor.execute("SELECT * FROM TRASLADO WHERE id_traslado=%s FOR UPDATE", (transfer_id,))
     t = cursor.fetchone()
     require(t, "El traslado no existe.")
@@ -197,6 +206,7 @@ def transfer_action(cursor, employee, transfer_id, action, note="", received=Non
 
 
 def current_units(cursor, branch, product_id):
+    """Bloquea las unidades físicas disponibles o reservadas de una sucursal."""
     cursor.execute("SELECT * FROM UNIDAD_PRODUCTO WHERE id_sucursal=%s AND id_producto=%s AND estado IN ('Disponible','Reservada') ORDER BY id_unidad FOR UPDATE", (branch, product_id))
     return cursor.fetchall()
 
@@ -213,6 +223,7 @@ def register_legacy_unit(cursor, employee, branch, product_id, pair):
 
 
 def request_count(cursor, employee, branch, product_id, quantity, reason, present, new_pairs):
+    """Guarda un conteo con la revisión de inventario observada."""
     actor(cursor, employee, branch)
     require(reason.strip() and 0 <= quantity <= 1000000, "Indica una cantidad válida y el motivo del conteo.")
     p = product(cursor, product_id)
@@ -230,6 +241,7 @@ def request_count(cursor, employee, branch, product_id, quantity, reason, presen
 
 
 def resolve_count(cursor, employee, count_id, approve, note):
+    """Aprueba o rechaza un conteo evitando ajustes sobre existencias modificadas."""
     actor(cursor, employee, admin=True)
     cursor.execute("SELECT * FROM CONTEO_INVENTARIO WHERE id_conteo=%s FOR UPDATE", (count_id,))
     c = cursor.fetchone()
@@ -257,6 +269,7 @@ def resolve_count(cursor, employee, count_id, approve, note):
 
 
 def reverse_document(cursor, employee, kind, document_id, cancel, quantities, reason, selected_units):
+    """Revierte cantidades pendientes y conserva documento, importes e historial."""
     actor(cursor, employee, admin=True)
     require(kind in ("venta", "compra") and reason.strip(), "Escribe el motivo de la devolución o anulación.")
     table, detail_table = ("VENTA", "DETALLE_VENTA") if kind == "venta" else ("COMPRA", "DETALLE_COMPRA")
@@ -313,6 +326,7 @@ def reverse_document(cursor, employee, kind, document_id, cancel, quantities, re
 
 
 def enrich_inventory(cursor, rows, branch=None, by_branch=False):
+    """Añade disponibilidad, reservas y unidades en tránsito a la consulta de stock."""
     cursor.execute("""SELECT i.id_sucursal,i.id_producto,i.stock_actual,i.stock_reservado,
                          COALESCE(i.stock_minimo,p.stock_minimo) minimo
                       FROM INVENTARIO_SUCURSAL i JOIN PRODUCTO p USING(id_producto) JOIN SUCURSAL s USING(id_sucursal)
@@ -330,3 +344,37 @@ def enrich_inventory(cursor, rows, branch=None, by_branch=False):
         row["en_transito"] = sum(t["cantidad"] for t in transit if t["id_producto"] == row["id_producto"] and (target is None or t["id_sucursal"] == target))
         if target is not None and stocks:
             row["stock_minimo"] = stocks[0]["minimo"]
+
+
+def correct_document(cursor, employee, kind, document_id, data, reason):
+    """Actualiza solo datos de cabecera y guarda las versiones anterior y nueva."""
+    actor(cursor, employee, admin=True)
+    require(kind in ("venta", "compra") and reason.strip() and len(reason) <= 500,
+            "Indica el documento y el motivo de la corrección.")
+    table, key = kind.upper(), f"id_{kind}"
+    cursor.execute(f"SELECT * FROM {table} WHERE {key}=%s FOR UPDATE", (document_id,))
+    doc = cursor.fetchone()
+    require(doc and doc.get("estado", doc.get("estado_recepcion")) in ("Emitida", "Recibido"),
+            "Solo pueden corregirse documentos vigentes.")
+    if kind == "venta":
+        client = int(data.get("id_cliente", 0))
+        payment = data.get("tipo_pago", "")
+        require(payment in ("Efectivo", "Transferencia", "Depósito Bancario"), "Selecciona una forma de pago válida.")
+        cursor.execute("SELECT id_cliente FROM CLIENTE WHERE id_cliente=%s AND (estado=1 OR id_cliente=%s)", (client, doc["id_cliente"]))
+        require(cursor.fetchone(), "Selecciona un cliente activo.")
+        old = {"id_cliente": doc["id_cliente"], "tipo_pago": doc["tipo_pago"]}
+        new = {"id_cliente": client, "tipo_pago": payment}
+        cursor.execute("UPDATE VENTA SET id_cliente=%s,tipo_pago=%s WHERE id_venta=%s", (client, payment, document_id))
+    else:
+        provider = int(data.get("id_proveedor", 0))
+        order = data.get("numero_orden", "").strip()
+        require(order and len(order) <= 30, "El número de orden es obligatorio y admite hasta 30 caracteres.")
+        cursor.execute("SELECT id_proveedor FROM PROVEEDOR WHERE id_proveedor=%s AND (estado=1 OR id_proveedor=%s)", (provider, doc["id_proveedor"]))
+        require(cursor.fetchone(), "Selecciona un proveedor aprobado y activo.")
+        old = {"id_proveedor": doc["id_proveedor"], "numero_orden": doc["numero_orden"]}
+        new = {"id_proveedor": provider, "numero_orden": order}
+        cursor.execute("UPDATE COMPRA SET id_proveedor=%s,numero_orden=%s WHERE id_compra=%s", (provider, order, document_id))
+    require(old != new, "No hay cambios para guardar.")
+    cursor.execute(f"INSERT INTO CORRECCION_DOCUMENTO({key},id_empleado,motivo,datos_anteriores,datos_nuevos) VALUES(%s,%s,%s,%s,%s)",
+                   (document_id, employee, reason, json.dumps(old, ensure_ascii=False), json.dumps(new, ensure_ascii=False)))
+    return cursor.lastrowid

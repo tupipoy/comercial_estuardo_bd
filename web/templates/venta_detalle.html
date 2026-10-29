@@ -15,6 +15,7 @@
             <a href="{{ url_for('ventas') }}" class="btn">Volver a ventas</a>
             <button class="btn active" type="button" onclick="window.print()">Imprimir recibo</button>
             {% if session.get('user_role') == 'Administrador' %}
+            <a class="btn" href="{{ url_for('corregir_documento',kind='venta',document_id=venta.id_venta) }}">Corregir cabecera</a>
             <a class="btn" href="{{ url_for('reversar_documento',kind='venta',document_id=venta.id_venta) }}">Devolución / Anulación</a>
             {% endif %}
         </div>

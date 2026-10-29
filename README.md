@@ -1,85 +1,72 @@
-# Comercial Estuardo
+# Comercial Estuardo — Entrega 4
 
-Sistema académico de gestión de inventario, compras y ventas para Comercial Estuardo.
+Sistema de gestión de ventas, compras e inventario por sucursal.
 
-## Datos del proyecto
+- **Universidad:** Mariano Gálvez de Guatemala · Base de Datos, 2026.
+- **Integrantes:** Elvin Guillermo Miranda Gómez — 2690-24-16072; Juan Carlos Ochoa Samayoa — 2690-23-7592.
+- **Tecnología:** MySQL 8.4/InnoDB, Python 3.11+, Flask, PyMySQL y Gunicorn.
+- **Aplicación:** https://comercialestuardobd-production.up.railway.app
+- **Versión de entrega:** tag `entrega-4`.
+- **Instalación:** [INSTALL.md](INSTALL.md), con los scripts en el orden indicado. No se requiere cargar datos de demostración en la base productiva.
 
-- **Institución:** Universidad Mariano Gálvez de Guatemala
-- **Curso:** Base de Datos, semestre 2026
-- **SGBD:** MySQL 8.0 o superior
-- **Aplicación:** Python 3.11+, Flask, PyMySQL y Gunicorn
-- **Despliegue actual:** Railway (servicio web Flask + servicio MySQL)
-- **Integrantes:**
-  - Elvin Guillermo Miranda Gómez — 2690-24-16072
-  - Juan Carlos Ochoa Samayoa — 2690-23-7592
+## Funcionalidad entregada
 
-## Funcionalidades
+- Login con hash, protección CSRF, suspensión progresiva y tres perfiles: Administración, Vendedor y Bodega.
+- Catálogos de sucursales, empleados, clientes, categorías y productos, con bajas lógicas y permisos.
+- Proveedores mediante propuesta de ambos perfiles y aprobación, edición y desactivación exclusivamente administrativas.
+- Compras y ventas de varias líneas; motocicletas identificadas por VIN y motor desde la recepción, con selección de unidades al vender.
+- Inventario físico, reservado, disponible y en tránsito por sucursal; vista general de consulta para Bodega y consolidado para Administración.
+- Traslados con solicitud, aprobación, reserva, despacho y recepción acumulada, incluyendo diferencias.
+- Kardex, historial por unidad, conteos físicos autorizados, mínimos por sucursal y alertas.
+- Actualización auditada de cabeceras de compra/venta. Devoluciones y anulaciones conservan documentos y líneas; no se permite el borrado destructivo de operaciones emitidas.
+- Respaldo diario cifrado a las 02:00 de Guatemala, retención de 14 días y recuperación verificada en MySQL aislado.
 
-- Inicio de sesión con contraseñas guardadas como hash y sesiones Flask.
-- Acceso por cargo: Administrador, Vendedor y Bodega.
-- Inventario por sucursal: Vendedores y Bodega ven su ubicación; Administración consulta el total consolidado.
-- CRUD de Productos, Clientes y Proveedores, con desactivación lógica.
-- Consulta y registro web de Ventas de varios productos mediante `sp_registrar_venta_detallada`; los triggers validan y descuentan existencias.
-- Consulta y registro web de Compras de varios productos mediante `sp_registrar_compra_detallada`; el procedimiento actualiza existencias de la sucursal asignada y costo.
-- Traslados multiproducto entre sucursales con validación de stock y actualización transaccional de origen y destino.
-- Administración de Categorías, Sucursales y Empleados para el rol Administrador.
-- Scripts SQL para datos semilla y masivos, vistas de negocio, triggers, procedimientos y roles MySQL.
+## Entrega y evidencias
 
-## Instalación rápida
+| Documento | Contenido |
+|---|---|
+| [Verificación del enunciado](docs/entrega-4/ENTREGA4_VERIFICACION_REQUISITOS.md) | Requisitos del PDF, evidencias y observaciones pendientes |
+| [Matriz de cierre](docs/entrega-4/ENTREGA4_MATRIZ_CIERRE.md) | Cierre técnico y responsabilidades del equipo |
+| [Trazabilidad final](docs/entrega-4/MATRIZ_TRAZABILIDAD_ENTREGA_4.md) | Requerimiento → implementación → prueba |
+| [Manual técnico](docs/entrega-4/ENTREGA4_MANUAL_TECNICO.md) | Arquitectura, instalación, seguridad y SQL |
+| [Manual de usuario](docs/entrega-4/ENTREGA4_MANUAL_USUARIO.md) | Flujos y permisos de la aplicación |
+| [Informe final](docs/entrega-4/ENTREGA4_INFORME_FINAL.md) | Resultados, decisiones y declaración de integridad |
+| [Diccionario vigente](docs/entrega-4/ENTREGA4_DICCIONARIO_DATOS.md) | Las 25 tablas, columnas y restricciones reales |
+| [Casos y resultados](docs/casos-prueba/CASOS_PRUEBA_ENTREGA_4.md) | Instalación limpia y pruebas automatizadas |
+| [Estructura comprobada](docs/entrega-4/evidencias/VERIFICACION_ENTREGA4.json) | Conteos, objetos, versiones y hashes de scripts |
+| [Auditoría del repositorio](docs/entrega-4/evidencias/AUDITORIA_REPOSITORIO.json) | Estructura, participación y búsqueda de patrones sensibles |
+| [Certificación](docs/certificaciones/CERTIFICACION_ENTREGA_4.md) | Evidencia técnica y aprobaciones existentes |
+| [Bitácora consolidada](docs/bitacora-ia/BITACORA_IA_CONSOLIDADA.md) | Índice y validación del apoyo de IA |
+| [Guía de defensa](docs/entrega-4/ENTREGA4_GUIA_DEFENSA.md) | Decisiones que cada integrante debe explicar |
 
-Sigue [INSTALL.md](INSTALL.md) para configurar Python, MySQL, las variables de entorno, ejecutar los scripts en el orden correcto y desplegar en Railway con Gunicorn. La prueba de instalación limpia documentada se ejecutó en un esquema temporal y no modificó la base local de trabajo.
+## Diagramas
 
-## Estructura principal
+- Chen base: [editable recuperado](docs/diagramas/comercialchen4.drawio) y [PNG](docs/diagramas/comercialchen3.drawio.png).
+- Relacional vigente: [editable](docs/diagramas/ENTREGA4_MODELO_RELACIONAL.drawio), [PNG](docs/diagramas/ENTREGA4_MODELO_RELACIONAL.png) y [PDF de ambos modelos](docs/diagramas/ENTREGA4_DIAGRAMAS.pdf).
+- La normalización histórica de Entrega 2 está en [normalizacion.md](docs/entrega-2/normalizacion.md); las extensiones y decisiones actuales se explican en el informe final.
 
-```text
-sql/
-  ddl/             esquema principal
-  dml/             datos semilla y carga masiva
-  views/           vistas de negocio
-  triggers/        reglas de inventario para ventas
-  procedures/     procedimientos transaccionales
-  security/        roles y privilegios MySQL
-docs/
-  entrega-1/       propuesta, requerimientos y cronograma
-  entrega-2/       diccionario, normalización y avance web
-  entrega-3/       avance web y matriz de trazabilidad
-  entrega-4/       manuales, informe final y matriz de cierre
-  casos-prueba/    casos funcionales y resultados
-  bitacora-ia/     bitácoras de uso de IA
-  certificaciones/ certificaciones por entrega
-web/
-  app.py           rutas y reglas de acceso Flask
-  templates/       vistas HTML/Jinja
-  static/          estilos
+## Antecedentes conservados
+
+[Propuesta](docs/entrega-1/propuesta.md) · [Requerimientos RF/RD/RNF](docs/entrega-1/requerimientos.md) · [Gantt](docs/entrega-1/gantt.md) · [Diccionario de Entrega 2](docs/entrega-2/diccionario_datos.md) · [Trazabilidad de Entrega 3](docs/entrega-3/MATRIZ_TRAZABILIDAD.md). Los tags anteriores mantienen sus versiones originales.
+
+## Estructura
+
+`sql/ddl`, `dml`, `views`, `triggers`, `procedures`, `security` y `migrations`; `web/` contiene aplicación, servicios, conexión, plantillas y estilos; `docs/` conserva las cuatro entregas, diagramas, certificaciones, casos y bitácoras. `tests/` y `scripts/` permiten repetir la verificación.
+
+## Comprobar la entrega
+
+Con las variables de una conexión MySQL autorizada en `TEST_MYSQL_URL` o `MYSQL_PUBLIC_URL`, y el cliente `mysql` instalado:
+
+```bash
+python tests/test_delivery4_acceptance.py --isolated
+python tests/test_inventory_control.py --isolated
+python tests/test_supplier_proposals.py --isolated
+python tests/test_backup_crypto.py
+python scripts/audit_delivery_repository.py
 ```
 
-## Documentación
+Los tres primeros comandos crean esquemas `ce_acceptance_*` y los eliminan al terminar. El primero también usa roles y usuarios SQL temporales para verificar permisos efectivos. No mostrar ni versionar valores del entorno. Los datos semilla cumplen 50 filas por cada una de las ocho tablas principales.
 
-- [Guía de instalación](INSTALL.md)
-- [Plantilla de variables de entorno](.env.example)
-- [Propuesta](docs/entrega-1/propuesta.md)
-- [Requerimientos](docs/entrega-1/requerimientos.md)
-- [Cronograma](docs/entrega-1/gantt.md)
-- [Diagrama ER editable](docs/diagramas/comercialchen4.drawio)
-- [Diagrama ER en imagen](docs/diagramas/comercialchen3.drawio.png)
-- [Normalización](docs/entrega-2/normalizacion.md)
-- [Diccionario de datos](docs/entrega-2/diccionario_datos.md)
-- [Diccionario de datos actualizado — Entrega 4](docs/entrega-4/DICCIONARIO_DATOS_ACTUALIZADO.md)
-- [Avance web — Entrega 2](docs/entrega-2/AVANCE_WEB.md)
-- [Avance web — Entrega 3](docs/entrega-3/AVANCE_WEB_ENTREGA_3.md)
-- [Matriz de trazabilidad — Entrega 3](docs/entrega-3/MATRIZ_TRAZABILIDAD.md)
-- [Casos de prueba — Entrega 3](docs/casos-prueba/CASOS_PRUEBA_ENTREGA_3.md)
-- [Casos de prueba — Entrega 4](docs/casos-prueba/CASOS_PRUEBA_ENTREGA_4.md)
-- [Manual técnico — Entrega 4](docs/entrega-4/MANUAL_TECNICO.md)
-- [Manual de usuario — Entrega 4](docs/entrega-4/MANUAL_USUARIO.md)
-- [Informe final — Entrega 4](docs/entrega-4/INFORME_FINAL.md)
-- [Matriz de cierre — Entrega 4](docs/entrega-4/MATRIZ_CIERRE.md)
-- [Bitácora IA — Entrega 1](docs/bitacora-ia/BITACORA_IA_ENTREGA_1.md)
-- [Bitácora IA — Entrega 2](docs/bitacora-ia/BITACORA_IA_ENTREGA_2.md)
-- [Bitácora IA — Entrega 3](docs/bitacora-ia/BITACORA_IA_ENTREGA_3.md)
-- [Bitácora IA — Entrega 4](docs/bitacora-ia/BITACORA_IA_ENTREGA_4.md)
-- [Bitácora IA consolidada](docs/bitacora-ia/BITACORA_IA_CONSOLIDADA.md)
-- [Certificación — Entrega 1](docs/certificaciones/CERTIFICACION_ENTREGA_1.md)
-- [Certificación — Entrega 2](docs/certificaciones/CERTIFICACION_ENTREGA_2.md)
-- [Certificación — Entrega 3](docs/certificaciones/CERTIFICACION_ENTREGA_3.md)
-- [Certificación — Entrega 4](docs/certificaciones/CERTIFICACION_ENTREGA_4.md)
+## Observaciones de cierre
+
+Las tablas conservan `UPPER_SNAKE_CASE` y las columnas `snake_case`; se documenta esta variante frente al criterio S1 del PDF. El equipo está formado por los dos integrantes indicados por el usuario. La revisión técnica no sustituye la aprobación del ER, la ratificación personal de la certificación ni la defensa oral. Ver los detalles en la matriz de verificación.

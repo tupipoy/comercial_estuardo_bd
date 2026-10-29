@@ -25,14 +25,26 @@ def connect():
     return pymysql.connect(host=URL.hostname, port=URL.port or 3306, user=unquote(URL.username), password=unquote(URL.password), database=SCHEMA, cursorclass=pymysql.cursors.DictCursor)
 
 
-def install():
+ROLE_NAMES = {name: f"ce_{SCHEMA[-12:]}_{suffix}" for name,suffix in (("rol_administrador","admin"),("rol_ventas","ventas"),("rol_bodega","bodega"))}
+
+
+def install(seed=False, roles=False):
     env = os.environ.copy()
     env["MYSQL_PWD"] = unquote(URL.password)
-    for name in ("sql/ddl/01_schema.sql", "sql/migrations/08_inventory_control.sql", "sql/migrations/09_supplier_proposals.sql", "sql/triggers/01_triggers.sql", "sql/triggers/02_inventory_control.sql", "sql/procedures/01_procedures.sql", "sql/procedures/02_transfer_workflow.sql", "sql/views/01_views.sql"):
+    files = ["sql/ddl/01_schema.sql"]
+    if seed:
+        files += ["sql/dml/01_seed_data.sql", "sql/dml/02_bulk_data.sql"]
+    files += ["sql/migrations/08_inventory_control.sql", "sql/migrations/09_supplier_proposals.sql", "sql/migrations/10_document_corrections.sql", "sql/views/01_views.sql", "sql/triggers/01_triggers.sql", "sql/triggers/02_inventory_control.sql", "sql/procedures/01_procedures.sql", "sql/procedures/02_transfer_workflow.sql"]
+    if roles:
+        files += ["sql/security/01_roles.sql", "sql/security/02_inventory_control.sql", "sql/security/03_supplier_proposals.sql"]
+    for name in files:
         sql = (ROOT / name).read_text().replace("comercial_estuardo_db", SCHEMA)
+        for original,temporary in ROLE_NAMES.items():
+            sql = sql.replace(original,temporary)
         result = subprocess.run(["mysql", "--default-character-set=utf8mb4", "-h", URL.hostname, "-P", str(URL.port or 3306), "-u", unquote(URL.username)], input=sql.encode(), env=env, capture_output=True)
         if result.returncode:
             raise RuntimeError(f"No se pudo instalar {name}: {result.stderr.decode()}")
+    return files
 
 
 class InventoryIntegration(unittest.TestCase):

@@ -1,6 +1,6 @@
 # Manual de usuario — Entrega 4
 
-**Sistema:** Gestión de Ventas, Compras e Inventario — Comercial Estuardo  
+**Sistema:** Gestión de Ventas, Compras e Inventario — Comercial Estuardo
 **Versión:** Borrador de trabajo para Entrega 4
 
 ## Acceso
@@ -46,11 +46,11 @@ El Administrador (perfil de gerencia en este sistema) dispone además de **Categ
 
 ## Ventas
 
-Los usuarios autorizados pueden consultar ventas, filtrarlas por factura, cliente, empleado o rango de fechas, abrir **Ver factura** para revisar sus líneas y registrar una venta seleccionando cliente y forma de pago, y agregando una o más líneas de producto. Para cada línea se indica cantidad y descuento; para motocicletas se ingresan VIN/chasis y número de motor. El inventario disponible se valida en MySQL. Si no hay existencias suficientes, la operación completa se rechaza sin descontar stock.
+Los usuarios autorizados pueden consultar ventas, filtrarlas por factura, cliente, empleado o rango de fechas, abrir **Ver factura** para revisar sus líneas y registrar una venta seleccionando cliente y forma de pago, y agregando una o más líneas de producto. Para cada línea se indica cantidad y descuento; para motocicletas se selecciona una unidad ya identificada por VIN/chasis y motor. El inventario disponible se valida en MySQL. Si no hay existencias suficientes, la operación completa se rechaza sin descontar stock.
 
 ## Compras
 
-Los usuarios autorizados pueden consultar compras de su sucursal (el Administrador puede consultar todas), filtrarlas por número de orden, proveedor, empleado o rango de fechas, abrir **Ver orden** para revisar sus líneas y registrar una recepción en su sucursal, agregando una o más líneas con producto, cantidad y costo unitario. Al confirmar, el procedimiento almacena la compra y actualiza las existencias de esa sucursal y el costo vigente dentro de una transacción.
+Los usuarios autorizados pueden consultar compras de su sucursal (el Administrador puede consultar todas), filtrarlas por número de orden, proveedor, empleado o rango de fechas, abrir **Ver orden** para revisar sus líneas y registrar una recepción en su sucursal, agregando una o más líneas con producto, cantidad y costo unitario. Al confirmar, el servicio transaccional almacena la compra y actualiza las existencias de esa sucursal y el costo vigente dentro de una transacción.
 
 ## Traslados entre sucursales
 
@@ -81,6 +81,11 @@ Administración abre **Devolución / Anulación** desde una venta o compra. Para
 - **Error al guardar:** confirmar que la conexión a MySQL esté disponible y que los datos requeridos sean válidos.
 - **Stock insuficiente:** reducir la cantidad o registrar la recepción de compra correspondiente.
 
-## Funciones por validar para la versión final
 
-Este manual describe los módulos presentes en el repositorio. Completar la revisión de cada flujo contra la versión desplegada y retirar esta nota antes de la entrega final.
+## Corrección de cabeceras
+
+Administración puede abrir **Corregir cabecera** desde una compra o venta vigente. En ventas corrige cliente o forma de pago; en compras, proveedor o número de orden. Debe indicar un motivo. El sistema conserva las versiones anterior y nueva, responsable y fecha. Las cantidades, importes, sucursal y líneas permanecen sin cambios; para cantidades utiliza Devolución / Anulación. Los documentos anulados no se corrigen.
+
+## Alcance de la verificación
+
+La instalación y los flujos se comprobaron con formularios y sesiones reales del cliente Flask sobre MySQL temporal. La evidencia está en los casos de Entrega 4. Los integrantes deben revisar la presentación visual en su navegador y practicar la defensa con los datos de demostración.

@@ -2046,7 +2046,8 @@ def detalle_traslado(id_traslado):
             if connection:
                 connection.rollback()
             app.logger.exception("No se pudo actualizar el traslado")
-            flash(str(exc) if isinstance(exc, (control.InventoryError, ValueError)) else "No se pudo actualizar el traslado. Recarga y verifica su estado.", "danger")
+            mensaje = str(exc) if isinstance(exc, control.InventoryError) else ("Revisa que las cantidades y unidades indicadas sean válidas." if isinstance(exc, ValueError) else "No se pudo actualizar el traslado. Recarga y verifica su estado.")
+            flash(mensaje, "danger")
         finally:
             if connection:
                 connection.close()
@@ -2295,6 +2296,7 @@ def nuevo_proveedor():
 @app.route("/proveedores/propuestas")
 @requiere_rol("Administrador", "Bodega")
 def propuestas_proveedores():
+    """Consulta todas las propuestas para Administración o las propias para Bodega."""
     estado = request.args.get("estado", "Pendiente" if session.get("user_role") == "Administrador" else "Todas")
     if estado not in ("Pendiente", "Aprobada", "Rechazada", "Todas"):
         estado = "Todas"
@@ -2319,6 +2321,7 @@ def propuestas_proveedores():
 @app.route("/proveedores/propuestas/<int:id_propuesta>", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def detalle_propuesta_proveedor(id_propuesta):
+    """Muestra una propuesta y procesa su resolución administrativa con auditoría."""
     connection = get_db_connection()
     errores = []
     try:
@@ -2363,6 +2366,7 @@ def detalle_propuesta_proveedor(id_propuesta):
 @app.route("/proveedores/editar/<int:id_proveedor>", methods=["GET", "POST"])
 @requiere_rol("Administrador")
 def editar_proveedor(id_proveedor):
+    """Actualiza un proveedor únicamente con autorización administrativa."""
     errores = []
     connection = get_db_connection()
     try:

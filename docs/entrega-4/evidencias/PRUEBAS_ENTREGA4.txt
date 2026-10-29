@@ -1,0 +1,47 @@
+test_catalog_crud_from_forms_persists (__main__.DeliveryAcceptance.test_catalog_crud_from_forms_persists) ... ok
+test_database_roles_have_different_effective_permissions (__main__.DeliveryAcceptance.test_database_roles_have_different_effective_permissions) ... ok
+test_document_update_is_audited_without_stock_or_amount_change (__main__.DeliveryAcceptance.test_document_update_is_audited_without_stock_or_amount_change) ... ok
+test_employee_crud_password_and_self_protection (__main__.DeliveryAcceptance.test_employee_crud_password_and_self_protection) ... ok
+test_invalid_input_and_under_cost_sales_are_rejected (__main__.DeliveryAcceptance.test_invalid_input_and_under_cost_sales_are_rejected) ... ok
+test_multiline_purchase_and_sale_from_forms (__main__.DeliveryAcceptance.test_multiline_purchase_and_sale_from_forms) ... ok
+test_real_login_csrf_logout_and_permissions (__main__.DeliveryAcceptance.test_real_login_csrf_logout_and_permissions) ... ok
+test_stored_procedures_and_stock_rollback (__main__.DeliveryAcceptance.test_stored_procedures_and_stock_rollback) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 71.547s
+
+OK
+test_cancel_releases_reservation_and_scope (__main__.InventoryIntegration.test_cancel_releases_reservation_and_scope) ... ok
+test_cancel_sale_preserves_history_and_avoids_duplicate_stock (__main__.InventoryIntegration.test_cancel_sale_preserves_history_and_avoids_duplicate_stock) ... ok
+test_concurrent_approvals_do_not_overreserve (__main__.InventoryIntegration.test_concurrent_approvals_do_not_overreserve) ... ok
+test_failed_purchase_rolls_back_header_stock_and_units (__main__.InventoryIntegration.test_failed_purchase_rolls_back_header_stock_and_units) ... ok
+test_pages_render_and_roles_are_scoped (__main__.InventoryIntegration.test_pages_render_and_roles_are_scoped) ... ok
+test_partial_refund_rounding_never_exceeds_original (__main__.InventoryIntegration.test_partial_refund_rounding_never_exceeds_original) ... ok
+test_purchase_return_exact_units (__main__.InventoryIntegration.test_purchase_return_exact_units) ... ok
+test_reservation_dispatch_partial_receipt_and_ledger (__main__.InventoryIntegration.test_reservation_dispatch_partial_receipt_and_ledger) ... ok
+test_sale_return_and_resale_keeps_original (__main__.InventoryIntegration.test_sale_return_and_resale_keeps_original) ... ok
+test_serial_count_identifies_missing_and_new_units (__main__.InventoryIntegration.test_serial_count_identifies_missing_and_new_units) ... ok
+test_serial_transfer_and_sale (__main__.InventoryIntegration.test_serial_transfer_and_sale) ... ok
+test_stale_count_and_approved_adjustment (__main__.InventoryIntegration.test_stale_count_and_approved_adjustment) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 95.603s
+
+OK
+test_admin_proposals_are_pending_and_rejection_is_audited (__main__.SupplierIntegration.test_admin_proposals_are_pending_and_rejection_is_audited) ... ok
+test_bodega_proposes_admin_corrects_and_approves_for_purchases (__main__.SupplierIntegration.test_bodega_proposes_admin_corrects_and_approves_for_purchases) ... ok
+test_concurrent_approvals_create_only_one_provider (__main__.SupplierIntegration.test_concurrent_approvals_create_only_one_provider) ... ok
+test_duplicates_and_failed_approval_are_atomic (__main__.SupplierIntegration.test_duplicates_and_failed_approval_are_atomic) ... ok
+test_only_admin_modifies_and_deactivates_preserving_purchase_history (__main__.SupplierIntegration.test_only_admin_modifies_and_deactivates_preserving_purchase_history) ... ok
+test_permissions_are_enforced_on_direct_urls_and_posts (__main__.SupplierIntegration.test_permissions_are_enforced_on_direct_urls_and_posts) ... ok
+test_stale_admin_session_cannot_modify_as_bodega (__main__.SupplierIntegration.test_stale_admin_session_cannot_modify_as_bodega) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 39.691s
+
+OK
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.993s
+
+OK

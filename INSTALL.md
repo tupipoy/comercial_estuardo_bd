@@ -48,6 +48,7 @@ mysql -u root -p < sql/dml/01_seed_data.sql
 mysql -u root -p < sql/dml/02_bulk_data.sql
 mysql -u root -p < sql/migrations/08_inventory_control.sql
 mysql -u root -p < sql/migrations/09_supplier_proposals.sql
+mysql -u root -p < sql/migrations/10_document_corrections.sql
 mysql -u root -p < sql/views/01_views.sql
 mysql -u root -p < sql/triggers/01_triggers.sql
 mysql -u root -p < sql/triggers/02_inventory_control.sql
@@ -64,11 +65,18 @@ También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el 
 
 `02_bulk_data.sql` está preparado para ejecutarse una vez después del esquema y los datos semilla. Completa 50 registros en las ocho entidades principales y agrega detalles de compra y venta; asigna el inventario de demostración a las dos sucursales.
 
-Para actualizar una base existente, respalda primero. Si aún tiene stock global, aplica la migración 06 asignándolo a Sucursal Central y después la 07. Para una base que ya tiene el flujo de traslados de la 07, aplica únicamente `08_inventory_control.sql` y luego `sql/triggers/02_inventory_control.sql`, `sql/views/01_views.sql` y ambos scripts de seguridad en orden. No reinstales los triggers 01 sin volver a aplicar los 02: los 02 protegen las reservas y las unidades identificadas. El código nuevo requiere completar estos pasos antes de desplegarlo.
+### Actualizar una base existente
 
-La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión; la 06 convierte el stock global en existencias por sucursal; y la 07 agrega aprobación, despacho y recepción para los traslados. Cada migración se ejecuta una sola vez. La 06 asigna el stock global existente a **Sucursal Central** y completa la sucursal histórica de compras según la sucursal actual del empleado. La 07 conserva los traslados completados y registra sus cantidades recibidas históricas. Antes de aplicar migraciones en producción, genera un respaldo completo; después ejecuta `sql/procedures/02_transfer_workflow.sql` y `sql/security/01_roles.sql`. Para una instalación limpia, el DDL y scripts actuales incluyen el nuevo flujo; ejecuta ambos archivos de procedimientos en orden.
+No se vuelve a ejecutar el DDL sobre una base con datos. Las migraciones 02–07 ya están incorporadas en el DDL base para una instalación nueva. Cada migración se aplica una sola vez sobre una base anterior:
 
-Para habilitar propuestas de proveedores en una base que ya tiene la migración 08: respaldar, aplicar `sql/migrations/09_supplier_proposals.sql` y después `sql/security/03_supplier_proposals.sql` antes de publicar el código nuevo. Los proveedores anteriores conservan su estado y las compras; solo las propuestas aprobadas crean un nuevo registro en el catálogo. En Railway, `scripts/migrate_inventory_control.py --suppliers` respalda y comprueba primero la migración sobre una copia aislada. Los scripts de seguridad se aplican en orden 01, 02 y 03; el último revoca altas y cambios directos de proveedores al rol Bodega.
+- Base con stock global: respaldar y aplicar 06, que asigna el stock a Sucursal Central, y después 07 para aprobación/despacho/recepción. Actualizar los objetos necesarios según la versión previa.
+- Base con migración 07: aplicar 08, triggers 02 y vistas actualizadas.
+- Base con migración 08: aplicar 09 y seguridad 03 para propuestas de proveedores.
+- Base con migración 09: aplicar 10 y triggers 02 para correcciones de cabecera y detección precisa de motocicletas.
+
+Al reinstalar permisos se aplican seguridad 01, 02 y 03 en orden. No reinstalar triggers 01 sin volver a aplicar triggers 02: los últimos protegen reservas, unidades e historial. Los procedimientos de traslados de la versión 07 no se utilizan desde la aplicación actual.
+
+`scripts/migrate_inventory_control.py` respalda y prueba una copia antes de aplicar la 08; `--suppliers` selecciona la 09 y `--document-corrections` la 10. En Railway se ejecuta con las variables del servicio MySQL mediante `railway run --service MySQL -- python scripts/migrate_inventory_control.py OPCION`. Las credenciales no se imprimen ni se guardan en Git.
 
 ## 5. Crear una contraseña inicial para el administrador
 
@@ -135,7 +143,7 @@ Configura la ruta de health check de Railway como `/health`; responde cuando el 
 | `DB_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` |
 | `DB_NAME` | `comercial_estuardo_db` |
 
-Si Railway asigna otro nombre al servicio de base de datos, reemplaza `MySQL` en las referencias por el nombre del servicio. `DB_NAME` debe conservar `comercial_estuardo_db`, que es el esquema creado por los scripts del proyecto. No publiques un dominio de MySQL ni guardes credenciales en Git.
+Si Railway asigna otro nombre al servicio de base de datos, reemplaza `MySQL` en las referencias por el nombre del servicio. `DB_NAME` debe conservar `comercial_estuardo_db`, que es el esquema creado por los scripts del proyecto. La aplicación usa la red privada de MySQL; las tareas externas autorizadas y respaldos pueden usar el proxy TCP con credenciales protegidas. No guardar esas URL en Git.
 
 Para inicializar la base remota, conecta temporalmente MySQL Workbench o el cliente `mysql` mediante la conexión autorizada de Railway y ejecuta los scripts de las secciones 4 y 5, en el mismo orden. Revisa dos veces el nombre del esquema antes de ejecutar `01_schema.sql`, ya que ese archivo elimina y recrea `comercial_estuardo_db`. Después genera el hash del administrador y asígnalo como indica la sección 5. Finalmente, genera un dominio público para el servicio web y comprueba login, inventario, compras y ventas.
 
@@ -153,7 +161,9 @@ SHOW TRIGGERS;
 SHOW PROCEDURE STATUS WHERE Db = 'comercial_estuardo_db';
 ```
 
-La instalación limpia de la versión anterior (Entrega 3) se verificó el 29 de septiembre de 2026 en un esquema temporal independiente: los diez conjuntos de datos tuvieron 50 filas, y se instalaron tres vistas, dos triggers y dos procedimientos. Esa evidencia corresponde a Entrega 3; la versión actual agrega INVENTARIO_SUCURSAL, TRASLADO y DETALLE_TRASLADO y aún requiere instalación limpia. También se ejecutaron los ocho casos funcionales de esa entrega. Esa evidencia histórica no valida los dos procedimientos mult producto añadidos para Entrega 4. Para aprobar esta entrega, ejecuta de nuevo desde cero los scripts anteriores en MySQL 8 y registra el resultado de los casos de `docs/casos-prueba/CASOS_PRUEBA_ENTREGA_4.md`; la integración Entrega 4 aún está pendiente de esa verificación.
+La instalación completa de Entrega 4 se verificó en MySQL 8.4 temporal y un entorno Python 3.11 recién creado con `requirements.txt`: 25 tablas, 3 vistas, 15 triggers, 8 procedimientos, tres roles y 50 filas por cada entidad principal. La aceptación verificó login, permisos efectivos, CRUD de catálogos, operaciones multiproducto, cabeceras auditadas y rollback. Ver `docs/entrega-4/evidencias/VERIFICACION_ENTREGA4.json` y `PRUEBAS_ENTREGA4.txt`. Los esquemas, usuarios y roles de prueba se eliminaron al terminar.
+
+Para repetir la comprobación, configura una URL MySQL autorizada en `TEST_MYSQL_URL` o `MYSQL_PUBLIC_URL` y ejecuta `python tests/test_delivery4_acceptance.py --isolated`. Requiere el cliente `mysql` y permiso para crear/eliminar exclusivamente los recursos temporales de prueba. Los datos de demostración se instalan en ese esquema, no en el esquema productivo.
 
 ## 10. Detener la aplicación
 

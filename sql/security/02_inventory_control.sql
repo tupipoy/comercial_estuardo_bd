@@ -1,3 +1,7 @@
+-- Archivo: sql/security/02_inventory_control.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: configura roles y privilegios.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 USE comercial_estuardo_db;
 GRANT SELECT (requiere_serie) ON comercial_estuardo_db.PRODUCTO TO 'rol_ventas';
 GRANT SELECT ON comercial_estuardo_db.UNIDAD_PRODUCTO TO 'rol_ventas','rol_bodega';

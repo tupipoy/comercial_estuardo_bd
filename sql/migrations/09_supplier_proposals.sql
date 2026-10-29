@@ -1,3 +1,7 @@
+-- Archivo: sql/migrations/09_supplier_proposals.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: actualiza de forma incremental el esquema existente.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 -- Proveedores existentes conservan su aprobación y su historial.
 -- Las altas nuevas se proponen y se aprueban antes de entrar al catálogo.
 USE comercial_estuardo_db;
@@ -19,9 +23,9 @@ CREATE TABLE PROPUESTA_PROVEEDOR (
  id_proveedor INT NULL UNIQUE,
  nit_pendiente VARCHAR(15) GENERATED ALWAYS AS (CASE WHEN estado='Pendiente' THEN nit ELSE NULL END) STORED,
  UNIQUE KEY uq_propuesta_nit_pendiente (nit_pendiente),
- FOREIGN KEY (id_solicitante) REFERENCES EMPLEADO(id_empleado),
- FOREIGN KEY (id_responsable) REFERENCES EMPLEADO(id_empleado),
- FOREIGN KEY (id_proveedor) REFERENCES PROVEEDOR(id_proveedor),
+ FOREIGN KEY (id_solicitante) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_responsable) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_proveedor) REFERENCES PROVEEDOR(id_proveedor) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CHECK (estado IN ('Pendiente','Aprobada','Rechazada')),
  CHECK ((estado='Pendiente' AND id_responsable IS NULL AND fecha_resolucion IS NULL AND id_proveedor IS NULL)
      OR (estado='Aprobada' AND id_responsable IS NOT NULL AND fecha_resolucion IS NOT NULL AND id_proveedor IS NOT NULL)
@@ -39,8 +43,8 @@ CREATE TABLE EVENTO_PROVEEDOR (
  observacion VARCHAR(500) NULL,
  datos_anteriores JSON NULL,
  datos_nuevos JSON NULL,
- FOREIGN KEY (id_propuesta) REFERENCES PROPUESTA_PROVEEDOR(id_propuesta),
- FOREIGN KEY (id_proveedor) REFERENCES PROVEEDOR(id_proveedor),
- FOREIGN KEY (id_empleado) REFERENCES EMPLEADO(id_empleado),
+ FOREIGN KEY (id_propuesta) REFERENCES PROPUESTA_PROVEEDOR(id_propuesta) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_proveedor) REFERENCES PROVEEDOR(id_proveedor) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_empleado) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CHECK (id_propuesta IS NOT NULL OR id_proveedor IS NOT NULL)
 ) ENGINE=InnoDB;

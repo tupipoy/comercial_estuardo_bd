@@ -1,3 +1,7 @@
+-- Archivo: sql/dml/02_bulk_data.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: carga datos sintéticos de demostración.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 -- ============================================================
 -- 02_bulk_data.sql
 -- Proyecto: Comercial Estuardo

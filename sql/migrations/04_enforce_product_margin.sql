@@ -1,3 +1,7 @@
+-- Archivo: sql/migrations/04_enforce_product_margin.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: actualiza de forma incremental el esquema existente.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 -- Ejecutar una vez en la base comercial_estuardo_db ya desplegada.
 -- Protege las escrituras SQL directas, además de las validaciones de Flask.
 USE comercial_estuardo_db;

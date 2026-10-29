@@ -8,7 +8,9 @@ import inventory_control as control
 
 
 def register_control_routes(app, requiere_rol, branch_for_employee):
+    """Registra pantallas protegidas para operaciones y trazabilidad de inventario."""
     def choices(cursor):
+        """Consulta sucursales y productos activos para los filtros."""
         cursor.execute("SELECT id_sucursal,nombre FROM SUCURSAL WHERE estado=1 ORDER BY nombre")
         branches = cursor.fetchall()
         cursor.execute("SELECT id_producto,nombre,requiere_serie FROM PRODUCTO WHERE estado=1 ORDER BY nombre")
@@ -35,6 +37,7 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
     @app.route("/unidades", methods=["GET", "POST"])
     @requiere_rol("Administrador", "Bodega", "Vendedor")
     def unidades():
+        """Consulta unidades y permite identificar existencias previas a Administración."""
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
@@ -73,6 +76,7 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
     @app.route("/unidades/<int:unit_id>")
     @requiere_rol("Administrador", "Bodega", "Vendedor")
     def historial_unidad(unit_id):
+        """Muestra el recorrido de una unidad dentro del alcance del usuario."""
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
@@ -92,6 +96,7 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
     @app.route("/kardex")
     @requiere_rol("Administrador", "Bodega", "Vendedor")
     def kardex():
+        """Consulta movimientos por producto, sucursal y fechas con paginación."""
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
@@ -132,6 +137,7 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
     @app.route("/conteos", methods=["GET", "POST"])
     @requiere_rol("Administrador", "Bodega")
     def conteos():
+        """Registra conteos y procesa su autorización y mínimos por sucursal."""
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
@@ -175,9 +181,49 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
         finally:
             connection.close()
 
+    @app.route("/documentos/<kind>/<int:document_id>/corregir", methods=["GET", "POST"])
+    @requiere_rol("Administrador")
+    def corregir_documento(kind, document_id):
+        """Corrige cabeceras con auditoría; los importes y movimientos se conservan."""
+        if kind not in ("venta", "compra"):
+            return "Documento no encontrado", 404
+        connection = get_db_connection()
+        try:
+            with connection.cursor() as cursor:
+                if request.method == "POST":
+                    try:
+                        control.correct_document(cursor, session["user_id"], kind, document_id, request.form,
+                                                 request.form.get("motivo", "").strip())
+                        connection.commit()
+                        flash("Cabecera corregida; las versiones quedaron guardadas en el historial.", "success")
+                    except IntegrityError:
+                        connection.rollback()
+                        flash("Ese número de orden ya está registrado.", "danger")
+                    except Exception as exc:
+                        handle_error(connection, exc)
+                    return redirect(url_for("corregir_documento", kind=kind, document_id=document_id))
+                cursor.execute(f"SELECT * FROM {kind.upper()} WHERE id_{kind}=%s", (document_id,))
+                doc = cursor.fetchone()
+                if not doc:
+                    return "Documento no encontrado", 404
+                if kind == "venta":
+                    cursor.execute("SELECT id_cliente id,CONCAT_WS(' ',nombres,apellidos) nombre FROM CLIENTE WHERE estado=1 OR id_cliente=%s ORDER BY nombres", (doc["id_cliente"],))
+                else:
+                    cursor.execute("SELECT id_proveedor id,razon_social nombre FROM PROVEEDOR WHERE estado=1 OR id_proveedor=%s ORDER BY razon_social", (doc["id_proveedor"],))
+                options = cursor.fetchall()
+                cursor.execute(f"SELECT c.*,CONCAT_WS(' ',e.nombres,e.apellidos) empleado FROM CORRECCION_DOCUMENTO c JOIN EMPLEADO e USING(id_empleado) WHERE id_{kind}=%s ORDER BY id_correccion DESC", (document_id,))
+                history = cursor.fetchall()
+                for row in history:
+                    row["anterior"] = json.loads(row["datos_anteriores"])
+                    row["nuevo"] = json.loads(row["datos_nuevos"])
+            return render_template("documento_corregir.html", kind=kind, doc=doc, options=options, history=history)
+        finally:
+            connection.close()
+
     @app.route("/documentos/<kind>/<int:document_id>/reversar", methods=["GET", "POST"])
     @requiere_rol("Administrador")
     def reversar_documento(kind, document_id):
+        """Gestiona devoluciones y anulaciones administrativas conservando documentos."""
         if kind not in ("venta", "compra"):
             return "Documento no encontrado", 404
         connection = get_db_connection()
@@ -215,6 +261,7 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
     @app.route("/alertas")
     @requiere_rol("Administrador", "Bodega", "Vendedor")
     def alertas():
+        """Consulta pendientes y disponibilidad dentro del alcance del usuario."""
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
@@ -250,6 +297,7 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
     @app.route("/respaldos")
     @requiere_rol("Administrador")
     def respaldos():
+        """Muestra a Administración el historial de copias y recuperaciones."""
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:

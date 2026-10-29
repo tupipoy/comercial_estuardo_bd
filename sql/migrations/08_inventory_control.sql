@@ -1,10 +1,14 @@
+-- Archivo: sql/migrations/08_inventory_control.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: actualiza de forma incremental el esquema existente.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 -- Aplicar una vez después de la migración 07. No elimina documentos.
 USE comercial_estuardo_db;
 
 ALTER TABLE PRODUCTO ADD COLUMN requiere_serie TINYINT NOT NULL DEFAULT 0,
  ADD CONSTRAINT chk_producto_serie CHECK (requiere_serie IN (0,1));
 UPDATE PRODUCTO p JOIN CATEGORIA c ON c.id_categoria=p.id_categoria
-SET p.requiere_serie=1 WHERE LOWER(c.nombre) LIKE '%moto%';
+SET p.requiere_serie=1 WHERE LOWER(c.nombre) REGEXP '(^|[^[:alpha:]])(motos?|motocicletas?)([^[:alpha:]]|$)';
 UPDATE PRODUCTO p JOIN DETALLE_VENTA d ON d.id_producto=p.id_producto
 SET p.requiere_serie=1 WHERE d.vin_chasis IS NOT NULL AND d.numero_motor IS NOT NULL;
 
@@ -26,11 +30,11 @@ CREATE TABLE UNIDAD_PRODUCTO (
  id_detalle_venta INT NULL,
  id_traslado INT NULL,
  fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
- FOREIGN KEY (id_producto) REFERENCES PRODUCTO(id_producto),
- FOREIGN KEY (id_sucursal) REFERENCES SUCURSAL(id_sucursal),
- FOREIGN KEY (id_detalle_compra) REFERENCES DETALLE_COMPRA(id_detalle_compra),
- FOREIGN KEY (id_detalle_venta) REFERENCES DETALLE_VENTA(id_detalle_venta),
- FOREIGN KEY (id_traslado) REFERENCES TRASLADO(id_traslado),
+ FOREIGN KEY (id_producto) REFERENCES PRODUCTO(id_producto) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_sucursal) REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_detalle_compra) REFERENCES DETALLE_COMPRA(id_detalle_compra) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_detalle_venta) REFERENCES DETALLE_VENTA(id_detalle_venta) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_traslado) REFERENCES TRASLADO(id_traslado) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CONSTRAINT chk_unidad_estado CHECK (estado IN ('Disponible','Reservada','En tránsito','Vendida','Baja','Devuelta a proveedor')),
  INDEX idx_unidad_sucursal (id_sucursal,id_producto,estado)
 ) ENGINE=InnoDB;
@@ -43,7 +47,7 @@ WHERE d.vin_chasis IS NOT NULL AND d.numero_motor IS NOT NULL AND v.estado='Emit
 ALTER TABLE DETALLE_VENTA
  DROP INDEX vin_chasis, DROP INDEX numero_motor,
  ADD COLUMN id_unidad INT NULL,
- ADD FOREIGN KEY (id_unidad) REFERENCES UNIDAD_PRODUCTO(id_unidad),
+ ADD FOREIGN KEY (id_unidad) REFERENCES UNIDAD_PRODUCTO(id_unidad) ON UPDATE RESTRICT ON DELETE RESTRICT,
  ADD INDEX idx_venta_vin (vin_chasis), ADD INDEX idx_venta_motor (numero_motor);
 UPDATE DETALLE_VENTA d JOIN UNIDAD_PRODUCTO u ON u.id_detalle_venta=d.id_detalle_venta SET d.id_unidad=u.id_unidad;
 
@@ -52,8 +56,8 @@ CREATE TABLE TRASLADO_UNIDAD (
  id_unidad INT NOT NULL,
  recibida TINYINT NOT NULL DEFAULT 0,
  PRIMARY KEY(id_traslado,id_unidad),
- FOREIGN KEY (id_traslado) REFERENCES TRASLADO(id_traslado),
- FOREIGN KEY (id_unidad) REFERENCES UNIDAD_PRODUCTO(id_unidad),
+ FOREIGN KEY (id_traslado) REFERENCES TRASLADO(id_traslado) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_unidad) REFERENCES UNIDAD_PRODUCTO(id_unidad) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CHECK (recibida IN (0,1))
 ) ENGINE=InnoDB;
 ALTER TABLE TRASLADO DROP CHECK chk_traslado_estado,
@@ -66,8 +70,8 @@ CREATE TABLE EVENTO_TRASLADO (
  id_empleado INT NOT NULL,
  observacion VARCHAR(500) NULL,
  fecha DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
- FOREIGN KEY (id_traslado) REFERENCES TRASLADO(id_traslado),
- FOREIGN KEY (id_empleado) REFERENCES EMPLEADO(id_empleado)
+ FOREIGN KEY (id_traslado) REFERENCES TRASLADO(id_traslado) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY (id_empleado) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE MOVIMIENTO_INVENTARIO (
@@ -84,9 +88,9 @@ CREATE TABLE MOVIMIENTO_INVENTARIO (
  reservado_anterior INT NOT NULL,
  reservado_posterior INT NOT NULL,
  motivo VARCHAR(500) NULL,
- FOREIGN KEY(id_sucursal) REFERENCES SUCURSAL(id_sucursal),
- FOREIGN KEY(id_producto) REFERENCES PRODUCTO(id_producto),
- FOREIGN KEY(id_empleado) REFERENCES EMPLEADO(id_empleado),
+ FOREIGN KEY(id_sucursal) REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_producto) REFERENCES PRODUCTO(id_producto) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_empleado) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
  INDEX idx_movimiento_consulta(id_sucursal,id_producto,fecha)
 ) ENGINE=InnoDB;
 INSERT INTO MOVIMIENTO_INVENTARIO(id_sucursal,id_producto,tipo,cantidad,saldo_anterior,saldo_posterior,reservado_anterior,reservado_posterior,motivo)
@@ -103,8 +107,8 @@ CREATE TABLE HISTORIAL_UNIDAD (
  id_empleado INT NULL,
  referencia VARCHAR(100) NULL,
  motivo VARCHAR(500) NULL,
- FOREIGN KEY(id_unidad) REFERENCES UNIDAD_PRODUCTO(id_unidad),
- FOREIGN KEY(id_empleado) REFERENCES EMPLEADO(id_empleado)
+ FOREIGN KEY(id_unidad) REFERENCES UNIDAD_PRODUCTO(id_unidad) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_empleado) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 INSERT INTO HISTORIAL_UNIDAD(id_unidad,id_sucursal_destino,estado_nuevo,referencia)
 SELECT id_unidad,id_sucursal,estado,'Identificación histórica de venta' FROM UNIDAD_PRODUCTO;
@@ -127,10 +131,10 @@ CREATE TABLE CONTEO_INVENTARIO (
  fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
  fecha_resolucion DATETIME NULL,
  observacion VARCHAR(500) NULL,
- FOREIGN KEY(id_sucursal) REFERENCES SUCURSAL(id_sucursal),
- FOREIGN KEY(id_producto) REFERENCES PRODUCTO(id_producto),
- FOREIGN KEY(id_solicitante) REFERENCES EMPLEADO(id_empleado),
- FOREIGN KEY(id_responsable) REFERENCES EMPLEADO(id_empleado),
+ FOREIGN KEY(id_sucursal) REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_producto) REFERENCES PRODUCTO(id_producto) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_solicitante) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_responsable) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CHECK(cantidad_contada>=0),
  CHECK(estado IN ('Pendiente','Aprobado','Rechazado'))
 ) ENGINE=InnoDB;
@@ -144,9 +148,9 @@ CREATE TABLE REVERSO_DOCUMENTO (
  fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
  motivo VARCHAR(500) NOT NULL,
  importe DECIMAL(12,2) NOT NULL DEFAULT 0,
- FOREIGN KEY(id_venta) REFERENCES VENTA(id_venta),
- FOREIGN KEY(id_compra) REFERENCES COMPRA(id_compra),
- FOREIGN KEY(id_empleado) REFERENCES EMPLEADO(id_empleado),
+ FOREIGN KEY(id_venta) REFERENCES VENTA(id_venta) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_compra) REFERENCES COMPRA(id_compra) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_empleado) REFERENCES EMPLEADO(id_empleado) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CHECK(tipo IN ('Devolución venta','Anulación venta','Devolución compra','Anulación compra')),
  CHECK((id_venta IS NOT NULL AND id_compra IS NULL) OR (id_compra IS NOT NULL AND id_venta IS NULL))
 ) ENGINE=InnoDB;
@@ -158,10 +162,10 @@ CREATE TABLE DETALLE_REVERSO (
  id_detalle_compra INT NULL,
  cantidad INT NOT NULL,
  importe DECIMAL(12,2) NOT NULL,
- FOREIGN KEY(id_reverso) REFERENCES REVERSO_DOCUMENTO(id_reverso),
- FOREIGN KEY(id_producto) REFERENCES PRODUCTO(id_producto),
- FOREIGN KEY(id_detalle_venta) REFERENCES DETALLE_VENTA(id_detalle_venta),
- FOREIGN KEY(id_detalle_compra) REFERENCES DETALLE_COMPRA(id_detalle_compra),
+ FOREIGN KEY(id_reverso) REFERENCES REVERSO_DOCUMENTO(id_reverso) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_producto) REFERENCES PRODUCTO(id_producto) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_detalle_venta) REFERENCES DETALLE_VENTA(id_detalle_venta) ON UPDATE RESTRICT ON DELETE RESTRICT,
+ FOREIGN KEY(id_detalle_compra) REFERENCES DETALLE_COMPRA(id_detalle_compra) ON UPDATE RESTRICT ON DELETE RESTRICT,
  CHECK(cantidad>0)
 ) ENGINE=InnoDB;
 

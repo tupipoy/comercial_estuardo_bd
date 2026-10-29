@@ -1,3 +1,7 @@
+-- Archivo: sql/procedures/02_transfer_workflow.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: implementa operaciones transaccionales.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 -- Flujo de solicitud, aprobacion, despacho y recepcion de traslados.
 USE comercial_estuardo_db;
 

@@ -1,3 +1,7 @@
+-- Archivo: sql/triggers/02_inventory_control.sql
+-- Autor: Equipo Comercial Estuardo
+-- Descripción: aplica reglas automáticas y trazabilidad.
+-- Dependencias: Esquema y objetos previos según INSTALL.md; no ejecutar sobre producción sin respaldo.
 USE comercial_estuardo_db;
 DROP TRIGGER IF EXISTS trg_validar_stock_venta;
 DROP TRIGGER IF EXISTS trg_venta_unidad;
@@ -13,11 +17,11 @@ DROP TRIGGER IF EXISTS trg_producto_identificacion_update;
 DELIMITER $$
 CREATE TRIGGER trg_producto_identificacion_insert BEFORE INSERT ON PRODUCTO FOR EACH ROW
 BEGIN
- IF EXISTS(SELECT 1 FROM CATEGORIA WHERE id_categoria=NEW.id_categoria AND LOWER(nombre) LIKE '%moto%') THEN SET NEW.requiere_serie=1; END IF;
+ IF EXISTS(SELECT 1 FROM CATEGORIA WHERE id_categoria=NEW.id_categoria AND LOWER(nombre) REGEXP '(^|[^[:alpha:]])(motos?|motocicletas?)([^[:alpha:]]|$)') THEN SET NEW.requiere_serie=1; END IF;
 END$$
 CREATE TRIGGER trg_producto_identificacion_update BEFORE UPDATE ON PRODUCTO FOR EACH ROW
 BEGIN
- IF EXISTS(SELECT 1 FROM CATEGORIA WHERE id_categoria=NEW.id_categoria AND LOWER(nombre) LIKE '%moto%') THEN SET NEW.requiere_serie=1; END IF;
+ IF EXISTS(SELECT 1 FROM CATEGORIA WHERE id_categoria=NEW.id_categoria AND LOWER(nombre) REGEXP '(^|[^[:alpha:]])(motos?|motocicletas?)([^[:alpha:]]|$)') THEN SET NEW.requiere_serie=1; END IF;
  IF NEW.requiere_serie=0 AND OLD.requiere_serie=1 AND EXISTS(SELECT 1 FROM UNIDAD_PRODUCTO WHERE id_producto=OLD.id_producto) THEN
   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='El producto ya tiene unidades identificadas; conserva su seguimiento';
  END IF;

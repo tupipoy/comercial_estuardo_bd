@@ -1,0 +1,37 @@
+{
+  "fecha_utc": "2026-10-29T21:53:26.152522+00:00",
+  "estructura": {
+    "README.md": true,
+    "INSTALL.md": true,
+    ".gitignore": true,
+    ".env.example": true,
+    "docs/entrega-1": true,
+    "docs/entrega-2": true,
+    "docs/entrega-3": true,
+    "docs/entrega-4": true,
+    "docs/diagramas": true,
+    "docs/certificaciones": true,
+    "docs/bitacora-ia": true,
+    "docs/casos-prueba": true,
+    "sql/ddl": true,
+    "sql/dml": true,
+    "sql/views": true,
+    "sql/triggers": true,
+    "sql/procedures": true,
+    "sql/security": true,
+    "web": true
+  },
+  "archivos_texto_inspeccionados": 69,
+  "objetos_historicos_inspeccionados": 1192,
+  "patrones_sensibles_encontrados": [],
+  "alcance": "Revisión automática de patrones conocidos; no equivale a una garantía absoluta de ausencia de secretos.",
+  "participacion": [
+    "    70\telvin <elvin4232miranda@gmail.com>",
+    "    14\tELOCHOAXD <och8a.22@gmail.com>",
+    "     1\ttupipoy <emirandag3@miumg.edu.gt>"
+  ],
+  "sql_sin_encabezado": [],
+  "fk_sin_acciones_explicitas": [],
+  "funciones_bd_sin_docstring": [],
+  "enlaces_locales_rotos": []
+}

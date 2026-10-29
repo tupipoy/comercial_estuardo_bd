@@ -1,6 +1,6 @@
 # Bitácora de herramientas de IA — Entrega 4
 
-**Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario — Comercial Estuardo  
+**Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario — Comercial Estuardo
 **Periodo registrado:** 14 al 29 de octubre de 2026
 
 Esta bitácora registra el apoyo de IA, los cambios realizados y la evidencia disponible. Las validaciones pendientes se mantienen explícitas para que el equipo pueda completar el cierre con resultados verificables.
@@ -180,6 +180,19 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 
 
 ### 29 de octubre de 2026
+
+#### Verificación final contra el PDF y preparación de Entrega 4
+
+- **Fecha:** 29/10/2026.
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Comparar el repositorio con el enunciado y dejar verificables los productos de la entrega final.
+- **Prompt utilizado:** «Verifica que todo esté en orden y el repo de Git tenga lo que pide; hoy es la Entrega 4», con `Proyecto - Base de datos (7).pdf` como fuente de requisitos.
+- **Resultado:** Manuales e informe actualizados; diccionario real de 25 tablas; matrices de cierre y trazabilidad; recuperación del Chen editable desde su PNG y exportación relacional editable/PNG/PDF; correcciones auditadas de cabeceras de compra/venta para completar actualización de las entidades principales; detección precisa de motocicletas que no confunde Repuestos de Motor; guía de defensa y preparación del tag `entrega-4`.
+- **Validación técnica:** Entorno Python 3.11 nuevo con requirements, instalación SQL completa con semilla/datos masivos, 50 filas por entidad principal, tres roles con usuarios SQL temporales, 15 triggers y 8 procedimientos. Las suites de aceptación, inventario, proveedores y cifrado reúnen 28 pruebas. Se conservaron registros y hashes de scripts en `docs/entrega-4/evidencias/`. Se revisaron enlaces, docstrings y patrones sensibles en archivos e historial.
+- **Aplicación productiva:** La migración 10 y los triggers precisos se probaron sobre copia y se aplicaron después de verificar `backups/railway_pre_document_corrections_20261029T214932Z.sql.gz`. Las correcciones administrativas registran versiones de cabecera; no alteran líneas ni stock. Se preservaron los datos existentes.
+- **Validación del grupo:** El usuario confirmó que participan dos integrantes. Se preservaron las marcas de aprobación que ya figuraban en la certificación. La ejecución automática no acredita firmas nuevas, aprobación docente del ER ni una defensa oral; esas constancias se mantienen explícitamente separadas de la evidencia técnica.
+- **Estándares aplicados:** R1–R8, separación SQL y encabezados S2/S3, integridad S4, despliegue S5, reglas comentadas S6, validación S8, A1–A6 y D1–D4. S1 conserva observación por mayúsculas en tablas y S7 documenta importes históricos como desnormalización controlada.
+- **Responsable:** Codex ejecutó la comprobación técnica; Elvin Guillermo Miranda Gómez y Juan Carlos Ochoa Samayoa deben ratificar personalmente la revisión y explicar las decisiones en la defensa.
 
 #### Proveedores propuestos por Bodega y aprobados por Administración
 

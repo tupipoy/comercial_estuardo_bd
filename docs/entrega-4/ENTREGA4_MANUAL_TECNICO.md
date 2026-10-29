@@ -1,6 +1,6 @@
 # Manual técnico — Entrega 4
 
-**Sistema:** Gestión de Ventas, Compras e Inventario — Comercial Estuardo  
+**Sistema:** Gestión de Ventas, Compras e Inventario — Comercial Estuardo
 **Versión:** Borrador de trabajo para Entrega 4
 
 ## Arquitectura
@@ -64,3 +64,14 @@ La aplicación está desplegada y accesible en Railway en https://comercialestua
 La migración 09 agrega `PROPUESTA_PROVEEDOR` y `EVENTO_PROVEEDOR`. `web/supplier_control.py` consulta el cargo activo en cada mutación, bloquea la propuesta durante su resolución y crea el proveedor aprobado y su auditoría dentro de una sola transacción. Una clave única impide propuestas simultáneas pendientes para el mismo NIT. Las rutas de edición y desactivación exigen Administración y vuelven a verificar el cargo en el servicio. Bodega tiene consulta del catálogo e inserción de propuestas, sin permisos SQL para insertar o actualizar proveedores ni resolver propuestas. `sql/security/03_supplier_proposals.sql` revoca privilegios anteriores y debe aplicarse después de los roles base. Las compras solo referencian el catálogo aprobado y activo; los proveedores existentes se conservan. `tests/test_supplier_proposals.py --isolated` comprueba la matriz de permisos, concurrencia, duplicados, auditoría y selección en Compras.
 
 `tests/test_inventory_control.py --isolated` crea un esquema temporal `ce_acceptance_*`, instala los objetos SQL y comprueba reservas concurrentes, permisos, seriales, recepción parcial, devoluciones, anulaciones, conteos obsoletos y las pantallas. Lo elimina al terminar. `tests/test_backup_crypto.py` valida cifrado, recuperación y rechazo de archivos alterados. El workflow diario restaura cada copia en MySQL 8.4 aislado y registra el resultado; ver `docs/operaciones/RESPALDOS.md`.
+
+
+## Actualización auditada de documentos
+
+La migración 10 crea `CORRECCION_DOCUMENTO`. `correct_document` bloquea la cabecera, consulta el cargo activo y permite únicamente cliente/pago en ventas o proveedor/número de orden en compras. El motivo es obligatorio, las opciones deben pertenecer al catálogo y el documento debe estar vigente. La modificación y sus snapshots se confirman en una misma transacción. Las líneas y movimientos no cambian. Esta operación completa la actualización de las tablas principales sin exponer edición libre del historial financiero.
+
+El reconocimiento automático de motocicletas usa palabras completas `moto`, `motos`, `motocicleta` o `motocicletas`, evitando exigir seriales a **Repuestos de Motor**. Un producto también puede marcarse explícitamente para identificación por unidad. La corrección no desactiva el seguimiento de unidades existentes.
+
+## Evidencia de la versión final
+
+La instalación completa tiene 25 tablas, 3 vistas, 15 triggers, 8 procedimientos y 57 claves foráneas. El JSON de `evidencias/VERIFICACION_ENTREGA4.json` registra tipos, acciones referenciales, versiones y hashes de scripts. `tests/test_delivery4_acceptance.py --isolated` carga semilla y datos masivos, comprueba 50 filas por entidad y usa los tres roles con cuentas MySQL temporales. El registro completo de pruebas está en `evidencias/PRUEBAS_ENTREGA4.txt`.
