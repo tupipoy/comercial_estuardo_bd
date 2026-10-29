@@ -12,18 +12,23 @@
 <main class="main-content">
     {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}" role="status">{{ mensaje }}</div>{% endfor %}{% endwith %}
     <div class="page-heading">
-        <div><p class="eyebrow">CATÁLOGO</p><h1>{% if session.get('user_role') == 'Bodega' %}{% if vista_general %}Inventario general{% else %}Inventario local{% endif %}{% else %}Inventario{% endif %}</h1>
-            <p class="muted">{% if vista_general %}Consulta las existencias de cada producto en todas las sucursales. Esta vista es solo de consulta.{% elif session.get('user_role') == 'Bodega' %}Existencias de tu sucursal asignada{% if sucursal_nombre %}: {{ sucursal_nombre }}{% endif %}.{% else %}Consulta existencias actuales y alertas según el mínimo de cada producto.{% endif %}</p></div>
+        <div><p class="eyebrow">CATÁLOGO</p><h1>{% if session.get('user_role') == 'Bodega' %}{% if vista_general %}Inventario general{% else %}Inventario local{% endif %}{% elif session.get('user_role') == 'Administrador' %}{% if vista_general %}Inventario por sucursal{% else %}Inventario consolidado{% endif %}{% else %}Inventario{% endif %}</h1>
+            <p class="muted">{% if vista_general %}Consulta las existencias de cada producto en todas las sucursales.{% elif session.get('user_role') == 'Bodega' %}Existencias de tu sucursal asignada{% if sucursal_nombre %}: {{ sucursal_nombre }}{% endif %}.{% elif session.get('user_role') == 'Administrador' %}Existencias totales sumadas entre las sucursales activas.{% else %}Consulta existencias actuales y alertas según el mínimo de cada producto.{% endif %}</p></div>
         {% if session.get('user_role') == 'Administrador' or (session.get('user_role') == 'Bodega' and not vista_general) %}<a href="{{ url_for('nuevo_producto') }}" class="button button-primary">＋ Agregar producto</a>{% endif %}
     </div>
-    {% if session.get('user_role') == 'Bodega' %}
+    {% if session.get('user_role') in ['Administrador', 'Bodega'] %}
     <nav class="inventory-view-tabs" aria-label="Vistas de inventario">
+        {% if session.get('user_role') == 'Administrador' %}
+        <a href="{{ url_for('inventario', vista='consolidado') }}" class="{% if not vista_general %}is-active{% endif %}" {% if not vista_general %}aria-current="page"{% endif %}>Consolidado</a>
+        <a href="{{ url_for('inventario', vista='general') }}" class="{% if vista_general %}is-active{% endif %}" {% if vista_general %}aria-current="page"{% endif %}>Por sucursal</a>
+        {% else %}
         <a href="{{ url_for('inventario', vista='local') }}" class="{% if not vista_general %}is-active{% endif %}" {% if not vista_general %}aria-current="page"{% endif %}>Inventario local</a>
         <a href="{{ url_for('inventario', vista='general') }}" class="{% if vista_general %}is-active{% endif %}" {% if vista_general %}aria-current="page"{% endif %}>Inventario general</a>
+        {% endif %}
     </nav>
     {% endif %}
     <form class="filter-panel" method="GET" action="{{ url_for('inventario') }}">
-        {% if session.get('user_role') == 'Bodega' %}<input type="hidden" name="vista" value="{{ vista }}">{% endif %}
+        {% if session.get('user_role') in ['Administrador', 'Bodega'] %}<input type="hidden" name="vista" value="{{ vista }}">{% endif %}
         <div class="search-field"><label class="visually-hidden" for="buscar-inventario">Buscar producto</label><span aria-hidden="true">⌕</span><input id="buscar-inventario" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, SKU o categoría"></div>
         <label class="visually-hidden" for="categoria-inventario">Categoría</label>
         <select id="categoria-inventario" name="categoria"><option value="">Todas las categorías</option>{% for c in categorias %}<option value="{{ c.id_categoria }}" {% if categoria|string == c.id_categoria|string %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}</select>
@@ -31,7 +36,7 @@
         <select id="estado-inventario" name="estado"><option value="todos" {% if estado_stock == 'todos' %}selected{% endif %}>Todos los estados</option><option value="disponible" {% if estado_stock == 'disponible' %}selected{% endif %}>Disponible</option><option value="bajo" {% if estado_stock == 'bajo' %}selected{% endif %}>Stock bajo</option><option value="agotado" {% if estado_stock == 'agotado' %}selected{% endif %}>Agotado</option></select>
         {% if vista_general %}<label class="visually-hidden" for="sucursal-inventario">Sucursal</label><select id="sucursal-inventario" name="sucursal"><option value="">Todas las sucursales</option>{% for s in sucursales %}<option value="{{ s.id_sucursal }}" {% if sucursal_filtro|string == s.id_sucursal|string %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select>{% endif %}
         <button class="button button-primary" type="submit">Filtrar</button>
-        {% if busqueda or categoria or estado_stock != 'todos' or sucursal_filtro %}<a class="button button-secondary" href="{{ url_for('inventario', vista=vista) if session.get('user_role') == 'Bodega' else url_for('inventario') }}">Limpiar</a>{% endif %}
+        {% if busqueda or categoria or estado_stock != 'todos' or sucursal_filtro %}<a class="button button-secondary" href="{{ url_for('inventario', vista=vista) if session.get('user_role') in ['Administrador', 'Bodega'] else url_for('inventario') }}">Limpiar</a>{% endif %}
     </form>
 
     <section class="panel inventory-panel">
@@ -39,13 +44,14 @@
         {% if error_datos %}<div class="empty-state"><strong>No se pudo consultar MySQL</strong><p>Comprueba la conexión e intenta cargar el inventario nuevamente.</p></div>
         {% elif productos %}
         <div class="responsive-table"><table class="data-table">
-            <thead><tr><th>Producto</th>{% if vista_general %}<th>Sucursal</th>{% endif %}<th>Código</th><th>Categoría</th><th>Precio</th><th>Existencias</th><th>Estado</th></tr></thead>
+            <thead><tr><th>Producto</th>{% if vista_general %}<th>Sucursal</th>{% endif %}<th>Código</th><th>Categoría</th><th>Precio</th><th>Existencias</th><th>Estado</th>{% if vista_general and session.get('user_role') == 'Administrador' %}<th>Acciones</th>{% endif %}</tr></thead>
             <tbody>{% for p in productos %}<tr>
                 <td><div class="product-cell"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><strong>{{ p.nombre }}</strong></div></td>
                 {% if vista_general %}<td>{{ p.sucursal }}</td>{% endif %}
                 <td>{{ p.codigo_barra or '—' }}</td><td>{{ p.categoria }}</td><td>Q {{ "%.2f"|format(p.precio_venta) }}</td>
                 <td><strong>{{ p.stock_actual }}</strong><small class="table-subtext">Mínimo {{ p.stock_minimo }}</small></td>
                 <td>{% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</td>
+                {% if vista_general and session.get('user_role') == 'Administrador' %}<td><a href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar producto</a></td>{% endif %}
             </tr>{% endfor %}</tbody>
         </table></div>
         <div class="mobile-product-list">{% for p in productos %}
@@ -54,6 +60,7 @@
                     {% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</div>
                 {% if vista_general %}<div class="inventory-branch-label">Sucursal: <strong>{{ p.sucursal }}</strong></div>{% endif %}
                 <div class="mobile-product-meta"><span>Existencias <strong>{{ p.stock_actual }}</strong> <small>(mín. {{ p.stock_minimo }})</small></span><strong>Q {{ "%.2f"|format(p.precio_venta) }}</strong></div>
+                {% if vista_general and session.get('user_role') == 'Administrador' %}<a class="button button-secondary" href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar producto</a>{% endif %}
             </article>
         {% endfor %}</div>
         {% else %}<div class="empty-state"><strong>{% if busqueda or categoria or estado_stock != 'todos' or sucursal_filtro %}No encontramos productos{% else %}El inventario está vacío{% endif %}</strong><p>{% if busqueda or categoria or estado_stock != 'todos' or sucursal_filtro %}Prueba cambiar la búsqueda o los filtros.{% elif vista_general %}No hay productos asociados a sucursales activas.{% else %}Cuando agregues productos, sus existencias aparecerán aquí.{% endif %}</p>{% if session.get('user_role') in ['Administrador', 'Bodega'] and not vista_general and not busqueda and not categoria %}<a class="button button-primary" href="{{ url_for('nuevo_producto') }}">Agregar el primer producto</a>{% endif %}</div>{% endif %}

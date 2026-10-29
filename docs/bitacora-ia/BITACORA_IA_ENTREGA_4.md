@@ -162,11 +162,11 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 - **Validación:** Consultas de solo lectura confirmaron 53 filas de inventario con 1,571 unidades en la sucursal 1, ausencia de `PRODUCTO.stock_actual`, las tres tablas de inventario/traslados, tres procedimientos nuevos/actualizados y tres triggers de venta. Railway informa el servicio `Online`; `/health` respondió HTTP 200 y `/` respondió HTTP 200. Una incompatibilidad entre `CHECK` y `ON UPDATE CASCADE` se corrigió cambiando las claves foráneas de origen/destino de traslado a `ON UPDATE RESTRICT` y se aplicó exitosamente la migración corregida.
 - **Seguimiento:** Probar con cuentas reales en Railway el alcance por rol, compras, ventas, traslados, alertas de stock y visualización móvil; confirmar el resultado funcional antes de cerrar los casos CP4-21 a CP4-24.
 
-#### Vistas general y local de inventario; corrección del catálogo
+#### Vistas general y local de inventario; alcance de Administración y corrección del catálogo
 
 - **Herramienta:** OpenAI Codex.
-- **Objetivo:** Diferenciar existencias de la sucursal asignada de la consulta entre sucursales para el cargo Bodega y corregir el error del catálogo de productos.
-- **Resultado:** Se agregaron pestañas **Inventario local** y **Inventario general**. La vista general lista cada producto por sucursal, con filtro por sucursal y paginación; es de solo consulta. La vista local conserva el stock asignado al bodeguero. Los logs de Railway mostraron una cadena SQL sin interpolar en la consulta paginada de Productos; se corrigió para incorporar la consulta de existencias y sus parámetros.
+- **Objetivo:** Diferenciar existencias locales de las consultas entre sucursales, permitir que Administración consulte y edite el catálogo global, y corregir el error del catálogo de productos.
+- **Resultado:** Bodega cuenta con **Inventario local** y **Inventario general**; la vista general lista el stock por sucursal, con filtros y paginación, y es de solo consulta. Administración tiene las vistas **Consolidado** y **Por sucursal**; desde esta última puede abrir la edición de cada producto. El catálogo es compartido entre sucursales, mientras las existencias se reciben o trasladan por ubicación. Los logs de Railway mostraron una cadena SQL sin interpolar en la consulta paginada de Productos; se corrigió para incorporar la consulta de existencias y sus parámetros.
 - **Validación:** `py_compile`, análisis sintáctico de las plantillas Jinja y `git diff --check`.
 - **Seguimiento:** Publicar en Railway y validar con un usuario Bodega que ambas vistas muestren cantidades por sucursal y que el catálogo de Productos abra sin error.
 

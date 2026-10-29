@@ -47,7 +47,7 @@
                 <input id="precio_venta" name="precio_venta" type="number" min="0.01" step="0.01" required
                        value="{{ producto.precio_venta if producto else '' }}">
             </div>
-            <p class="texto-ayuda">Las existencias se reciben mediante Compras y se consultan por sucursal en Inventario.</p>
+            <p class="texto-ayuda">{% if session.get('user_role') == 'Administrador' %}Los datos del producto se comparten entre sucursales. El stock se consulta en Inventario y cambia con Compras, Ventas o Traslados.{% else %}Las existencias se reciben mediante Compras y se consultan por sucursal en Inventario.{% endif %}</p>
             <div class="form-group">
                 <label for="stock_minimo">Stock mínimo</label>
                 <input id="stock_minimo" name="stock_minimo" type="number" min="0" step="1" required

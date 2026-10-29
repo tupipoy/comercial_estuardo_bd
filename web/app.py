@@ -369,11 +369,15 @@ def resumen():
 @requiere_rol("Administrador", "Vendedor", "Bodega")
 def inventario():
     """Consulta existencias con búsqueda, filtros de categoría y estado."""
-    es_bodega = session.get("user_role") == "Bodega"
-    vista = request.args.get("vista", "local") if es_bodega else "local"
-    if vista not in {"local", "general"}:
-        vista = "local"
-    vista_general = es_bodega and vista == "general"
+    rol = session.get("user_role")
+    es_bodega = rol == "Bodega"
+    es_admin = rol == "Administrador"
+    vista_default = "local" if es_bodega else "consolidado"
+    vista = request.args.get("vista", vista_default)
+    vistas_validas = {"local", "general"} if es_bodega else {"consolidado", "general"}
+    if not (es_bodega or es_admin) or vista not in vistas_validas:
+        vista = vista_default
+    vista_general = (es_bodega or es_admin) and vista == "general"
     solo_stock_bajo = "1" if request.args.get("stock_bajo") == "1" else "0"
     busqueda = request.args.get("q", "").strip()[:100]
     condiciones = ["p.estado = 1"]
