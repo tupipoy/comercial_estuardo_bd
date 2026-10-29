@@ -40,6 +40,7 @@
                         {% endfor %}
                     </select>
                     {% if not proveedores %}<small>No hay proveedores activos registrados.</small>{% endif %}
+                    <small>Solo se muestran proveedores aprobados y activos. <a href="{{ url_for('nuevo_proveedor') }}">Proponer proveedor</a>.</small>
                 </div>
 
                 <div id="lineas-compra">

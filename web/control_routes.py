@@ -236,11 +236,14 @@ def register_control_routes(app, requiere_rol, branch_for_employee):
                     WHERE p.requiere_serie=1 AND p.estado=1""" + suffix, args)
                 unidentified = [row for row in cursor.fetchall() if row["stock_actual"] != row["identificadas"]]
                 backup = None
+                pending_suppliers = 0
                 if session.get("user_role") == "Administrador":
+                    cursor.execute("SELECT COUNT(*) n FROM PROPUESTA_PROVEEDOR WHERE estado='Pendiente'")
+                    pending_suppliers = cursor.fetchone()['n']
                     cursor.execute("SELECT * FROM RESPALDO_EJECUCION ORDER BY id_respaldo DESC LIMIT 1")
                     backup = cursor.fetchone()
                 backup_stale = not backup or backup['estado'] == 'Error' or datetime.utcnow() - backup['inicio'] > timedelta(hours=36)
-            return render_template("control.html", page="alertas", low=low, transfers=transfers, unidentified=unidentified, backup=backup, backup_stale=backup_stale)
+            return render_template("control.html", page="alertas", low=low, transfers=transfers, unidentified=unidentified, backup=backup, backup_stale=backup_stale, pending_suppliers=pending_suppliers)
         finally:
             connection.close()
 

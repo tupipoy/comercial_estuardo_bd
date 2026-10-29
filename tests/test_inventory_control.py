@@ -28,7 +28,7 @@ def connect():
 def install():
     env = os.environ.copy()
     env["MYSQL_PWD"] = unquote(URL.password)
-    for name in ("sql/ddl/01_schema.sql", "sql/migrations/08_inventory_control.sql", "sql/triggers/01_triggers.sql", "sql/triggers/02_inventory_control.sql", "sql/procedures/01_procedures.sql", "sql/procedures/02_transfer_workflow.sql", "sql/views/01_views.sql"):
+    for name in ("sql/ddl/01_schema.sql", "sql/migrations/08_inventory_control.sql", "sql/migrations/09_supplier_proposals.sql", "sql/triggers/01_triggers.sql", "sql/triggers/02_inventory_control.sql", "sql/procedures/01_procedures.sql", "sql/procedures/02_transfer_workflow.sql", "sql/views/01_views.sql"):
         sql = (ROOT / name).read_text().replace("comercial_estuardo_db", SCHEMA)
         result = subprocess.run(["mysql", "--default-character-set=utf8mb4", "-h", URL.hostname, "-P", str(URL.port or 3306), "-u", unquote(URL.username)], input=sql.encode(), env=env, capture_output=True)
         if result.returncode:

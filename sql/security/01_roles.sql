@@ -44,7 +44,7 @@ GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_venta
 GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_venta_detallada
     TO 'rol_ventas';
 
--- Bodega: mantenimiento de catálogo, proveedores y compras. Las compras
+-- Bodega: mantenimiento de productos, consulta de proveedores y compras. Las compras
 -- se registran mediante el procedimiento para que detalle, existencias y
 -- costo actual se actualicen dentro de una sola transacción.
 GRANT SELECT ON comercial_estuardo_db.CATEGORIA
@@ -67,7 +67,7 @@ GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_despachar_traslado
     TO 'rol_bodega';
 GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_recibir_traslado
     TO 'rol_bodega';
-GRANT SELECT, INSERT, UPDATE ON comercial_estuardo_db.PROVEEDOR
+GRANT SELECT ON comercial_estuardo_db.PROVEEDOR
     TO 'rol_bodega';
 GRANT SELECT (
     id_empleado, nombres, apellidos, cargo, id_sucursal, estado

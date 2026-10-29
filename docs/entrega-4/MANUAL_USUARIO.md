@@ -28,7 +28,17 @@ Los usuarios autorizados pueden consultar y buscar clientes por nombre, NIT, CUI
 
 ## Proveedores
 
-Los usuarios autorizados pueden consultar y buscar proveedores por razón social, NIT o contacto, además de crear, editar y desactivar sus registros. Se requiere NIT, razón social y teléfono.
+Administrador y Bodega pueden consultar proveedores aprobados, buscar por razón social, NIT o contacto y seleccionarlos en compras cuando estén activos. Ambos perfiles pueden usar **Proponer proveedor**; se requiere NIT, razón social y teléfono. La propuesta queda pendiente y todavía no aparece en Compras.
+
+En **Propuestas**, Administración revisa todas las solicitudes, puede corregir sus datos y aprobarlas, o rechazarlas indicando el motivo. Bodega consulta sus propias propuestas y el resultado. Solo Administración puede editar proveedores aprobados o desactivarlos. La desactivación conserva las compras históricas. Se puede consultar el catálogo de activos e inactivos; las propuestas pendientes también aparecen como alerta administrativa.
+
+| Acción | Bodega | Administrador |
+|---|---|---|
+| Consultar proveedores | Sí | Sí |
+| Seleccionarlos en compras | Sí | Sí |
+| Proponer un proveedor nuevo | Sí | Sí |
+| Aprobarlo y modificar sus datos | No | Sí |
+| Desactivarlo | No | Sí |
 
 ## Administración (Administrador)
 

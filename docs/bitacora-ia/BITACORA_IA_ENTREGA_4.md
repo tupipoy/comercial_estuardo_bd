@@ -181,6 +181,13 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 
 ### 29 de octubre de 2026
 
+#### Proveedores propuestos por Bodega y aprobados por Administración
+
+- **Solicitud:** Ambos perfiles consultan proveedores, los seleccionan en compras y proponen altas; solo Administración aprueba, modifica datos o desactiva.
+- **Resultado:** Se incorporaron propuestas pendientes, aprobadas y rechazadas, con revisión y corrección de datos al aprobar, motivo de rechazo, seguimiento por solicitante y auditoría de responsables y cambios. Las propuestas no ingresan al catálogo de Compras hasta su aprobación. Bodega no puede editar, desactivar ni aprobar mediante las URL directas; los servicios vuelven a consultar el cargo activo. Administración recibe una alerta por propuestas pendientes. La desactivación conserva las compras.
+- **Validación:** Siete pruebas nuevas de permisos, concurrencia, duplicados, correcciones, rechazo y conservación del historial; las doce pruebas anteriores de inventario y operaciones también pasaron en esquemas temporales MySQL. Se verificó en Railway que el rol Bodega solo tiene `SELECT` sobre `PROVEEDOR` y no puede insertar campos de resolución de propuestas.
+- **Producción:** Respaldo íntegro `backups/railway_pre_supplier_proposals_20261029T204102Z.sql.gz`; migración 09 comprobada primero sobre una copia y aplicada junto con los permisos 03. Se conservaron 52 proveedores (4 activos), compras y existencias. No se crearon proveedores de prueba en producción.
+
 #### Configuración autorizada de respaldos cifrados
 
 - **Autorización:** El usuario autorizó expresamente crear `ce_backup` y guardar su conexión y la clave de cifrado como secretos protegidos de GitHub Actions en el repositorio público.

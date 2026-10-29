@@ -3,7 +3,7 @@
 ## Requisitos
 
 - Python 3.11 o superior
-- MySQL 8.0 o superior
+- MySQL 8.0.30 o superior (Railway usa MySQL 8.4)
 - Git
 - Navegador web
 
@@ -47,6 +47,7 @@ mysql -u root -p < sql/ddl/01_schema.sql
 mysql -u root -p < sql/dml/01_seed_data.sql
 mysql -u root -p < sql/dml/02_bulk_data.sql
 mysql -u root -p < sql/migrations/08_inventory_control.sql
+mysql -u root -p < sql/migrations/09_supplier_proposals.sql
 mysql -u root -p < sql/views/01_views.sql
 mysql -u root -p < sql/triggers/01_triggers.sql
 mysql -u root -p < sql/triggers/02_inventory_control.sql
@@ -54,6 +55,7 @@ mysql -u root -p < sql/procedures/01_procedures.sql
 mysql -u root -p < sql/procedures/02_transfer_workflow.sql
 mysql -u root -p < sql/security/01_roles.sql
 mysql -u root -p < sql/security/02_inventory_control.sql
+mysql -u root -p < sql/security/03_supplier_proposals.sql
 ```
 
 También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el mismo orden.
@@ -65,6 +67,8 @@ También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el 
 Para actualizar una base existente, respalda primero. Si aún tiene stock global, aplica la migración 06 asignándolo a Sucursal Central y después la 07. Para una base que ya tiene el flujo de traslados de la 07, aplica únicamente `08_inventory_control.sql` y luego `sql/triggers/02_inventory_control.sql`, `sql/views/01_views.sql` y ambos scripts de seguridad en orden. No reinstales los triggers 01 sin volver a aplicar los 02: los 02 protegen las reservas y las unidades identificadas. El código nuevo requiere completar estos pasos antes de desplegarlo.
 
 La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión; la 06 convierte el stock global en existencias por sucursal; y la 07 agrega aprobación, despacho y recepción para los traslados. Cada migración se ejecuta una sola vez. La 06 asigna el stock global existente a **Sucursal Central** y completa la sucursal histórica de compras según la sucursal actual del empleado. La 07 conserva los traslados completados y registra sus cantidades recibidas históricas. Antes de aplicar migraciones en producción, genera un respaldo completo; después ejecuta `sql/procedures/02_transfer_workflow.sql` y `sql/security/01_roles.sql`. Para una instalación limpia, el DDL y scripts actuales incluyen el nuevo flujo; ejecuta ambos archivos de procedimientos en orden.
+
+Para habilitar propuestas de proveedores en una base que ya tiene la migración 08: respaldar, aplicar `sql/migrations/09_supplier_proposals.sql` y después `sql/security/03_supplier_proposals.sql` antes de publicar el código nuevo. Los proveedores anteriores conservan su estado y las compras; solo las propuestas aprobadas crean un nuevo registro en el catálogo. En Railway, `scripts/migrate_inventory_control.py --suppliers` respalda y comprueba primero la migración sobre una copia aislada. Los scripts de seguridad se aplican en orden 01, 02 y 03; el último revoca altas y cambios directos de proveedores al rol Bodega.
 
 ## 5. Crear una contraseña inicial para el administrador
 

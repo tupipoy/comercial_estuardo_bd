@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Propuestas de proveedores</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head><body>
+{% include '_sidebar.html' %}{% include '_mobile_nav.html' %}
+<main class="main-content">
+{% with mensajes=get_flashed_messages(with_categories=true) %}{% for categoria,mensaje in mensajes %}<div class="alert-{{ categoria }}" role="status">{{ mensaje }}</div>{% endfor %}{% endwith %}
+<section class="toolbar"><h2>{{ 'Propuestas de proveedores' if session.user_role=='Administrador' else 'Mis propuestas de proveedores' }}</h2><a class="btn active" href="{{ url_for('nuevo_proveedor') }}">Proponer proveedor</a><a class="btn" href="{{ url_for('proveedores') }}">Catálogo aprobado</a></section>
+<p class="texto-ayuda">Las propuestas pendientes o rechazadas no están disponibles para registrar compras.</p>
+<form method="GET" class="filter-panel"><label>Estado<select name="estado">{% for e in ['Pendiente','Aprobada','Rechazada','Todas'] %}<option value="{{ e }}" {% if estado==e %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></label><button class="btn-submit">Filtrar</button></form>
+<section class="control-card-list">{% for p in propuestas %}<article class="panel"><h3>{{ p.razon_social }}</h3><p>NIT {{ p.nit }} · {{ p.estado }}</p><p>Propuesta #{{ p.id_propuesta }} · {{ p.fecha_solicitud }} · {{ p.solicitante }}</p>{% if p.responsable %}<p>Revisó: {{ p.responsable }} · {{ p.fecha_resolucion }}</p>{% endif %}{% if p.observacion %}<p>{{ p.observacion }}</p>{% endif %}<a class="btn" href="{{ url_for('detalle_propuesta_proveedor',id_propuesta=p.id_propuesta) }}">{{ 'Revisar propuesta' if session.user_role=='Administrador' and p.estado=='Pendiente' else 'Ver propuesta' }}</a></article>{% else %}<p class="directory-empty">No hay propuestas para este estado.</p>{% endfor %}</section>
+<p class="texto-ayuda">Se muestran las 200 propuestas más recientes del filtro.</p>
+</main></body></html>

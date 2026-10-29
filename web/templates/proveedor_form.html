@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if proveedor.id_proveedor %}Editar proveedor{% else %}Nuevo proveedor{% endif %} - Comercial Estuardo</title>
+    <title>{% if proveedor.id_proveedor %}Editar proveedor{% else %}Proponer proveedor{% endif %} - Comercial Estuardo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -12,8 +12,9 @@
 
     <main>
         <section class="product-form-page">
-            <h2>{% if proveedor.id_proveedor %}Editar proveedor{% else %}Nuevo proveedor{% endif %}</h2>
+            <h2>{% if proveedor.id_proveedor %}Editar proveedor{% else %}Proponer proveedor{% endif %}</h2>
 
+            {% if not proveedor.id_proveedor %}<p class="texto-ayuda">La propuesta quedará pendiente hasta que Administración revise y apruebe los datos.</p>{% endif %}
             {% if errores %}
             <div class="alert-danger" role="alert">
                 <ul>{% for error in errores %}<li>{{ error }}</li>{% endfor %}</ul>
@@ -22,34 +23,12 @@
 
             <form class="product-form" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <div class="form-group">
-                    <label for="nit">NIT</label>
-                    <input id="nit" name="nit" type="text" maxlength="15" required value="{{ proveedor.nit or '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="razon_social">Razón social</label>
-                    <input id="razon_social" name="razon_social" type="text" maxlength="150" required value="{{ proveedor.razon_social or '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="contacto">Contacto</label>
-                    <input id="contacto" name="contacto" type="text" maxlength="100" value="{{ proveedor.contacto or '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="telefono">Teléfono</label>
-                    <input id="telefono" name="telefono" type="text" maxlength="15" required value="{{ proveedor.telefono or '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="correo">Correo</label>
-                    <input id="correo" name="correo" type="email" maxlength="100" value="{{ proveedor.correo or '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="direccion">Dirección</label>
-                    <input id="direccion" name="direccion" type="text" maxlength="200" value="{{ proveedor.direccion or '' }}">
-                </div>
-                <button class="btn-submit" type="submit">Guardar proveedor</button>
+                {% include "_proveedor_campos.html" %}
+                <button class="btn-submit" type="submit">{{ 'Guardar cambios' if proveedor.id_proveedor else 'Enviar propuesta' }}</button>
                 <a class="btn" href="{{ url_for('proveedores') }}">Cancelar</a>
             </form>
         </section>
+        {% if historial %}<section class="control-card-list" aria-label="Historial del proveedor">{% for e in historial %}<article class="panel"><p>{{ e.fecha }} · {{ e.accion }} · {{ e.empleado }}</p>{% if e.observacion %}<p>{{ e.observacion }}</p>{% endif %}</article>{% endfor %}</section>{% endif %}
     </main>
 </body>
 </html>

@@ -18,14 +18,15 @@
         {% endwith %}
 
         <section class="toolbar">
-            <h2>Proveedores activos</h2>
-            <a href="{{ url_for('nuevo_proveedor') }}" class="btn active">Nuevo proveedor</a>
+            <h2>Proveedores aprobados</h2><a href="{{ url_for('propuestas_proveedores') }}" class="btn">Propuestas ({{ pendientes }} pendientes)</a>
+            <a href="{{ url_for('nuevo_proveedor') }}" class="btn active">Proponer proveedor</a>
         </section>
         <form class="busqueda-form" method="GET" action="{{ url_for('proveedores') }}">
             <label for="buscar-proveedor">Buscar proveedor</label>
             <input id="buscar-proveedor" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Razón social, NIT o contacto">
+            <label for="estado-proveedor">Estado</label><select id="estado-proveedor" name="estado">{% for value,label in [('activos','Activos'),('inactivos','Inactivos'),('todos','Todos')] %}<option value="{{ value }}" {% if estado==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
             <button class="btn active" type="submit">Buscar</button>
-            {% if busqueda %}<a class="btn" href="{{ url_for('proveedores') }}">Limpiar</a>{% endif %}
+            {% if busqueda or estado!='activos' %}<a class="btn" href="{{ url_for('proveedores') }}">Limpiar</a>{% endif %}
         </form>
 
         <div class="directory-table"><table>
@@ -37,7 +38,7 @@
                     <th>Teléfono</th>
                     <th>Correo</th>
                     <th>Dirección</th>
-                    <th>Acciones</th>
+                    <th>Estado</th>{% if session.user_role=='Administrador' %}<th>Acciones</th>{% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -49,27 +50,29 @@
                     <td>{{ proveedor.telefono }}</td>
                     <td>{{ proveedor.correo or '-' }}</td>
                     <td>{{ proveedor.direccion or '-' }}</td>
-                    <td>
+                    <td>{{ 'Activo' if proveedor.estado else 'Inactivo' }}</td>
+                    {% if session.user_role=='Administrador' %}<td>
                         <a href="{{ url_for('editar_proveedor', id_proveedor=proveedor.id_proveedor) }}">Editar</a>
-                        <form method="POST"
+                        {% if proveedor.estado %}<form method="POST"
                               action="{{ url_for('desactivar_proveedor', id_proveedor=proveedor.id_proveedor) }}"
                               style="display:inline"
                               onsubmit="return confirm('¿Desactivar este proveedor?');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <button type="submit">Desactivar</button>
-                        </form>
-                    </td>
+                        </form>{% endif %}
+                    </td>{% endif %}
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="text-center">No hay proveedores activos.</td></tr>
+                <tr><td colspan="{{ 8 if session.user_role=='Administrador' else 7 }}" class="text-center">No hay proveedores para estos filtros.</td></tr>
                 {% endfor %}
             </tbody>
         </table></div>
         <div class="directory-list" aria-label="Lista de proveedores">
             {% for proveedor in proveedores %}<article class="directory-card"><h3>{{ proveedor.razon_social }}</h3><dl class="directory-details">
                 <div><dt>NIT</dt><dd>{{ proveedor.nit }}</dd></div><div><dt>Contacto</dt><dd>{{ proveedor.contacto or '-' }}</dd></div><div><dt>Teléfono</dt><dd>{{ proveedor.telefono }}</dd></div><div><dt>Correo</dt><dd>{{ proveedor.correo or '-' }}</dd></div><div class="directory-wide"><dt>Dirección</dt><dd>{{ proveedor.direccion or '-' }}</dd></div>
-            </dl><div class="directory-actions"><a class="btn" href="{{ url_for('editar_proveedor', id_proveedor=proveedor.id_proveedor) }}">Editar</a><form method="POST" action="{{ url_for('desactivar_proveedor', id_proveedor=proveedor.id_proveedor) }}" onsubmit="return confirm('¿Desactivar este proveedor?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn directory-danger" type="submit">Desactivar</button></form></div></article>
-            {% else %}<p class="directory-empty">No hay proveedores activos.</p>{% endfor %}
+                <div><dt>Estado</dt><dd>{{ 'Activo' if proveedor.estado else 'Inactivo' }}</dd></div>
+            </dl>{% if session.user_role=='Administrador' %}<div class="directory-actions"><a class="btn" href="{{ url_for('editar_proveedor', id_proveedor=proveedor.id_proveedor) }}">Editar</a>{% if proveedor.estado %}<form method="POST" action="{{ url_for('desactivar_proveedor', id_proveedor=proveedor.id_proveedor) }}" onsubmit="return confirm('¿Desactivar este proveedor?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn directory-danger" type="submit">Desactivar</button></form>{% endif %}</div>{% endif %}</article>
+            {% else %}<p class="directory-empty">No hay proveedores para estos filtros.</p>{% endfor %}
         </div>
     </main>
 </body>

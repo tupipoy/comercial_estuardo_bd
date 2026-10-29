@@ -1,7 +1,8 @@
-"""Respalda, comprueba una copia y aplica la migración 08 en Railway."""
+"""Respalda y comprueba migraciones; --suppliers aplica la 09 en Railway."""
 import gzip
 import os
 import subprocess
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,7 +13,11 @@ DB = "comercial_estuardo_db"
 FILES = ("sql/migrations/08_inventory_control.sql", "sql/triggers/02_inventory_control.sql", "sql/views/01_views.sql")
 
 
-def main():
+def main(suppliers=False):
+    files = ("sql/migrations/09_supplier_proposals.sql",) if suppliers else FILES
+    security = ("sql/security/03_supplier_proposals.sql",) if suppliers else ("sql/security/01_roles.sql", "sql/security/02_inventory_control.sql")
+    marker = "PROPUESTA_PROVEEDOR" if suppliers else "MOVIMIENTO_INVENTARIO"
+    migration = "09" if suppliers else "08"
     url = urlparse(os.environ["MYSQL_PUBLIC_URL"])
     env = os.environ.copy()
     env["MYSQL_PWD"] = unquote(url.password)
@@ -26,9 +31,11 @@ def main():
 
     def preflight():
         with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='MOVIMIENTO_INVENTARIO'")
+            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s", (marker,))
             if cursor.fetchone()[0]:
-                raise RuntimeError("La migración 08 ya está iniciada o instalada; no se volvió a aplicar.")
+                raise RuntimeError(f"La migración {migration} ya está iniciada o instalada; no se volvió a aplicar.")
+            if suppliers:
+                return
             cursor.execute("""SELECT COUNT(*) FROM TRASLADO t JOIN DETALLE_TRASLADO d USING(id_traslado)
                 JOIN PRODUCTO p USING(id_producto) JOIN CATEGORIA c USING(id_categoria)
                 WHERE t.estado IN ('Pendiente de aprobación','Aprobado','En tránsito') AND LOWER(c.nombre) LIKE '%moto%'""")
@@ -45,7 +52,7 @@ def main():
     clone = "ce_migration_check_" + uuid.uuid4().hex[:12]
     try:
         preflight()
-        backup = Path("backups") / f"railway_pre_inventory_control_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.sql.gz"
+        backup = Path("backups") / f"railway_pre_{'supplier_proposals' if suppliers else 'inventory_control'}_{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.sql.gz"
         backup.parent.mkdir(mode=0o700, exist_ok=True)
         dump = subprocess.Popen(["mysqldump", *args, "--single-transaction", "--routines", "--triggers", "--events", "--no-tablespaces", "--set-gtid-purged=OFF", "--databases", DB], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         with gzip.open(backup, "wb") as output:
@@ -62,17 +69,17 @@ def main():
         print("Respaldo íntegro:", backup)
         execute(contents.replace(DB.encode(), clone.encode()))
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT (SELECT COUNT(*) FROM `{clone}`.VENTA),(SELECT COUNT(*) FROM `{clone}`.COMPRA),(SELECT SUM(stock_actual) FROM `{clone}`.INVENTARIO_SUCURSAL)")
+            cursor.execute(f"SELECT (SELECT COUNT(*) FROM `{clone}`.VENTA),(SELECT COUNT(*) FROM `{clone}`.COMPRA),(SELECT SUM(stock_actual) FROM `{clone}`.INVENTARIO_SUCURSAL),(SELECT COUNT(*) FROM `{clone}`.PROVEEDOR)")
             before = cursor.fetchone()
-        for file in FILES:
+        for file in files:
             execute(Path(file).read_bytes().replace(DB.encode(), clone.encode()))
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT (SELECT COUNT(*) FROM `{clone}`.VENTA),(SELECT COUNT(*) FROM `{clone}`.COMPRA),(SELECT SUM(stock_actual) FROM `{clone}`.INVENTARIO_SUCURSAL)")
+            cursor.execute(f"SELECT (SELECT COUNT(*) FROM `{clone}`.VENTA),(SELECT COUNT(*) FROM `{clone}`.COMPRA),(SELECT SUM(stock_actual) FROM `{clone}`.INVENTARIO_SUCURSAL),(SELECT COUNT(*) FROM `{clone}`.PROVEEDOR)")
             if cursor.fetchone() != before:
                 raise RuntimeError("La migración de aceptación alteró documentos o cantidades físicas.")
         print("Migración verificada en copia aislada: documentos y existencias conservados.")
         preflight()
-        for file in (*FILES, "sql/security/01_roles.sql", "sql/security/02_inventory_control.sql"):
+        for file in (*files, *security):
             execute(Path(file).read_bytes())
             print("Aplicado:", file)
     finally:
@@ -82,4 +89,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(suppliers="--suppliers" in sys.argv)
