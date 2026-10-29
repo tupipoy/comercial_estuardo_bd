@@ -181,6 +181,12 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 
 ### 29 de octubre de 2026
 
+#### Configuración autorizada de respaldos cifrados
+
+- **Autorización:** El usuario autorizó expresamente crear `ce_backup` y guardar su conexión y la clave de cifrado como secretos protegidos de GitHub Actions en el repositorio público.
+- **Resultado:** Se creó la cuenta dedicada y se configuraron `MYSQL_BACKUP_URL`, `BACKUP_ENCRYPTION_KEY` y la variable de activación. Se verificó la presencia de los secretos sin imprimir valores. La clave local de recuperación está en `backups/backup_recovery.env`, excluida de Git y con permisos `0600`.
+- **Pendiente:** El token Git actual carece del permiso `workflow`. El archivo `.github/workflows/daily-backup.yml` permanece preparado localmente; todavía no se publicó ni se ejecutó el primer respaldo automático. Habilitar ese permiso, publicar el archivo y comprobar la restauración de la primera ejecución.
+
 #### Unidades, Kardex, reservas, conteos y reversos
 
 - **Herramienta:** OpenAI Codex.
