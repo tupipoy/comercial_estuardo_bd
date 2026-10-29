@@ -1,0 +1,38 @@
+name: Respaldo diario y recuperación
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: respaldo-produccion
+  cancel-in-progress: false
+jobs:
+  backup:
+    if: vars.BACKUP_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Instalar herramientas de respaldo
+        run: python -m pip install 'PyMySQL==1.1.0' 'cryptography>=46,<48'
+      - name: Respaldar, cifrar y restaurar en base aislada
+        env:
+          MYSQL_BACKUP_URL: ${{ secrets.MYSQL_BACKUP_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: python scripts/daily_backup.py
+      - name: Conservar copia cifrada durante 14 días
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: respaldo-cifrado-${{ github.run_id }}
+          path: backup-output/*.enc
+          if-no-files-found: error
+          retention-days: 14
+      - name: Registrar resultado de respaldo
+        if: always()
+        env:
+          MYSQL_BACKUP_URL: ${{ secrets.MYSQL_BACKUP_URL }}
+          BACKUP_JOB_STATUS: ${{ job.status }}
+        run: python scripts/daily_backup.py --finalize
