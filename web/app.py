@@ -295,14 +295,20 @@ def resumen():
             actividad = cursor.fetchone()
 
             cursor.execute("""
-                SELECT c.nombre, COUNT(p.id_producto) AS total
+                SELECT c.nombre,
+                       COUNT(DISTINCT CASE
+                           WHEN COALESCE(existencias.stock_actual, 0) > 0
+                           THEN p.id_producto
+                       END) AS total
                 FROM CATEGORIA c
                 LEFT JOIN PRODUCTO p ON p.id_categoria = c.id_categoria AND p.estado = 1
+                LEFT JOIN (""" + stock_sql + """) AS existencias
+                  ON existencias.id_producto = p.id_producto
                 WHERE c.estado = 1
                 GROUP BY c.id_categoria, c.nombre
                 ORDER BY total DESC, c.nombre
                 LIMIT 6
-            """)
+            """, stock_params)
             categorias = cursor.fetchall()
 
             cursor.execute("""
@@ -325,17 +331,21 @@ def resumen():
                 (SELECT 'Venta' AS tipo, v.fecha_venta AS fecha,
                         CONCAT(v.serie_factura, '-', v.numero_factura) AS referencia,
                         v.total_venta AS total
-                 FROM VENTA v WHERE (%s IS NULL OR v.id_sucursal = %s)
+                 FROM VENTA v WHERE v.fecha_venta >= %s AND v.fecha_venta < %s
+                   AND (%s IS NULL OR v.id_sucursal = %s)
                  ORDER BY v.fecha_venta DESC LIMIT 6)
                 UNION ALL
                 (SELECT 'Compra' AS tipo, c.fecha_compra AS fecha,
                         c.numero_orden AS referencia, c.total_compra AS total
-                 FROM COMPRA c WHERE (%s IS NULL OR c.id_sucursal = %s)
+                 FROM COMPRA c WHERE c.fecha_compra >= %s AND c.fecha_compra < %s
+                   AND (%s IS NULL OR c.id_sucursal = %s)
                  ORDER BY c.fecha_compra DESC LIMIT 6)
                 ORDER BY fecha DESC
                 LIMIT 8
             """, (
+                fecha_inicio, fecha_fin,
                 id_sucursal_scope, id_sucursal_scope,
+                fecha_inicio, fecha_fin,
                 id_sucursal_scope, id_sucursal_scope,
             ))
             recientes = cursor.fetchall()

@@ -12,7 +12,7 @@
 <main class="main-content dashboard-page">
     <div class="page-heading">
         <div>
-            <p class="eyebrow">PANEL DE CONTROL · {{ session.get('user_branch', '') }}</p>
+            <p class="eyebrow">{% if session.get('user_role') == 'Administrador' %}PANEL DE ADMINISTRACIÓN · TODAS LAS SUCURSALES{% else %}PANEL DE CONTROL · {{ session.get('user_branch', '') }}{% endif %}</p>
             <h1>Resumen del inventario</h1>
             <p class="muted">Hola, {{ session.get('user_name', '') }}. Aquí tienes el estado actual de tu operación.</p>
         </div>
@@ -40,7 +40,7 @@
             <span class="metric-icon metric-icon-blue"><svg><use href="#icon-box"/></svg></span>
             <p>Productos activos</p>
             <strong>{{ indicadores.total_productos }}</strong>
-            <small>Referencias en catálogo</small>
+            <small>Referencias activas en el catálogo compartido</small>
         </article>
         <article class="metric-card">
             <span class="metric-icon metric-icon-amber">!</span>
@@ -71,7 +71,7 @@
     <section class="dashboard-grid">
         <article class="panel category-panel">
             <div class="panel-heading">
-                <div><h2>Productos por categoría</h2><p class="muted">Conteo de productos activos</p></div>
+                <div><h2>Productos con stock por categoría</h2><p class="muted">Existencias según tu alcance de sucursal</p></div>
                 <a href="{{ url_for('inventario') }}">Ver inventario</a>
             </div>
             {% if categorias %}
@@ -83,12 +83,12 @@
                 </div>
                 {% endfor %}
             </div>
-            {% else %}<div class="empty-state"><strong>Aún no hay categorías activas</strong><p>Cuando registres productos, su distribución aparecerá aquí.</p></div>{% endif %}
+            {% else %}<div class="empty-state"><strong>Sin productos con existencias</strong><p>La distribución por categoría aparecerá cuando haya stock en tu alcance de sucursal.</p></div>{% endif %}
         </article>
 
         <article class="panel activity-panel">
             <div class="panel-heading">
-                <div><h2>Actividad reciente</h2><p class="muted">Compras y ventas registradas</p></div>
+                <div><h2>Actividad del período</h2><p class="muted">Compras y ventas de los últimos {{ periodo }} días</p></div>
                 <form method="GET" action="{{ url_for('resumen') }}">
                     <label class="visually-hidden" for="periodo">Período</label>
                     <select id="periodo" name="dias">

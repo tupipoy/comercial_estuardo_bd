@@ -168,7 +168,15 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 - **Objetivo:** Diferenciar existencias locales de las consultas entre sucursales, permitir que Administración consulte y edite el catálogo global, y corregir el error del catálogo de productos.
 - **Resultado:** Bodega cuenta con **Inventario local** y **Inventario general**; la vista general lista el stock por sucursal, con filtros y paginación, y es de solo consulta. Administración tiene las vistas **Consolidado** y **Por sucursal**; desde esta última puede abrir la edición de cada producto. El catálogo es compartido entre sucursales, mientras las existencias se reciben o trasladan por ubicación. Los logs de Railway mostraron una cadena SQL sin interpolar en la consulta paginada de Productos; se corrigió para incorporar la consulta de existencias y sus parámetros.
 - **Validación:** `py_compile`, análisis sintáctico de las plantillas Jinja y `git diff --check`.
-- **Seguimiento:** Publicar en Railway y validar con un usuario Bodega que ambas vistas muestren cantidades por sucursal y que el catálogo de Productos abra sin error.
+- **Seguimiento:** Validar con usuarios Bodega y Administrador que las vistas de inventario muestren las cantidades por sucursal y que el catálogo de Productos abra sin error.
+
+#### Ajuste del resumen según sucursal y período
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Alinear categorías, actividad y encabezado del dashboard con el inventario real disponible y el período seleccionado.
+- **Resultado:** Las categorías se cuentan solo cuando sus productos tienen existencias dentro del alcance del usuario. La actividad reciente respeta el mismo rango de días del resumen; Administración se identifica como vista de todas las sucursales. La revisión agregada de producción identificó 50 ventas y 50 compras de los datos de ejemplo de Entrega 4, además de 3 ventas y 4 compras posteriores. Esos registros siguen en la base y no se eliminaron.
+- **Validación:** Revisión de las consultas y conteos agregados de solo lectura en MySQL de Railway.
+- **Seguimiento:** Si se quiere quitar los datos de ejemplo de las cifras del dashboard, identificar y respaldar primero el conjunto de filas antes de modificar datos productivos.
 
 
 ### 29 de octubre de 2026
