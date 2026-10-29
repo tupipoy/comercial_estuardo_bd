@@ -12,7 +12,7 @@
 
 ## Resumen y catálogo
 
-`INVENTARIO_SUCURSAL` almacena el stock por producto y sucursal. Administración consulta totales consolidados; Vendedores y Bodega quedan limitados a la sucursal de su empleado. Compras y ventas actualizan existencias en la sucursal del empleado. Los traslados usan `TRASLADO`, `DETALLE_TRASLADO` y `sp_registrar_traslado` para descontar origen y acreditar destino en una sola transacción. `/resumen` y `/productos` aplican el mismo alcance de inventario.
+`INVENTARIO_SUCURSAL` almacena el stock por producto y sucursal. Administración consulta totales consolidados; Vendedores y Bodega quedan limitados a la sucursal de su empleado. Compras y ventas actualizan existencias en la sucursal del empleado. Los traslados se solicitan sin modificar stock; un administrador los aprueba o rechaza, Bodega de origen confirma el despacho y Bodega de destino registra cantidades recibidas. El despacho descuenta el origen y la recepción acredita solo lo recibido, con auditoría de usuarios, fechas y diferencias. `sp_registrar_traslado`, `sp_resolver_traslado`, `sp_despachar_traslado` y `sp_recibir_traslado` hacen las operaciones transaccionales.
 
 ## Ejecución local
 
@@ -35,7 +35,7 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
 ## Objetos SQL
 
-La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. `sp_registrar_venta_detallada`, `sp_registrar_compra_detallada` y `sp_registrar_traslado` procesan operaciones atómicas. La migración 06 asigna el stock global existente a Sucursal Central; antes de aplicarla en producción se debe respaldar y verificar esa sucursal. Después se vuelven a instalar triggers, vistas, procedimientos y roles. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
+La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. La migración 07 activa el flujo de aprobaciones en bases existentes y requiere aplicar después `sql/procedures/02_transfer_workflow.sql` y `sql/security/01_roles.sql`. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
 
 ## Módulos administrativos
 

@@ -10,6 +10,7 @@
     {% include "_sidebar.html" %}
     {% include "_mobile_nav.html" %}
     <main>
+        {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}">{{ mensaje }}</div>{% endfor %}{% endwith %}
         <section class="toolbar"><h2>Traslado {{ traslado.numero_traslado }}</h2><a class="btn" href="{{ url_for('traslados') }}">Volver a traslados</a></section>
         <section class="product-form-page">
             <p><strong>Fecha:</strong> {{ traslado.fecha_traslado }}</p>
@@ -17,10 +18,25 @@
             <p><strong>Destino:</strong> {{ traslado.sucursal_destino }}</p>
             <p><strong>Registrado por:</strong> {{ traslado.empleado }}</p>
             <p><strong>Estado:</strong> {{ traslado.estado }}</p>
+            {% if traslado.aprobador %}<p><strong>Resuelto por:</strong> {{ traslado.aprobador }}{% if traslado.fecha_aprobacion %}, {{ traslado.fecha_aprobacion }}{% endif %}</p>{% endif %}
+            {% if traslado.observacion_resolucion %}<p><strong>Observación:</strong> {{ traslado.observacion_resolucion }}</p>{% endif %}
+            {% if traslado.despachador %}<p><strong>Despachado por:</strong> {{ traslado.despachador }}{% if traslado.fecha_despacho %}, {{ traslado.fecha_despacho }}{% endif %}</p>{% endif %}
+            {% if traslado.receptor %}<p><strong>Recibido por:</strong> {{ traslado.receptor }}{% if traslado.fecha_recepcion %}, {{ traslado.fecha_recepcion }}{% endif %}</p>{% endif %}
+            {% if traslado.observacion_recepcion %}<p><strong>Nota de recepción:</strong> {{ traslado.observacion_recepcion }}</p>{% endif %}
         </section>
-        <div class="transfer-table"><table><thead><tr><th>Producto</th><th>Código</th><th>Cantidad trasladada</th></tr></thead><tbody>
-        {% for d in detalles %}<tr><td>{{ d.producto }}</td><td>{{ d.codigo_barra or '-' }}</td><td>{{ d.cantidad }}</td></tr>{% else %}<tr><td colspan="3" class="text-center">Sin productos en el traslado.</td></tr>{% endfor %}</tbody></table></div>
-        <div class="transfer-mobile-list">{% for d in detalles %}<article class="directory-card"><h3>{{ d.producto }}</h3><dl class="directory-details"><div><dt>Código</dt><dd>{{ d.codigo_barra or '-' }}</dd></div><div><dt>Cantidad trasladada</dt><dd>{{ d.cantidad }}</dd></div></dl></article>{% else %}<p class="directory-empty">Sin productos en el traslado.</p>{% endfor %}</div>
+        <div class="transfer-table"><table><thead><tr><th>Producto</th><th>Código</th><th>Cantidad enviada</th><th>Cantidad recibida</th></tr></thead><tbody>
+        {% for d in detalles %}<tr><td>{{ d.producto }}</td><td>{{ d.codigo_barra or '-' }}</td><td>{{ d.cantidad }}</td><td>{{ d.cantidad_recibida if d.cantidad_recibida is not none else 'Pendiente' }}</td></tr>{% else %}<tr><td colspan="4" class="text-center">Sin productos en el traslado.</td></tr>{% endfor %}</tbody></table></div>
+        <div class="transfer-mobile-list">{% for d in detalles %}<article class="directory-card"><h3>{{ d.producto }}</h3><dl class="directory-details"><div><dt>Código</dt><dd>{{ d.codigo_barra or '-' }}</dd></div><div><dt>Cantidad enviada</dt><dd>{{ d.cantidad }}</dd></div><div><dt>Cantidad recibida</dt><dd>{{ d.cantidad_recibida if d.cantidad_recibida is not none else 'Pendiente' }}</dd></div></dl></article>{% else %}<p class="directory-empty">Sin productos en el traslado.</p>{% endfor %}</div>
+        {% if traslado.estado == 'Pendiente de aprobación' and session.get('user_role') == 'Administrador' %}
+        <section class="product-form-page transfer-workflow-actions">
+            <form method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Observación opcional<input name="observacion" maxlength="500"></label><button class="btn-submit" name="accion" value="aprobar">Aprobar solicitud</button></form>
+            <form method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Motivo del rechazo<input name="observacion" maxlength="500" required></label><button class="btn" name="accion" value="rechazar">Rechazar solicitud</button></form>
+        </section>
+        {% elif traslado.estado == 'Aprobado' and (session.get('user_role') == 'Administrador' or (session.get('user_role') == 'Bodega' and id_sucursal_usuario == traslado.id_sucursal_origen)) %}
+        <section class="product-form-page transfer-workflow-actions"><p>La aprobación no modifica el stock. Al despachar, las unidades saldrán del inventario de origen y quedarán en tránsito.</p><form method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn-submit" name="accion" value="despachar">Confirmar despacho</button></form></section>
+        {% elif traslado.estado == 'En tránsito' and (session.get('user_role') == 'Administrador' or (session.get('user_role') == 'Bodega' and id_sucursal_usuario == traslado.id_sucursal_destino)) %}
+        <section class="product-form-page transfer-workflow-actions"><h3>Confirmar recepción</h3><p>Registra lo que llegó físicamente. Si hay diferencias, anota el motivo.</p><form method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% for d in detalles %}<label>{{ d.producto }} (enviado: {{ d.cantidad }})<input type="hidden" name="id_producto" value="{{ d.id_producto }}"><input type="number" name="cantidad_recibida" min="0" max="{{ d.cantidad }}" step="1" value="{{ d.cantidad }}" required></label>{% endfor %}<label>Observación de recepción<textarea name="observacion_recepcion" maxlength="500" rows="3"></textarea></label><button class="btn-submit" name="accion" value="recibir">Confirmar recepción</button></form></section>
+        {% endif %}
     </main>
 </body>
 </html>

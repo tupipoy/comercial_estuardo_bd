@@ -181,6 +181,14 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 
 ### 29 de octubre de 2026
 
+#### Aprobación, despacho y recepción de traslados
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Incorporar autorización administrativa y confirmación física de movimientos entre sucursales.
+- **Resultado:** Se prepara un flujo de solicitud pendiente, aprobación/rechazo por Administración, despacho por Bodega de origen y recepción por Bodega de destino con cantidades reales y observaciones. El stock se descuenta al despachar y se acredita al recibir; las identidades y fechas quedan auditadas. Se añadieron migración 07, procedimientos SQL, vistas de acciones y documentación.
+- **Validación:** Pendiente de revisión sintáctica y aplicación de la migración a una copia de base antes de Railway.
+- **Seguimiento:** Aplicar migración 07, desplegar y validar los cuatro estados con cuentas de sucursales distintas.
+
 #### Inventario y traslados entre sucursales
 
 - **Herramienta:** OpenAI Codex.

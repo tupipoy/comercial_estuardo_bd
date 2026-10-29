@@ -2028,15 +2028,81 @@ def traslados():
             sql += " ORDER BY t.fecha_traslado DESC, t.id_traslado DESC LIMIT 200"
             cursor.execute(sql, parametros)
             lista = cursor.fetchall()
+            detalles_por_traslado = {traslado["id_traslado"]: [] for traslado in lista}
+            if detalles_por_traslado:
+                ids_traslados = tuple(detalles_por_traslado)
+                placeholders = ", ".join(["%s"] * len(ids_traslados))
+                cursor.execute(f"""
+                    SELECT d.id_traslado, p.nombre AS producto, d.cantidad
+                    FROM DETALLE_TRASLADO AS d
+                    INNER JOIN PRODUCTO AS p ON p.id_producto = d.id_producto
+                    WHERE d.id_traslado IN ({placeholders})
+                    ORDER BY d.id_traslado, p.nombre
+                """, ids_traslados)
+                for detalle in cursor.fetchall():
+                    detalles_por_traslado[detalle["id_traslado"]].append(detalle)
+            for traslado in lista:
+                traslado["detalles"] = detalles_por_traslado[traslado["id_traslado"]]
     finally:
         connection.close()
     return render_template("traslados.html", traslados=lista)
 
 
-@app.route("/traslados/<int:id_traslado>")
+@app.route("/traslados/<int:id_traslado>", methods=["GET", "POST"])
 @requiere_rol("Administrador", "Bodega")
 def detalle_traslado(id_traslado):
-    """Muestra los productos y cantidades del traslado."""
+    """Muestra el traslado y procesa su aprobacion, despacho o recepcion."""
+    if request.method == "POST":
+        accion = request.form.get("accion", "")
+        connection = None
+        try:
+            connection = get_db_connection()
+            with connection.cursor() as cursor:
+                if accion in ("aprobar", "rechazar"):
+                    if session.get("user_role") != "Administrador":
+                        return "Acceso no autorizado", 403
+                    observacion = request.form.get("observacion", "").strip()[:500]
+                    if accion == "rechazar" and not observacion:
+                        flash("Escribe el motivo del rechazo.", "danger")
+                        return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
+                    cursor.callproc("sp_resolver_traslado", (
+                        id_traslado, session["user_id"], 1 if accion == "aprobar" else 0, observacion,
+                    ))
+                elif accion == "despachar":
+                    cursor.callproc("sp_despachar_traslado", (id_traslado, session["user_id"]))
+                elif accion == "recibir":
+                    ids = request.form.getlist("id_producto")
+                    cantidades = request.form.getlist("cantidad_recibida")
+                    if not ids or len(ids) != len(cantidades) or len(ids) > 50:
+                        flash("Indica la cantidad recibida para cada producto.", "danger")
+                        return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
+                    lineas_recibidas = []
+                    for id_producto, cantidad in zip(ids, cantidades):
+                        try:
+                            lineas_recibidas.append({"id_producto": int(id_producto), "cantidad": int(cantidad)})
+                        except (TypeError, ValueError):
+                            flash("Las cantidades recibidas deben ser números enteros.", "danger")
+                            return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
+                    cursor.callproc("sp_recibir_traslado", (
+                        id_traslado, session["user_id"], json.dumps(lineas_recibidas),
+                        request.form.get("observacion_recepcion", "").strip()[:500],
+                    ))
+                else:
+                    return "Acción no válida", 400
+                while cursor.nextset():
+                    pass
+            connection.commit()
+            flash("El traslado se actualizó correctamente.", "success")
+        except Exception:
+            if connection:
+                connection.rollback()
+            app.logger.exception("No se pudo actualizar el traslado")
+            flash("No se pudo actualizar el traslado. Revisa el estado y los permisos.", "danger")
+        finally:
+            if connection:
+                connection.close()
+        return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
+
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -2044,11 +2110,19 @@ def detalle_traslado(id_traslado):
                 SELECT t.id_traslado, t.numero_traslado, t.fecha_traslado, t.estado,
                        t.id_sucursal_origen, t.id_sucursal_destino,
                        origen.nombre AS sucursal_origen, destino.nombre AS sucursal_destino,
-                       CONCAT(e.nombres, ' ', e.apellidos) AS empleado
+                       CONCAT(e.nombres, ' ', e.apellidos) AS empleado,
+                       t.fecha_aprobacion, t.observacion_resolucion, t.fecha_despacho,
+                       t.fecha_recepcion, t.observacion_recepcion,
+                       CONCAT(ap.nombres, ' ', ap.apellidos) AS aprobador,
+                       CONCAT(de.nombres, ' ', de.apellidos) AS despachador,
+                       CONCAT(re.nombres, ' ', re.apellidos) AS receptor
                 FROM TRASLADO AS t
                 INNER JOIN SUCURSAL AS origen ON origen.id_sucursal = t.id_sucursal_origen
                 INNER JOIN SUCURSAL AS destino ON destino.id_sucursal = t.id_sucursal_destino
                 INNER JOIN EMPLEADO AS e ON e.id_empleado = t.id_empleado
+                LEFT JOIN EMPLEADO AS ap ON ap.id_empleado = t.id_empleado_aprobacion
+                LEFT JOIN EMPLEADO AS de ON de.id_empleado = t.id_empleado_despacho
+                LEFT JOIN EMPLEADO AS re ON re.id_empleado = t.id_empleado_recepcion
                 WHERE t.id_traslado = %s
             """, (id_traslado,))
             traslado = cursor.fetchone()
@@ -2059,7 +2133,8 @@ def detalle_traslado(id_traslado):
                 if id_sucursal not in (traslado["id_sucursal_origen"], traslado["id_sucursal_destino"]):
                     return "Traslado no encontrado", 404
             cursor.execute("""
-                SELECT p.nombre AS producto, p.codigo_barra, d.cantidad
+                SELECT p.id_producto, p.nombre AS producto, p.codigo_barra, d.cantidad,
+                       d.cantidad_recibida
                 FROM DETALLE_TRASLADO AS d
                 INNER JOIN PRODUCTO AS p ON p.id_producto = d.id_producto
                 WHERE d.id_traslado = %s ORDER BY p.nombre
@@ -2067,7 +2142,11 @@ def detalle_traslado(id_traslado):
             detalles = cursor.fetchall()
     finally:
         connection.close()
-    return render_template("traslado_detalle.html", traslado=traslado, detalles=detalles)
+    id_sucursal_usuario = None
+    if session.get("user_role") != "Administrador":
+        id_sucursal_usuario = traslado["id_sucursal_origen"] if id_sucursal == traslado["id_sucursal_origen"] else traslado["id_sucursal_destino"]
+    return render_template("traslado_detalle.html", traslado=traslado, detalles=detalles,
+                           id_sucursal_usuario=id_sucursal_usuario)
 
 
 @app.route("/traslados/nuevo", methods=["GET", "POST"])
@@ -2167,7 +2246,7 @@ def nuevo_traslado():
                     while cursor.nextset():
                         pass
                     connection.commit()
-                    flash(f"Traslado {numero} completado correctamente.", "success")
+                    flash(f"Solicitud de traslado {numero} enviada al administrador para aprobación.", "success")
                     return redirect(url_for("traslados"))
     except Exception:
         if connection:

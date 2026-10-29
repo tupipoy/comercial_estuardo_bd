@@ -110,18 +110,32 @@ CREATE TABLE TRASLADO (
     id_traslado INT AUTO_INCREMENT PRIMARY KEY,
     numero_traslado VARCHAR(30) NOT NULL UNIQUE,
     fecha_traslado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(20) NOT NULL DEFAULT 'Completado',
+    estado VARCHAR(30) NOT NULL DEFAULT 'Pendiente de aprobación',
     id_sucursal_origen INT NOT NULL,
     id_sucursal_destino INT NOT NULL,
     id_empleado INT NOT NULL,
+    id_empleado_aprobacion INT NULL,
+    fecha_aprobacion DATETIME NULL,
+    observacion_resolucion VARCHAR(500) NULL,
+    id_empleado_despacho INT NULL,
+    fecha_despacho DATETIME NULL,
+    id_empleado_recepcion INT NULL,
+    fecha_recepcion DATETIME NULL,
+    observacion_recepcion VARCHAR(500) NULL,
     CONSTRAINT fk_traslado_origen FOREIGN KEY (id_sucursal_origen)
         REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_traslado_destino FOREIGN KEY (id_sucursal_destino)
         REFERENCES SUCURSAL(id_sucursal) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_traslado_empleado FOREIGN KEY (id_empleado)
         REFERENCES EMPLEADO(id_empleado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_traslado_aprobador FOREIGN KEY (id_empleado_aprobacion)
+        REFERENCES EMPLEADO(id_empleado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_traslado_despachador FOREIGN KEY (id_empleado_despacho)
+        REFERENCES EMPLEADO(id_empleado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_traslado_receptor FOREIGN KEY (id_empleado_recepcion)
+        REFERENCES EMPLEADO(id_empleado) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_traslado_sucursales CHECK (id_sucursal_origen <> id_sucursal_destino),
-    CONSTRAINT chk_traslado_estado CHECK (estado IN ('Completado', 'Anulado'))
+    CONSTRAINT chk_traslado_estado CHECK (estado IN ('Pendiente de aprobación', 'Rechazado', 'Aprobado', 'En tránsito', 'Completado', 'Anulado'))
 ) ENGINE=InnoDB;
 
 CREATE TABLE DETALLE_TRASLADO (
@@ -129,12 +143,14 @@ CREATE TABLE DETALLE_TRASLADO (
     id_traslado INT NOT NULL,
     id_producto INT NOT NULL,
     cantidad INT NOT NULL,
+    cantidad_recibida INT NULL,
     CONSTRAINT fk_dettraslado_traslado FOREIGN KEY (id_traslado)
         REFERENCES TRASLADO(id_traslado) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_dettraslado_producto FOREIGN KEY (id_producto)
         REFERENCES PRODUCTO(id_producto) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_dettraslado_producto UNIQUE (id_traslado, id_producto),
-    CONSTRAINT chk_dettraslado_cantidad CHECK (cantidad > 0)
+    CONSTRAINT chk_dettraslado_cantidad CHECK (cantidad > 0),
+    CONSTRAINT chk_dettraslado_recibida CHECK (cantidad_recibida IS NULL OR (cantidad_recibida >= 0 AND cantidad_recibida <= cantidad))
 ) ENGINE=InnoDB;
 
 

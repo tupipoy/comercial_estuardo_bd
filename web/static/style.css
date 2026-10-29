@@ -153,6 +153,13 @@ tbody tr:hover { background: #fbfdfe; }
 .sales-mobile-list { display: none; }
 .purchase-mobile-list, .purchase-detail-mobile { display: none; }
 .transfer-mobile-list { display: none; }
+.transfer-products-summary { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.transfer-products-summary li { color: #334155; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.transfer-workflow-actions { display: grid; gap: 16px; margin-top: 20px; }
+.transfer-workflow-actions form { display: grid; gap: 12px; }
+.transfer-workflow-actions label { display: grid; gap: 6px; color: #334155; font-size: 12px; font-weight: 650; }
+.transfer-workflow-actions input, .transfer-workflow-actions textarea { width: 100%; }
+.transfer-workflow-actions p { margin: 0; color: #475569; font-size: 13px; }
 .directory-list { display: none; }
 .sales-table-wrap { width: 100%; min-width: 0; }
 .sale-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow); }

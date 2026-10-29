@@ -49,6 +49,7 @@ mysql -u root -p < sql/dml/02_bulk_data.sql
 mysql -u root -p < sql/views/01_views.sql
 mysql -u root -p < sql/triggers/01_triggers.sql
 mysql -u root -p < sql/procedures/01_procedures.sql
+mysql -u root -p < sql/procedures/02_transfer_workflow.sql
 mysql -u root -p < sql/security/01_roles.sql
 ```
 
@@ -60,7 +61,7 @@ También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el 
 
 Para actualizar una base existente al inventario por sucursal: primero respalda la base y confirma que el stock global actual se encuentra físicamente en Sucursal Central. Ejecuta una sola vez `sql/migrations/06_inventory_by_branch.sql`; después vuelve a ejecutar `sql/triggers/01_triggers.sql`, `sql/views/01_views.sql`, `sql/procedures/01_procedures.sql` y `sql/security/01_roles.sql`. La aplicación nueva requiere que este paso termine antes de desplegarla. Las compras históricas se asignan a la sucursal actual del empleado relacionado porque las versiones anteriores no guardaban esa ubicación.
 
-La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión; la migración 06 convierte el stock global en existencias por sucursal y agrega traslados. Cada migración se ejecuta una sola vez. La 06 asigna el stock global existente a **Sucursal Central** y completa la sucursal histórica de compras según la sucursal actual del empleado. Antes de aplicarla, genera un respaldo completo de MySQL y valida la distribución física; después ejecuta de nuevo triggers, vistas, procedimientos y roles actualizados. En instalaciones limpias, todos estos cambios ya vienen en el DDL y scripts actuales.
+La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión; la 06 convierte el stock global en existencias por sucursal; y la 07 agrega aprobación, despacho y recepción para los traslados. Cada migración se ejecuta una sola vez. La 06 asigna el stock global existente a **Sucursal Central** y completa la sucursal histórica de compras según la sucursal actual del empleado. La 07 conserva los traslados completados y registra sus cantidades recibidas históricas. Antes de aplicar migraciones en producción, genera un respaldo completo; después ejecuta `sql/procedures/02_transfer_workflow.sql` y `sql/security/01_roles.sql`. Para una instalación limpia, el DDL y scripts actuales incluyen el nuevo flujo; ejecuta ambos archivos de procedimientos en orden.
 
 ## 5. Crear una contraseña inicial para el administrador
 

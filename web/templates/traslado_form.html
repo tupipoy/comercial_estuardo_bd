@@ -19,7 +19,7 @@
             <div class="form-group"><label for="id_sucursal_destino">Sucursal de destino</label><select id="id_sucursal_destino" name="id_sucursal_destino" required><option value="">Selecciona destino</option>{% for s in destinos %}<option value="{{ s.id_sucursal }}" {% if datos.id_sucursal_destino|string == s.id_sucursal|string %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select></div>
             <div id="lineas-traslado">{% for linea in lineas %}<fieldset class="form-group linea-transaccion"><legend>Producto {{ loop.index }}</legend><label>Producto<select name="id_producto" required><option value="">Selecciona producto</option>{% for p in productos %}<option value="{{ p.id_producto }}" {% if linea.id_producto|string == p.id_producto|string %}selected{% endif %}>{{ p.nombre }}{% if p.codigo_barra %} ({{ p.codigo_barra }}){% endif %} — disponible {{ p.stock_actual }}</option>{% endfor %}</select></label><label>Cantidad<input name="cantidad" type="number" min="1" max="{{ productos|selectattr('id_producto', 'equalto', linea.id_producto|int)|map(attribute='stock_actual')|first or '' }}" step="1" value="{{ linea.cantidad }}" required></label><button type="button" class="quitar-linea">Quitar producto</button></fieldset>{% endfor %}</div>
             <button type="button" id="agregar-linea">Agregar otro producto</button>
-            <button class="btn-submit" type="submit" {% if not productos or not destinos %}disabled{% endif %}>Completar traslado</button>
+            <button class="btn-submit" type="submit" {% if not productos or not destinos %}disabled{% endif %}>Enviar solicitud de aprobación</button>
             <a class="btn" href="{{ url_for('traslados') }}">Cancelar</a>
         </form>
     </section></main>

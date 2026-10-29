@@ -44,7 +44,7 @@ Los usuarios autorizados pueden consultar compras de su sucursal (el Administrad
 
 ## Traslados entre sucursales
 
-Administrador y Bodega pueden registrar traslados. Bodega solo puede elegir su sucursal asignada como origen; el Administrador puede elegir cualquier origen. Selecciona una sucursal destino distinta, agrega productos y cantidades disponibles y completa el traslado. El sistema descuenta del origen y acredita el destino dentro de una sola transacción; si falta stock, no se completa ninguna línea. El historial muestra traslados de las sucursales involucradas y el Administrador puede consultar todos.
+Administrador y Bodega pueden solicitar traslados. Bodega solo puede elegir su sucursal asignada como origen; el Administrador puede elegir cualquier origen. Selecciona una sucursal destino distinta, agrega productos y cantidades disponibles y envía la solicitud. El stock no cambia hasta que el Administrador la aprueba y Bodega de origen confirma el despacho. En ese momento las unidades salen del origen y quedan en tránsito. Bodega de destino registra las cantidades que recibió; solo esas cantidades se agregan a su inventario. El detalle conserva quién solicitó, aprobó, despachó y recibió, las fechas y cualquier diferencia. El historial muestra traslados de las sucursales involucradas y el Administrador puede consultar todos.
 
 ## Mensajes y problemas comunes
 

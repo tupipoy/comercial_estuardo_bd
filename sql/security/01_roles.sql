@@ -61,6 +61,12 @@ GRANT SELECT ON comercial_estuardo_db.DETALLE_TRASLADO
     TO 'rol_bodega';
 GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_registrar_traslado
     TO 'rol_bodega';
+GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_resolver_traslado
+    TO 'rol_bodega';
+GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_despachar_traslado
+    TO 'rol_bodega';
+GRANT EXECUTE ON PROCEDURE comercial_estuardo_db.sp_recibir_traslado
+    TO 'rol_bodega';
 GRANT SELECT, INSERT, UPDATE ON comercial_estuardo_db.PROVEEDOR
     TO 'rol_bodega';
 GRANT SELECT (
