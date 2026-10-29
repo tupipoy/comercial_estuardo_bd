@@ -11,6 +11,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import get_db_connection
 from dotenv import load_dotenv
+import inventory_control as control
+from control_routes import register_control_routes
 
 load_dotenv()
 
@@ -30,7 +32,7 @@ app.config.update(
 )
 # Hash de relleno para mantener un coste parecido si el usuario no existe o
 # está temporalmente suspendido. El valor aleatorio no se usa para autenticar.
-DUMMY_PASSWORD_HASH = generate_password_hash(secrets.token_urlsafe(32))
+DUMMY_PASSWORD_HASH = generate_password_hash(secrets.token_urlsafe(32), method="pbkdf2:sha256")
 INTENTOS_ANTES_DE_SUSPENDER = 5
 
 
@@ -228,15 +230,16 @@ def consulta_existencias(cursor, id_empleado=None, consolidar_admin=True):
     """Devuelve el SQL de existencias globales para Administración o de sucursal."""
     if consolidar_admin and session.get("user_role") == "Administrador":
         return (
-            "SELECT i.id_producto, SUM(i.stock_actual) AS stock_actual "
+            "SELECT i.id_producto, SUM(i.stock_actual) AS stock_actual, SUM(i.stock_reservado) AS stock_reservado, SUM(COALESCE(i.stock_minimo,p.stock_minimo)) AS stock_minimo "
             "FROM INVENTARIO_SUCURSAL AS i "
+            "INNER JOIN PRODUCTO p ON p.id_producto=i.id_producto "
             "INNER JOIN SUCURSAL AS s ON s.id_sucursal = i.id_sucursal "
             "WHERE s.estado = 1 GROUP BY i.id_producto",
             (),
         )
     sucursal = obtener_sucursal_empleado(cursor, id_empleado)
     return (
-        "SELECT id_producto, stock_actual FROM INVENTARIO_SUCURSAL "
+        "SELECT id_producto, stock_actual, stock_reservado, stock_minimo FROM INVENTARIO_SUCURSAL "
         "WHERE id_sucursal = %s",
         (sucursal,),
     )
@@ -278,13 +281,13 @@ def resumen():
 
             cursor.execute("""
                 SELECT
-                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s
+                    (SELECT COUNT(*) FROM VENTA WHERE estado='Emitida' AND fecha_venta >= %s AND fecha_venta < %s
                      AND (%s IS NULL OR id_sucursal = %s)) AS ventas_periodo,
-                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s
+                    (SELECT COUNT(*) FROM COMPRA WHERE estado_recepcion='Recibido' AND fecha_compra >= %s AND fecha_compra < %s
                      AND (%s IS NULL OR id_sucursal = %s)) AS compras_periodo,
-                    (SELECT COUNT(*) FROM VENTA WHERE fecha_venta >= %s AND fecha_venta < %s
+                    (SELECT COUNT(*) FROM VENTA WHERE estado='Emitida' AND fecha_venta >= %s AND fecha_venta < %s
                      AND (%s IS NULL OR id_sucursal = %s)) AS ventas_periodo_anterior,
-                    (SELECT COUNT(*) FROM COMPRA WHERE fecha_compra >= %s AND fecha_compra < %s
+                    (SELECT COUNT(*) FROM COMPRA WHERE estado_recepcion='Recibido' AND fecha_compra >= %s AND fecha_compra < %s
                      AND (%s IS NULL OR id_sucursal = %s)) AS compras_periodo_anterior
             """, (
                 fecha_inicio, fecha_fin, id_sucursal_scope, id_sucursal_scope,
@@ -330,13 +333,13 @@ def resumen():
             cursor.execute("""
                 (SELECT 'Venta' AS tipo, v.fecha_venta AS fecha,
                         CONCAT(v.serie_factura, '-', v.numero_factura) AS referencia,
-                        v.total_venta AS total
+                        v.total_venta-COALESCE((SELECT SUM(r.importe) FROM REVERSO_DOCUMENTO r WHERE r.id_venta=v.id_venta),0) AS total
                  FROM VENTA v WHERE v.fecha_venta >= %s AND v.fecha_venta < %s
                    AND (%s IS NULL OR v.id_sucursal = %s)
                  ORDER BY v.fecha_venta DESC LIMIT 6)
                 UNION ALL
                 (SELECT 'Compra' AS tipo, c.fecha_compra AS fecha,
-                        c.numero_orden AS referencia, c.total_compra AS total
+                        c.numero_orden AS referencia, c.total_compra-COALESCE((SELECT SUM(r.importe) FROM REVERSO_DOCUMENTO r WHERE r.id_compra=c.id_compra),0) AS total
                  FROM COMPRA c WHERE c.fecha_compra >= %s AND c.fecha_compra < %s
                    AND (%s IS NULL OR c.id_sucursal = %s)
                  ORDER BY c.fecha_compra DESC LIMIT 6)
@@ -451,7 +454,7 @@ def inventario():
                       ON i.id_sucursal = s.id_sucursal AND i.id_producto = p.id_producto
                 """
                 stock_general = "COALESCE(i.stock_actual, 0)"
-                condiciones_general = [x.replace("p.stock_actual", stock_general) for x in condiciones_general]
+                condiciones_general = [x.replace("p.stock_actual", "COALESCE(i.stock_actual-i.stock_reservado,0)").replace("p.stock_minimo", "COALESCE(i.stock_minimo,p.stock_minimo)") for x in condiciones_general]
                 where_general = " AND ".join(condiciones_general)
                 cursor.execute(f"SELECT COUNT(*) AS total {from_general} WHERE {where_general}", parametros_general)
                 total_productos = cursor.fetchone()["total"]
@@ -464,9 +467,9 @@ def inventario():
                 offset = (pagina - 1) * por_pagina
                 cursor.execute(f"""
                     SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
-                           {stock_general} AS stock_actual, p.stock_minimo,
+                           {stock_general} AS stock_actual, COALESCE(i.stock_minimo,p.stock_minimo) stock_minimo,
                            p.precio_costo, p.id_categoria, c.nombre AS categoria,
-                           s.nombre AS sucursal
+                           s.nombre AS sucursal, s.id_sucursal
                     {from_general}
                     WHERE {where_general}
                     ORDER BY c.nombre, p.nombre, s.nombre
@@ -477,12 +480,15 @@ def inventario():
                 stock_sql, stock_params = consulta_existencias(cursor)
                 parametros = [*stock_params, *parametros]
                 orden = "p.stock_actual ASC, p.nombre" if estado_stock in {"bajo", "agotado"} else "c.nombre, p.nombre"
+                condiciones = [x.replace("p.stock_actual", "(p.stock_actual-p.stock_reservado)") for x in condiciones]
                 cursor.execute(f"""
                     SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
                            p.stock_actual, p.stock_minimo, p.precio_costo,
                            p.id_categoria, c.nombre AS categoria
                     FROM (
-                        SELECT base.*, COALESCE(existencias.stock_actual, 0) AS stock_actual
+                        SELECT base.id_producto,base.codigo_barra,base.nombre,base.precio_venta,base.precio_costo,base.id_categoria,base.estado,
+                               COALESCE(existencias.stock_actual,0) stock_actual,COALESCE(existencias.stock_reservado,0) stock_reservado,
+                               COALESCE(existencias.stock_minimo,base.stock_minimo) stock_minimo
                         FROM PRODUCTO AS base
                         LEFT JOIN ({stock_sql}) AS existencias
                           ON existencias.id_producto = base.id_producto
@@ -492,6 +498,7 @@ def inventario():
                     ORDER BY {orden};
                 """, parametros)
                 productos = cursor.fetchall()
+            control.enrich_inventory(cursor, productos, branch=None if es_admin else (obtener_sucursal_empleado(cursor) or -1), by_branch=vista_general)
             categorias = cargar_categorias(cursor)
     except Exception:
         app.logger.exception("No se pudo cargar el inventario")
@@ -938,6 +945,7 @@ def cargar_categorias(cursor):
 
 def validar_datos_producto(form):
     datos = {
+        "requiere_serie": 1 if form.get("requiere_serie") == "1" else 0,
         "codigo_barra": form.get("codigo_barra", "").strip() or None,
         "nombre": form.get("nombre", "").strip(),
         "descripcion": form.get("descripcion", "").strip() or None,
@@ -1124,12 +1132,12 @@ def nuevo_producto():
                         cursor.execute("""
                             INSERT INTO PRODUCTO (
                                 codigo_barra, nombre, descripcion, precio_costo, precio_venta,
-                                stock_minimo, id_categoria, estado
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, 1);
+                                stock_minimo, id_categoria, requiere_serie, estado
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1);
                         """, (
                             datos["codigo_barra"], datos["nombre"], datos["descripcion"],
                             datos["precio_costo"], datos["precio_venta"],
-                            datos["stock_minimo"], datos["id_categoria"],
+                            datos["stock_minimo"], datos["id_categoria"], datos["requiere_serie"],
                         ))
                         id_producto = cursor.lastrowid
                         cursor.execute("""
@@ -1187,12 +1195,13 @@ def editar_producto(id_producto):
                                 precio_costo = %s,
                                 precio_venta = %s,
                                 stock_minimo = %s,
-                                id_categoria = %s
+                                id_categoria = %s,
+                                requiere_serie = %s
                             WHERE id_producto = %s AND estado = 1;
                         """, (
                             datos["codigo_barra"], datos["nombre"], datos["descripcion"],
                             datos["precio_costo"], datos["precio_venta"],
-                            datos["stock_minimo"], datos["id_categoria"], id_producto,
+                            datos["stock_minimo"], datos["id_categoria"], datos["requiere_serie"], id_producto,
                         ))
                         connection.commit()
                         flash("Producto actualizado correctamente.", "success")
@@ -1417,11 +1426,12 @@ def cargar_opciones_venta(cursor, id_sucursal):
 
     cursor.execute("""
         SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta,
-               i.stock_actual, c.nombre AS categoria
+               i.stock_actual-i.stock_reservado AS stock_actual, c.nombre AS categoria,
+               p.requiere_serie
         FROM PRODUCTO p
         INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
         INNER JOIN INVENTARIO_SUCURSAL i ON i.id_producto = p.id_producto
-        WHERE p.estado = 1 AND i.id_sucursal = %s AND i.stock_actual > 0 AND c.estado = 1
+        WHERE p.estado = 1 AND i.id_sucursal = %s AND i.stock_actual-i.stock_reservado > 0 AND c.estado = 1
         ORDER BY p.nombre;
     """, (id_sucursal,))
     productos_disponibles = cursor.fetchall()
@@ -1534,65 +1544,19 @@ def detalle_venta(id_venta):
                 ORDER BY d.id_detalle_venta
             """, (id_venta,))
             detalles = cursor.fetchall()
+            cursor.execute("SELECT COALESCE(SUM(importe),0) total FROM REVERSO_DOCUMENTO WHERE id_venta=%s", (id_venta,))
+            reversado = cursor.fetchone()["total"]
+
     finally:
         connection.close()
-    return render_template("venta_detalle.html", venta=venta, detalles=detalles)
+    return render_template("venta_detalle.html", venta=venta, detalles=detalles, reversado=reversado)
 
 
 @app.route("/ventas/<int:id_venta>/eliminar", methods=["POST"])
 @requiere_rol("Administrador")
 def eliminar_venta(id_venta):
-    """Elimina un recibo por solicitud de gerencia y devuelve sus existencias."""
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT id_venta, id_sucursal FROM VENTA WHERE id_venta = %s FOR UPDATE",
-                (id_venta,),
-            )
-            venta = cursor.fetchone()
-            if not venta:
-                connection.rollback()
-                flash("El recibo ya no existe.", "warning")
-                return redirect(url_for("ventas"))
-
-            cursor.execute(
-                """
-                SELECT id_producto, cantidad
-                FROM DETALLE_VENTA
-                WHERE id_venta = %s
-                ORDER BY id_detalle_venta
-                FOR UPDATE
-                """,
-                (id_venta,),
-            )
-            detalles = cursor.fetchall()
-            for detalle in detalles:
-                cursor.execute(
-                    """
-                    UPDATE INVENTARIO_SUCURSAL
-                    SET stock_actual = stock_actual + %s
-                    WHERE id_producto = %s AND id_sucursal = %s
-                    """,
-                    (detalle["cantidad"], detalle["id_producto"], venta["id_sucursal"]),
-                )
-
-            cursor.execute("DELETE FROM VENTA WHERE id_venta = %s", (id_venta,))
-            connection.commit()
-            app.logger.warning(
-                "Recibo %s eliminado por empleado %s; se restauraron %s líneas de inventario",
-                id_venta,
-                session.get("user_id"),
-                len(detalles),
-            )
-            flash("Recibo eliminado y existencias devueltas al inventario.", "success")
-    except Exception:
-        connection.rollback()
-        app.logger.exception("No se pudo eliminar el recibo %s", id_venta)
-        flash("No se pudo eliminar el recibo. No se aplicaron cambios.", "danger")
-    finally:
-        connection.close()
-    return redirect(url_for("ventas"))
+    """Conserva el recibo y abre el formulario de anulación con motivo."""
+    return redirect(url_for("reversar_documento", kind="venta", document_id=id_venta))
 
 #ventas
 @app.route("/ventas/nueva", methods=["GET", "POST"])
@@ -1608,6 +1572,7 @@ def nueva_venta():
     connection = None
     clientes_activos = []
     productos_disponibles = []
+    unidades_disponibles = []
     triggers_disponibles = False
 
     if request.method == "POST":
@@ -1639,8 +1604,8 @@ def nueva_venta():
                 errores.append("Revisa el producto, cantidad y descuento de cada línea de venta.")
         if not lineas_validas:
             errores.append("Agrega al menos un producto a la venta.")
-        if len(lineas_validas) != len({l["id_producto"] for l in lineas_validas}):
-            errores.append("Cada producto debe aparecer una sola vez; ajusta la cantidad en su línea.")
+        if len([l["vin_chasis"] for l in lineas_validas if l["vin_chasis"]]) != len({l["vin_chasis"] for l in lineas_validas if l["vin_chasis"]}):
+            errores.append("No repitas una motocicleta en la misma venta.")
         for linea in lineas_validas:
             if bool(linea["vin_chasis"]) != bool(linea["numero_motor"]):
                 errores.append("Para una motocicleta debes ingresar tanto VIN/chasis como número de motor.")
@@ -1658,6 +1623,8 @@ def nueva_venta():
         with connection.cursor() as cursor:
             id_sucursal_venta = obtener_sucursal_empleado(cursor)
             clientes_activos, productos_disponibles = cargar_opciones_venta(cursor, id_sucursal_venta)
+            cursor.execute("SELECT id_unidad,id_producto,vin_chasis,numero_motor FROM UNIDAD_PRODUCTO WHERE id_sucursal=%s AND estado='Disponible' ORDER BY vin_chasis", (id_sucursal_venta,))
+            unidades_disponibles = cursor.fetchall()
             triggers_disponibles = not faltan_triggers_venta(cursor)
 
             if request.method == "POST" and not errores:
@@ -1686,7 +1653,7 @@ def nueva_venta():
                     if linea["descuento"] > Decimal(producto["precio_venta"]) * linea["cantidad"]:
                         errores.append("El descuento de una línea supera el importe de esa línea.")
                         break
-                    es_motocicleta = "moto" in producto["categoria"].casefold()
+                    es_motocicleta = producto["requiere_serie"]
                     if es_motocicleta and (linea["cantidad"] != 1 or not linea["vin_chasis"] or not linea["numero_motor"]):
                         errores.append("Cada motocicleta requiere cantidad 1, VIN/chasis y número de motor.")
                         break
@@ -1738,8 +1705,12 @@ def nueva_venta():
             connection.rollback()
         app.logger.exception("No se pudo registrar la venta")
         mensaje_db = str(exc.args[1]) if len(getattr(exc, "args", ())) > 1 else ""
-        if "Stock insuficiente" in mensaje_db:
+        if isinstance(exc, control.InventoryError):
+            errores.append(str(exc))
+        elif "Stock insuficiente" in mensaje_db:
             errores.append("Stock insuficiente para realizar la venta.")
+        elif getattr(exc, "args", (None,))[0] == 1644:
+            errores.append(mensaje_db)
         else:
             errores.append("No se pudo registrar la venta. Revisa los datos y la configuración de MySQL.")
     finally:
@@ -1759,6 +1730,7 @@ def nueva_venta():
         lineas=lineas_formulario,
         errores=errores,
         triggers_disponibles=triggers_disponibles,
+        unidades=unidades_disponibles,
     )
 
 
@@ -1774,7 +1746,7 @@ def cargar_opciones_compra(cursor, id_sucursal):
 
     cursor.execute("""
         SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta,
-               COALESCE(i.stock_actual, 0) AS stock_actual
+               COALESCE(i.stock_actual, 0) AS stock_actual, p.requiere_serie
         FROM PRODUCTO p
         INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
         LEFT JOIN INVENTARIO_SUCURSAL i
@@ -1869,9 +1841,11 @@ def detalle_compra(id_compra):
                 ORDER BY d.id_detalle_compra
             """, (id_compra,))
             detalles = cursor.fetchall()
+            cursor.execute("SELECT COALESCE(SUM(importe),0) total FROM REVERSO_DOCUMENTO WHERE id_compra=%s", (id_compra,))
+            reversado = cursor.fetchone()["total"]
     finally:
         connection.close()
-    return render_template("compra_detalle.html", compra=compra, detalles=detalles)
+    return render_template("compra_detalle.html", compra=compra, detalles=detalles, reversado=reversado)
 
 #compra
 @app.route("/compras/nueva", methods=["GET", "POST"])
@@ -1883,7 +1857,7 @@ def nueva_compra():
         "numero_orden": "",
         "id_proveedor": "",
     }
-    lineas_formulario = [{"id_producto": "", "cantidad": "1", "costo_unitario": ""}]
+    lineas_formulario = [{"id_producto": "", "cantidad": "1", "costo_unitario": "", "series": ""}]
     lineas_validas = []
     proveedores = []
     productos = []
@@ -1907,15 +1881,15 @@ def nueva_compra():
             except (TypeError, ValueError):
                 errores.append(f"Selecciona un {etiqueta} válido.")
 
-        posted = zip(request.form.getlist("id_producto"), request.form.getlist("cantidad"), request.form.getlist("costo_unitario"))
-        line_lists = [request.form.getlist(name) for name in ("id_producto", "cantidad", "costo_unitario")]
+        posted = zip(request.form.getlist("id_producto"), request.form.getlist("cantidad"), request.form.getlist("costo_unitario"), request.form.getlist("series"))
+        line_lists = [request.form.getlist(name) for name in ("id_producto", "cantidad", "costo_unitario", "series")]
         if len({len(values) for values in line_lists}) != 1:
             errores.append("El formulario de líneas no está completo. Recarga e inténtalo de nuevo.")
         if len(line_lists[0]) > 50:
             errores.append("Una compra no puede superar 50 líneas de producto.")
         lineas_formulario = []
-        for id_producto, cantidad, costo in posted:
-            linea = {"id_producto": id_producto.strip(), "cantidad": cantidad.strip(), "costo_unitario": costo.strip()}
+        for id_producto, cantidad, costo, series in posted:
+            linea = {"id_producto": id_producto.strip(), "cantidad": cantidad.strip(), "costo_unitario": costo.strip(), "series": series}
             if not linea["id_producto"] and not linea["cantidad"] and not linea["costo_unitario"]:
                 continue
             lineas_formulario.append(linea)
@@ -1925,7 +1899,7 @@ def nueva_compra():
                 costo_num = Decimal(linea["costo_unitario"])
                 if id_producto_num <= 0 or cantidad_num <= 0 or not costo_num.is_finite() or costo_num <= 0 or costo_num.as_tuple().exponent < -2:
                     raise ValueError
-                lineas_validas.append({"id_producto": id_producto_num, "cantidad": cantidad_num, "costo_unitario": str(costo_num)})
+                lineas_validas.append({"id_producto": id_producto_num, "cantidad": cantidad_num, "costo_unitario": str(costo_num), "series": series})
             except (InvalidOperation, TypeError, ValueError):
                 errores.append("Revisa el producto, cantidad y costo unitario de cada línea de compra.")
         if not lineas_validas:
@@ -1965,15 +1939,9 @@ def nueva_compra():
                     errores.append("El empleado de la sesión ya no está activo.")
 
                 if not errores:
-                    cursor.callproc("sp_registrar_compra_detallada", (
-                        datos["numero_orden"],
-                        datos["id_proveedor"],
-                        session["user_id"],
-                        id_sucursal_compra,
-                        json.dumps(lineas_validas),
-                    ))
-                    while cursor.nextset():
-                        pass
+                    control.register_purchase(cursor, session["user_id"], id_sucursal_compra,
+                                              datos["numero_orden"], datos["id_proveedor"], lineas_validas)
+                    connection.commit()
                     flash(
                         f"Compra {datos['numero_orden']} registrada correctamente; "
                         "stock y costo fueron actualizados.",
@@ -1985,8 +1953,10 @@ def nueva_compra():
             connection.rollback()
         app.logger.exception("No se pudo registrar la compra")
         mensaje_db = str(exc.args[1]) if len(getattr(exc, "args", ())) > 1 else ""
-        if "Duplicate entry" in mensaje_db:
-            errores.append("Ese número de orden ya está registrado.")
+        if isinstance(exc, control.InventoryError):
+            errores.append(str(exc))
+        elif "Duplicate entry" in mensaje_db:
+            errores.append("Ese número de orden, VIN o motor ya está registrado.")
         else:
             errores.append("No se pudo registrar la compra. Revisa los datos y la configuración de MySQL.")
     finally:
@@ -2058,46 +2028,24 @@ def detalle_traslado(id_traslado):
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                if accion in ("aprobar", "rechazar"):
-                    if session.get("user_role") != "Administrador":
-                        return "Acceso no autorizado", 403
-                    observacion = request.form.get("observacion", "").strip()[:500]
-                    if accion == "rechazar" and not observacion:
-                        flash("Escribe el motivo del rechazo.", "danger")
-                        return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
-                    cursor.callproc("sp_resolver_traslado", (
-                        id_traslado, session["user_id"], 1 if accion == "aprobar" else 0, observacion,
-                    ))
-                elif accion == "despachar":
-                    cursor.callproc("sp_despachar_traslado", (id_traslado, session["user_id"]))
-                elif accion == "recibir":
+                recibidas = None
+                if accion == "recibir":
                     ids = request.form.getlist("id_producto")
                     cantidades = request.form.getlist("cantidad_recibida")
-                    if not ids or len(ids) != len(cantidades) or len(ids) > 50:
-                        flash("Indica la cantidad recibida para cada producto.", "danger")
-                        return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
-                    lineas_recibidas = []
-                    for id_producto, cantidad in zip(ids, cantidades):
-                        try:
-                            lineas_recibidas.append({"id_producto": int(id_producto), "cantidad": int(cantidad)})
-                        except (TypeError, ValueError):
-                            flash("Las cantidades recibidas deben ser números enteros.", "danger")
-                            return redirect(url_for("detalle_traslado", id_traslado=id_traslado))
-                    cursor.callproc("sp_recibir_traslado", (
-                        id_traslado, session["user_id"], json.dumps(lineas_recibidas),
-                        request.form.get("observacion_recepcion", "").strip()[:500],
-                    ))
-                else:
-                    return "Acción no válida", 400
-                while cursor.nextset():
-                    pass
+                    control.require(ids and len(ids) == len(cantidades) and len(ids) <= 50,
+                                    "Completa todas las cantidades recibidas.")
+                    recibidas = [{"id_producto": int(pid), "cantidad": int(qty),
+                                  "unidades": [int(v) for v in request.form.getlist(f"unidades_{pid}")]}
+                                 for pid, qty in zip(ids, cantidades)]
+                control.transfer_action(cursor, session["user_id"], id_traslado, accion,
+                                        request.form.get("observacion_recepcion" if accion == "recibir" else "observacion", "").strip()[:500], recibidas)
             connection.commit()
             flash("El traslado se actualizó correctamente.", "success")
-        except Exception:
+        except Exception as exc:
             if connection:
                 connection.rollback()
             app.logger.exception("No se pudo actualizar el traslado")
-            flash("No se pudo actualizar el traslado. Revisa el estado y los permisos.", "danger")
+            flash(str(exc) if isinstance(exc, (control.InventoryError, ValueError)) else "No se pudo actualizar el traslado. Recarga y verifica su estado.", "danger")
         finally:
             if connection:
                 connection.close()
@@ -2140,13 +2088,18 @@ def detalle_traslado(id_traslado):
                 WHERE d.id_traslado = %s ORDER BY p.nombre
             """, (id_traslado,))
             detalles = cursor.fetchall()
+            for d in detalles:
+                cursor.execute("SELECT u.*,tu.recibida FROM TRASLADO_UNIDAD tu JOIN UNIDAD_PRODUCTO u USING(id_unidad) WHERE tu.id_traslado=%s AND u.id_producto=%s ORDER BY u.vin_chasis", (id_traslado, d["id_producto"]))
+                d["unidades"] = cursor.fetchall()
+            cursor.execute("SELECT ev.*,CONCAT_WS(' ',e.nombres,e.apellidos) empleado FROM EVENTO_TRASLADO ev JOIN EMPLEADO e USING(id_empleado) WHERE id_traslado=%s ORDER BY id_evento", (id_traslado,))
+            eventos = cursor.fetchall()
     finally:
         connection.close()
     id_sucursal_usuario = None
     if session.get("user_role") != "Administrador":
         id_sucursal_usuario = traslado["id_sucursal_origen"] if id_sucursal == traslado["id_sucursal_origen"] else traslado["id_sucursal_destino"]
     return render_template("traslado_detalle.html", traslado=traslado, detalles=detalles,
-                           id_sucursal_usuario=id_sucursal_usuario)
+                           id_sucursal_usuario=id_sucursal_usuario, eventos=eventos)
 
 
 @app.route("/traslados/nuevo", methods=["GET", "POST"])
@@ -2158,6 +2111,7 @@ def nuevo_traslado():
     lineas = [{"id_producto": "", "cantidad": "1"}]
     sucursales = []
     productos = []
+    unidades = []
     connection = None
 
     try:
@@ -2203,13 +2157,16 @@ def nuevo_traslado():
                 errores.append("El origen y destino deben ser sucursales distintas.")
 
             cursor.execute("""
-                SELECT p.id_producto, p.nombre, p.codigo_barra, i.stock_actual
+                SELECT p.id_producto, p.nombre, p.codigo_barra, i.stock_actual-i.stock_reservado AS stock_actual
                 FROM PRODUCTO AS p
                 INNER JOIN INVENTARIO_SUCURSAL AS i ON i.id_producto = p.id_producto
-                WHERE p.estado = 1 AND i.id_sucursal = %s AND i.stock_actual > 0
+                WHERE p.estado = 1 AND i.id_sucursal = %s AND i.stock_actual-i.stock_reservado > 0
                 ORDER BY p.nombre
             """, (origen,))
             productos = cursor.fetchall()
+
+            cursor.execute("SELECT id_unidad,id_producto,vin_chasis,numero_motor FROM UNIDAD_PRODUCTO WHERE id_sucursal=%s AND estado='Disponible' ORDER BY vin_chasis", (origen,))
+            unidades = cursor.fetchall()
 
             if request.method == "POST":
                 producto_ids = request.form.getlist("id_producto")
@@ -2228,7 +2185,8 @@ def nuevo_traslado():
                         if (not producto or cantidad_num <= 0
                                 or cantidad_num > producto["stock_actual"]):
                             raise ValueError
-                        lineas_validas.append({"id_producto": id_num, "cantidad": cantidad_num})
+                        lineas_validas.append({"id_producto": id_num, "cantidad": cantidad_num,
+                                              "unidades": [int(v) for v in request.form.getlist(f"unidades_{id_num}")]})
                     except (TypeError, ValueError):
                         errores.append("Revisa que cada producto tenga existencias suficientes y cantidad válida.")
                         break
@@ -2239,20 +2197,15 @@ def nuevo_traslado():
 
                 if not errores:
                     numero = f"TR-{date.today():%Y%m%d}-{secrets.token_hex(3).upper()}"
-                    cursor.callproc("sp_registrar_traslado", (
-                        numero, origen, destino, session["user_id"],
-                        json.dumps(lineas_validas),
-                    ))
-                    while cursor.nextset():
-                        pass
+                    control.request_transfer(cursor, session["user_id"], origen, destino, numero, lineas_validas)
                     connection.commit()
                     flash(f"Solicitud de traslado {numero} enviada al administrador para aprobación.", "success")
                     return redirect(url_for("traslados"))
-    except Exception:
+    except Exception as exc:
         if connection:
             connection.rollback()
         app.logger.exception("No se pudo registrar el traslado")
-        errores.append("No se pudo registrar el traslado. Verifica las existencias e inténtalo de nuevo.")
+        errores.append(str(exc) if isinstance(exc, control.InventoryError) else "No se pudo registrar el traslado. Verifica las existencias e inténtalo de nuevo.")
     finally:
         if connection:
             connection.close()
@@ -2261,7 +2214,7 @@ def nuevo_traslado():
     return render_template(
         "traslado_form.html", datos=datos, lineas=lineas,
         sucursales=sucursales, destinos=destinos, productos=productos,
-        errores=errores,
+        errores=errores, unidades=unidades,
     )
 
 
@@ -2455,6 +2408,8 @@ def desactivar_proveedor(id_proveedor):
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+register_control_routes(app, requiere_rol, obtener_sucursal_empleado)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5050))

@@ -19,7 +19,9 @@ SELECT
     p.precio_costo,
     p.precio_venta,
     i.stock_actual,
-    p.stock_minimo,
+    i.stock_reservado,
+    i.stock_actual-i.stock_reservado AS stock_disponible,
+    COALESCE(i.stock_minimo,p.stock_minimo) AS stock_minimo,
     (i.stock_actual * p.precio_costo) AS valor_inventario
 FROM INVENTARIO_SUCURSAL AS i
 INNER JOIN PRODUCTO AS p ON p.id_producto = i.id_producto
@@ -39,13 +41,15 @@ SELECT
     p.nombre,
     c.nombre AS categoria,
     i.stock_actual,
-    p.stock_minimo
+    i.stock_reservado,
+    i.stock_actual-i.stock_reservado AS stock_disponible,
+    COALESCE(i.stock_minimo,p.stock_minimo) AS stock_minimo
 FROM INVENTARIO_SUCURSAL AS i
 INNER JOIN PRODUCTO AS p ON p.id_producto = i.id_producto
 INNER JOIN SUCURSAL AS s ON s.id_sucursal = i.id_sucursal
 INNER JOIN CATEGORIA AS c ON c.id_categoria = p.id_categoria
 WHERE p.estado = 1 AND s.estado = 1
-  AND i.stock_actual <= p.stock_minimo;
+  AND i.stock_actual-i.stock_reservado <= COALESCE(i.stock_minimo,p.stock_minimo);
 
 -- =========================================================
 -- VISTA 3: VENTAS DETALLADAS
@@ -58,6 +62,8 @@ SELECT
     v.numero_factura,
     v.fecha_venta,
     v.total_venta,
+    COALESCE((SELECT SUM(r.importe) FROM REVERSO_DOCUMENTO r WHERE r.id_venta=v.id_venta),0) AS total_devuelto,
+    v.total_venta-COALESCE((SELECT SUM(r.importe) FROM REVERSO_DOCUMENTO r WHERE r.id_venta=v.id_venta),0) AS total_neto,
     v.tipo_pago,
     v.estado,
     c.id_cliente,

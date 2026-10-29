@@ -27,3 +27,4 @@ __pycache__/
 # Respaldo local previo a cambios de inventario por sucursal
 version1/
 backups/
+backup-output/

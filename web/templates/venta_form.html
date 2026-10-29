@@ -52,13 +52,14 @@
                     <select id="id_producto_{{ loop.index }}" name="id_producto" required>
                         <option value="">Selecciona un producto</option>
                         {% for producto in productos %}
-                        <option value="{{ producto.id_producto }}" data-precio="{{ producto.precio_venta }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
+                        <option value="{{ producto.id_producto }}" data-serie="{{ producto.requiere_serie }}" data-precio="{{ producto.precio_venta }}" {% if linea.id_producto|string == producto.id_producto|string %}selected{% endif %}>
                             {{ producto.nombre }}{% if producto.codigo_barra %} ({{ producto.codigo_barra }}){% endif %} — Q {{ "%.2f"|format(producto.precio_venta) }}, stock {{ producto.stock_actual }}
                         </option>
                         {% endfor %}
                     </select>
                     {% if not productos %}<small>No hay productos activos con existencias.</small>{% endif %}
                     <label>Cantidad <input name="cantidad" type="number" min="1" step="1" required value="{{ linea.cantidad }}"></label>
+                    <label class="unit-picker">Motocicleta disponible<select class="select-unidad"><option value="">Selecciona una unidad</option></select></label>
                     <label>Descuento de la línea (Q) <input name="descuento" type="number" min="0" step="0.01" required value="{{ linea.descuento }}"></label>
                     <label>VIN / chasis (motocicletas) <input name="vin_chasis" maxlength="50" value="{{ linea.vin_chasis or '' }}"></label>
                     <label>Número de motor (motocicletas) <input name="numero_motor" maxlength="50" value="{{ linea.numero_motor or '' }}"></label>
@@ -91,6 +92,22 @@
         const lineasVenta = document.getElementById('lineas-venta');
         const botonAgregarVenta = document.getElementById('agregar-linea');
         const formatoQuetzales = new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const unidades = {{ unidades|tojson }};
+        const actualizarUnidades = (linea) => {
+            const producto = linea.querySelector('select[name="id_producto"]');
+            const serial = producto.selectedOptions[0]?.dataset.serie === '1';
+            const picker = linea.querySelector('.select-unidad');
+            const vin = linea.querySelector('[name="vin_chasis"]');
+            const motor = linea.querySelector('[name="numero_motor"]');
+            const elegido = vin.value;
+            picker.replaceChildren(new Option('Selecciona una unidad', ''));
+            unidades.filter(u => String(u.id_producto) === producto.value).forEach(u => picker.add(new Option(`${u.vin_chasis} · ${u.numero_motor}`, String(u.id_unidad), false, u.vin_chasis === elegido)));
+            picker.closest('label').hidden = !serial;
+            picker.required = serial;
+            vin.readOnly = true; motor.readOnly = true;
+            if (!serial) { vin.value = ''; motor.value = ''; }
+            if (serial) { linea.querySelector('[name="cantidad"]').value = '1'; }
+        };
         const actualizarTotalesVenta = () => {
             let total = 0;
             lineasVenta.querySelectorAll('.linea-transaccion').forEach((linea) => {
@@ -120,6 +137,7 @@
             });
             linea.querySelector('select').selectedIndex = 0;
             lineasVenta.appendChild(linea);
+            actualizarUnidades(linea);
             actualizarTotalesVenta();
         });
         lineasVenta.addEventListener('click', (event) => {
@@ -129,7 +147,17 @@
             }
         });
         lineasVenta.addEventListener('input', actualizarTotalesVenta);
-        lineasVenta.addEventListener('change', actualizarTotalesVenta);
+        lineasVenta.addEventListener('change', event => {
+            const linea = event.target.closest('.linea-transaccion');
+            if (event.target.name === 'id_producto') actualizarUnidades(linea);
+            if (event.target.classList.contains('select-unidad')) {
+                const unidad = unidades.find(u => String(u.id_unidad) === event.target.value);
+                linea.querySelector('[name="vin_chasis"]').value = unidad?.vin_chasis || '';
+                linea.querySelector('[name="numero_motor"]').value = unidad?.numero_motor || '';
+            }
+            actualizarTotalesVenta();
+        });
+        lineasVenta.querySelectorAll('.linea-transaccion').forEach(actualizarUnidades);
         actualizarTotalesVenta();
     </script>
 </body>

@@ -32,7 +32,7 @@ Los usuarios autorizados pueden consultar y buscar proveedores por razón social
 
 ## Administración (Administrador)
 
-El Administrador (perfil de gerencia en este sistema) dispone además de **Categorías**, **Sucursales** y **Empleados**. En cada catálogo puede consultar, crear, editar y desactivar registros. En **Ver factura** puede eliminar un recibo: la acción devuelve las cantidades al inventario y elimina sus detalles. Esta operación es irreversible y requiere confirmación; el Vendedor puede consultar e imprimir, pero no eliminar recibos. Antes de desactivar una categoría, desactiva los productos que aún estén activos en ella; antes de desactivar una sucursal, reasigna o desactiva sus empleados activos. Esto conserva las relaciones históricas. Al crear un empleado, se asigna una contraseña inicial de al menos 10 caracteres; al editarlo, la contraseña se puede dejar vacía para conservar la existente. El sistema guarda contraseñas como hash.
+El Administrador (perfil de gerencia en este sistema) dispone además de **Categorías**, **Sucursales** y **Empleados**. En cada catálogo puede consultar, crear, editar y desactivar registros. Desde cada documento puede registrar una devolución parcial o anular todo lo pendiente, indicando un motivo. El original y sus líneas se conservan; el Vendedor puede consultar e imprimir. Antes de desactivar una categoría, desactiva los productos que aún estén activos en ella; antes de desactivar una sucursal, reasigna o desactiva sus empleados activos. Esto conserva las relaciones históricas. Al crear un empleado, se asigna una contraseña inicial de al menos 10 caracteres; al editarlo, la contraseña se puede dejar vacía para conservar la existente. El sistema guarda contraseñas como hash.
 
 ## Ventas
 
@@ -44,7 +44,25 @@ Los usuarios autorizados pueden consultar compras de su sucursal (el Administrad
 
 ## Traslados entre sucursales
 
-Administrador y Bodega pueden solicitar traslados. Bodega solo puede elegir su sucursal asignada como origen; el Administrador puede elegir cualquier origen. Selecciona una sucursal destino distinta, agrega productos y cantidades disponibles y envía la solicitud. El stock no cambia hasta que el Administrador la aprueba y Bodega de origen confirma el despacho. En ese momento las unidades salen del origen y quedan en tránsito. Bodega de destino registra las cantidades que recibió; solo esas cantidades se agregan a su inventario. El detalle conserva quién solicitó, aprobó, despachó y recibió, las fechas y cualquier diferencia. El historial muestra traslados de las sucursales involucradas y el Administrador puede consultar todos.
+Administrador y Bodega pueden solicitar traslados. Bodega solo puede elegir su sucursal asignada como origen; el Administrador puede elegir cualquier origen. Selecciona una sucursal destino distinta, agrega productos y cantidades disponibles y envía la solicitud. Al aprobar, el stock se reserva y deja de estar disponible para vender; las existencias físicas cambian cuando Bodega de origen confirma el despacho. En ese momento las unidades salen del origen y quedan en tránsito. Bodega de destino registra las cantidades acumuladas que recibió y las unidades exactas; solo las nuevas cantidades recibidas se agregan a su inventario. Los faltantes permanecen como diferencias pendientes y pueden completarse después. El detalle conserva quién solicitó, aprobó, despachó y recibió, las fechas y cualquier diferencia. El historial muestra traslados de las sucursales involucradas y el Administrador puede consultar todos.
+
+## Unidades y Kardex
+
+En **Unidades**, consulta VIN, motor, sucursal, estado y recorrido de cada motocicleta. En Compras, registra un `VIN | MOTOR` por cada unidad recibida. En Ventas y Traslados, selecciona unidades disponibles de la sucursal; no se pueden vender las reservadas o en tránsito. Administración puede completar identidades de existencias anteriores sin alterar su cantidad.
+
+El **Kardex** muestra entradas, salidas, reservas, responsables y saldos por sucursal, con filtros de producto y fechas. Su saldo inicial corresponde al día de activación; no reconstruye movimientos anteriores.
+
+## Conteos, mínimos y ajustes
+
+En **Conteos y ajustes**, selecciona sucursal y producto. Bodega registra lo encontrado y Administración autoriza o rechaza el ajuste. Para motocicletas marca las unidades encontradas y añade los VIN/motores de unidades nuevas. Si el inventario cambió desde el conteo, se requiere otro conteo. No se pueden dar de baja unidades reservadas sin resolver primero sus reservas. Administración puede definir un mínimo diferente por sucursal.
+
+## Devoluciones y anulaciones
+
+Administración abre **Devolución / Anulación** desde una venta o compra. Para una devolución parcial, indica cantidades y motivo; para anular, se revierte todo lo pendiente. Nunca se devuelve más de lo original menos devoluciones anteriores. Las compras solo pueden revertirse si hay stock disponible en su sucursal y, para motocicletas, unidades exactas procedentes de esa compra. Los documentos muestran el importe original y el neto después de reversos.
+
+## Alertas y respaldos
+
+**Alertas** reúne mínimos de stock, traslados por autorizar, reservas por despachar, recepciones pendientes y unidades sin identificar. Administración también ve el estado del respaldo. **Respaldos** registra copias diarias cifradas, restauraciones verificadas y un enlace a su descarga. La recuperación está documentada en `docs/operaciones/RESPALDOS.md`.
 
 ## Mensajes y problemas comunes
 

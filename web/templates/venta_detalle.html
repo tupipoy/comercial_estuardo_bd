@@ -15,10 +15,7 @@
             <a href="{{ url_for('ventas') }}" class="btn">Volver a ventas</a>
             <button class="btn active" type="button" onclick="window.print()">Imprimir recibo</button>
             {% if session.get('user_role') == 'Administrador' %}
-            <form method="POST" action="{{ url_for('eliminar_venta', id_venta=venta.id_venta) }}" onsubmit="return confirm('¿Eliminar este recibo y devolver sus productos al inventario? Esta acción no se puede deshacer.');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button class="btn" type="submit">Eliminar recibo</button>
-            </form>
+            <a class="btn" href="{{ url_for('reversar_documento',kind='venta',document_id=venta.id_venta) }}">Devolución / Anulación</a>
             {% endif %}
         </div>
 
@@ -35,7 +32,7 @@
                 <p><strong>Cliente:</strong> {{ venta.cliente }}</p>
                 <p><strong>Atendió:</strong> {{ venta.empleado_nombres }} {{ venta.empleado_apellidos }}</p>
                 <p><strong>Sucursal:</strong> {{ venta.sucursal }}</p>
-                <p><strong>Pago:</strong> {{ venta.tipo_pago }}</p>
+                <p><strong>Estado:</strong> {{ venta.estado }}</p>{% if reversado %}<p><strong>Devuelto o anulado:</strong> Q {{ "%.2f"|format(reversado) }}</p><p><strong>Importe neto:</strong> Q {{ "%.2f"|format(venta.total_venta-reversado) }}</p>{% endif %}<p><strong>Pago:</strong> {{ venta.tipo_pago }}</p>
             </section>
 
             <div class="receipt-rule"></div>

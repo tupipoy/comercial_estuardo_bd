@@ -29,6 +29,7 @@
         <a class="side-link {% if request.endpoint in ['empleados', 'nuevo_empleado', 'editar_empleado'] %}is-active{% endif %}" href="{{ url_for('empleados') }}"><svg><use href="#icon-users-admin"/></svg><span>Empleados</span></a>
     </nav>
     {% endif %}
+    <nav class="sidebar-nav"><a class="side-link" href="{{ url_for('unidades') }}"><svg><use href="#icon-box"/></svg><span>Unidades</span></a><a class="side-link" href="{{ url_for('kardex') }}"><svg><use href="#icon-receipt"/></svg><span>Kardex</span></a>{% if session.get('user_role') in ['Administrador','Bodega'] %}<a class="side-link" href="{{ url_for('conteos') }}"><svg><use href="#icon-box"/></svg><span>Conteos y ajustes</span></a>{% endif %}<a class="side-link" href="{{ url_for('alertas') }}"><svg><use href="#icon-store"/></svg><span>Alertas</span></a>{% if session.get('user_role')=='Administrador' %}<a class="side-link" href="{{ url_for('respaldos') }}"><svg><use href="#icon-box"/></svg><span>Respaldos</span></a>{% endif %}</nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-profile">
         <span class="user-avatar">{{ session.get('user_name', 'U')[:1]|upper }}</span>

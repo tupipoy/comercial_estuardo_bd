@@ -49,17 +49,17 @@
                 <td><div class="product-cell"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><strong>{{ p.nombre }}</strong></div></td>
                 {% if vista_general %}<td>{{ p.sucursal }}</td>{% endif %}
                 <td>{{ p.codigo_barra or '—' }}</td><td>{{ p.categoria }}</td><td>Q {{ "%.2f"|format(p.precio_venta) }}</td>
-                <td><strong>{{ p.stock_actual }}</strong><small class="table-subtext">Mínimo {{ p.stock_minimo }}</small></td>
-                <td>{% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</td>
+                <td><strong>{{ p.stock_actual }}</strong><small class="table-subtext">Disponible {{ p.disponible }} · Reservado {{ p.reservado }} · En tránsito {{ p.en_transito }}</small><small class="table-subtext">Mínimo {{ p.stock_minimo }}</small></td>
+                <td>{% if p.disponible == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.disponible <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</td>
                 {% if vista_general and session.get('user_role') == 'Administrador' %}<td><a href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar producto</a></td>{% endif %}
             </tr>{% endfor %}</tbody>
         </table></div>
         <div class="mobile-product-list">{% for p in productos %}
             <article class="mobile-product-card">
                 <div class="mobile-product-top"><span class="product-avatar">{{ p.nombre[:1]|upper }}</span><span class="mobile-product-title"><strong>{{ p.nombre }}</strong><small>{{ p.codigo_barra or 'Sin código' }} · {{ p.categoria }}</small></span>
-                    {% if p.stock_actual == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.stock_actual <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</div>
+                    {% if p.disponible == 0 %}<span class="status-badge status-out">Agotado</span>{% elif p.disponible <= p.stock_minimo %}<span class="status-badge status-low">Stock bajo</span>{% else %}<span class="status-badge status-ok">Disponible</span>{% endif %}</div>
                 {% if vista_general %}<div class="inventory-branch-label">Sucursal: <strong>{{ p.sucursal }}</strong></div>{% endif %}
-                <div class="mobile-product-meta"><span>Existencias <strong>{{ p.stock_actual }}</strong> <small>(mín. {{ p.stock_minimo }})</small></span><strong>Q {{ "%.2f"|format(p.precio_venta) }}</strong></div>
+                <p class="texto-ayuda">Disponible {{ p.disponible }} · Reservado {{ p.reservado }} · En tránsito {{ p.en_transito }}</p><div class="mobile-product-meta"><span>Existencias <strong>{{ p.stock_actual }}</strong> <small>(mín. {{ p.stock_minimo }})</small></span><strong>Q {{ "%.2f"|format(p.precio_venta) }}</strong></div>
                 {% if vista_general and session.get('user_role') == 'Administrador' %}<a class="button button-secondary" href="{{ url_for('editar_producto', id_producto=p.id_producto) }}">Editar producto</a>{% endif %}
             </article>
         {% endfor %}</div>

@@ -181,6 +181,15 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 
 ### 29 de octubre de 2026
 
+#### Unidades, Kardex, reservas, conteos y reversos
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Completar la trazabilidad de motocicletas y el control de existencias por sucursal, con recuperación de datos.
+- **Resultado:** Migración 08 aditiva; identificación de unidades por VIN/motor desde Compras; selección de unidades en Ventas y Traslados; reservas al aprobar y liberación al anular; recepción parcial acumulada; Kardex e historial por unidad; conteos con autorización y detección de cambios posteriores; mínimos por sucursal; devoluciones y anulaciones que conservan documentos e importes originales; alertas operativas. Se prepara respaldo diario cifrado con restauración aislada y registro de resultados.
+- **Validación:** 12 pruebas de integración en esquemas temporales MySQL 8.4, incluyendo aprobaciones simultáneas, reventa tras devolución, reversión de compra fallida, conteos obsoletos, redondeo de devoluciones y pantallas por rol. Una prueba de cifrado/descifrado y rechazo de archivos alterados. La migración se aplicó primero a una copia de los datos de Railway y conservó documentos y existencias; luego se aplicó a producción.
+- **Respaldo previo:** `backups/railway_pre_inventory_control_20261029T194917Z.sql.gz`, con integridad comprobada y excluido de Git.
+- **Seguimiento:** Publicar código; activación de credenciales externas de respaldo pendiente de autorización específica por revisión automática. Completar desde Unidades cualquier motocicleta con existencias anteriores sin identificación.
+
 #### Aprobación, despacho y recepción de traslados
 
 - **Herramienta:** OpenAI Codex.

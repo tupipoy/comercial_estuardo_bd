@@ -49,6 +49,8 @@
             </div>
             <p class="texto-ayuda">{% if session.get('user_role') == 'Administrador' %}Los datos del producto se comparten entre sucursales. El stock se consulta en Inventario y cambia con Compras, Ventas o Traslados.{% else %}Las existencias se reciben mediante Compras y se consultan por sucursal en Inventario.{% endif %}</p>
             <div class="form-group">
+                <label><input type="checkbox" name="requiere_serie" value="1" {% if producto and producto.requiere_serie %}checked{% endif %}> Identificar cada unidad por VIN y motor</label>
+                <small>Se activa automáticamente para categorías de motocicletas.</small>
                 <label for="stock_minimo">Stock mínimo</label>
                 <input id="stock_minimo" name="stock_minimo" type="number" min="0" step="1" required
                        value="{{ producto.stock_minimo if producto else 1 }}">

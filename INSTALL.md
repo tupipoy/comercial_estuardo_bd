@@ -46,11 +46,14 @@ Ejecuta los siguientes archivos **en este orden**. Los comandos de ejemplo solic
 mysql -u root -p < sql/ddl/01_schema.sql
 mysql -u root -p < sql/dml/01_seed_data.sql
 mysql -u root -p < sql/dml/02_bulk_data.sql
+mysql -u root -p < sql/migrations/08_inventory_control.sql
 mysql -u root -p < sql/views/01_views.sql
 mysql -u root -p < sql/triggers/01_triggers.sql
+mysql -u root -p < sql/triggers/02_inventory_control.sql
 mysql -u root -p < sql/procedures/01_procedures.sql
 mysql -u root -p < sql/procedures/02_transfer_workflow.sql
 mysql -u root -p < sql/security/01_roles.sql
+mysql -u root -p < sql/security/02_inventory_control.sql
 ```
 
 También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el mismo orden.
@@ -59,7 +62,7 @@ También puedes abrir y ejecutar cada archivo en MySQL Workbench, respetando el 
 
 `02_bulk_data.sql` está preparado para ejecutarse una vez después del esquema y los datos semilla. Completa 50 registros en las ocho entidades principales y agrega detalles de compra y venta; asigna el inventario de demostración a las dos sucursales.
 
-Para actualizar una base existente al inventario por sucursal: primero respalda la base y confirma que el stock global actual se encuentra físicamente en Sucursal Central. Ejecuta una sola vez `sql/migrations/06_inventory_by_branch.sql`; después vuelve a ejecutar `sql/triggers/01_triggers.sql`, `sql/views/01_views.sql`, `sql/procedures/01_procedures.sql` y `sql/security/01_roles.sql`. La aplicación nueva requiere que este paso termine antes de desplegarla. Las compras históricas se asignan a la sucursal actual del empleado relacionado porque las versiones anteriores no guardaban esa ubicación.
+Para actualizar una base existente, respalda primero. Si aún tiene stock global, aplica la migración 06 asignándolo a Sucursal Central y después la 07. Para una base que ya tiene el flujo de traslados de la 07, aplica únicamente `08_inventory_control.sql` y luego `sql/triggers/02_inventory_control.sql`, `sql/views/01_views.sql` y ambos scripts de seguridad en orden. No reinstales los triggers 01 sin volver a aplicar los 02: los 02 protegen las reservas y las unidades identificadas. El código nuevo requiere completar estos pasos antes de desplegarlo.
 
 La carpeta `sql/migrations/` contiene cambios puntuales para actualizar bases existentes. No ejecutes las migraciones 02 y 03 después de la instalación limpia: los cambios de contraseña y precio de costo ya están incorporados en el DDL actual. Las migraciones 04 y 05 agregan controles de margen e intentos de inicio de sesión; la 06 convierte el stock global en existencias por sucursal; y la 07 agrega aprobación, despacho y recepción para los traslados. Cada migración se ejecuta una sola vez. La 06 asigna el stock global existente a **Sucursal Central** y completa la sucursal histórica de compras según la sucursal actual del empleado. La 07 conserva los traslados completados y registra sus cantidades recibidas históricas. Antes de aplicar migraciones en producción, genera un respaldo completo; después ejecuta `sql/procedures/02_transfer_workflow.sql` y `sql/security/01_roles.sql`. Para una instalación limpia, el DDL y scripts actuales incluyen el nuevo flujo; ejecuta ambos archivos de procedimientos en orden.
 

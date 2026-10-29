@@ -17,7 +17,7 @@
             {% if session.get('user_role') == 'Administrador' %}<div class="form-group"><label for="id_sucursal_origen">Sucursal de origen</label><select id="id_sucursal_origen" name="id_sucursal_origen" required>{% for s in sucursales %}<option value="{{ s.id_sucursal }}" {% if datos.id_sucursal_origen|string == s.id_sucursal|string %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select></div>
             {% else %}<div class="form-group"><label>Sucursal de origen</label><input value="{{ sucursales|selectattr('id_sucursal', 'equalto', datos.id_sucursal_origen|int)|map(attribute='nombre')|first or 'Mi sucursal' }}" disabled></div>{% endif %}
             <div class="form-group"><label for="id_sucursal_destino">Sucursal de destino</label><select id="id_sucursal_destino" name="id_sucursal_destino" required><option value="">Selecciona destino</option>{% for s in destinos %}<option value="{{ s.id_sucursal }}" {% if datos.id_sucursal_destino|string == s.id_sucursal|string %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select></div>
-            <div id="lineas-traslado">{% for linea in lineas %}<fieldset class="form-group linea-transaccion"><legend>Producto {{ loop.index }}</legend><label>Producto<select name="id_producto" required><option value="">Selecciona producto</option>{% for p in productos %}<option value="{{ p.id_producto }}" {% if linea.id_producto|string == p.id_producto|string %}selected{% endif %}>{{ p.nombre }}{% if p.codigo_barra %} ({{ p.codigo_barra }}){% endif %} — disponible {{ p.stock_actual }}</option>{% endfor %}</select></label><label>Cantidad<input name="cantidad" type="number" min="1" max="{{ productos|selectattr('id_producto', 'equalto', linea.id_producto|int)|map(attribute='stock_actual')|first or '' }}" step="1" value="{{ linea.cantidad }}" required></label><button type="button" class="quitar-linea">Quitar producto</button></fieldset>{% endfor %}</div>
+            <div id="lineas-traslado">{% for linea in lineas %}<fieldset class="form-group linea-transaccion"><legend>Producto {{ loop.index }}</legend><label>Producto<select name="id_producto" required><option value="">Selecciona producto</option>{% for p in productos %}<option value="{{ p.id_producto }}" {% if linea.id_producto|string == p.id_producto|string %}selected{% endif %}>{{ p.nombre }}{% if p.codigo_barra %} ({{ p.codigo_barra }}){% endif %} — disponible {{ p.stock_actual }}</option>{% endfor %}</select></label><label>Cantidad<input name="cantidad" type="number" min="1" max="{{ productos|selectattr('id_producto', 'equalto', linea.id_producto|int)|map(attribute='stock_actual')|first or '' }}" step="1" value="{{ linea.cantidad }}" required></label><label class="unit-picker">Unidades identificadas a trasladar<select class="transfer-units" name="unidades_{{ linea.id_producto }}" multiple size="4">{% for u in unidades if u.id_producto|string == linea.id_producto|string %}<option value="{{ u.id_unidad }}" {% if u.id_unidad|string in request.form.getlist('unidades_' ~ linea.id_producto) %}selected{% endif %}>{{ u.vin_chasis }} · {{ u.numero_motor }}</option>{% endfor %}</select><small>Selecciona tantas unidades como la cantidad indicada. Para productos sin VIN, deja la selección vacía.</small></label><button type="button" class="quitar-linea">Quitar producto</button></fieldset>{% endfor %}</div>
             <button type="button" id="agregar-linea">Agregar otro producto</button>
             <button class="btn-submit" type="submit" {% if not productos or not destinos %}disabled{% endif %}>Enviar solicitud de aprobación</button>
             <a class="btn" href="{{ url_for('traslados') }}">Cancelar</a>
@@ -25,6 +25,15 @@
     </section></main>
     <script>
         const contenedor = document.getElementById('lineas-traslado');
+        const unidades = {{ unidades|tojson }};
+        const configurarUnidades = fila => {
+            const producto = fila.querySelector('select[name="id_producto"]').value;
+            const selector = fila.querySelector('.transfer-units');
+            selector.name = `unidades_${producto}`;
+            selector.replaceChildren();
+            unidades.filter(u => String(u.id_producto) === producto).forEach(u => selector.add(new Option(`${u.vin_chasis} · ${u.numero_motor}`, String(u.id_unidad))));
+        };
+        contenedor.addEventListener('change', event => { if (event.target.name === 'id_producto') configurarUnidades(event.target.closest('fieldset')); });
         document.getElementById('id_sucursal_origen')?.addEventListener('change', (event) => {
             const url = new URL(window.location.href);
             url.searchParams.set('origen', event.target.value);
@@ -36,6 +45,7 @@
             fila.querySelector('legend').textContent = `Producto ${contenedor.children.length + 1}`;
             fila.querySelector('select').selectedIndex = 0;
             fila.querySelector('input').value = '1';
+            configurarUnidades(fila);
             contenedor.appendChild(fila);
         });
         contenedor.addEventListener('click', (event) => {

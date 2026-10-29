@@ -30,7 +30,7 @@ button, a, select { -webkit-tap-highlight-color: transparent; }
 .muted { color: var(--muted); }
 
 /* Navegación de escritorio */
-.app-sidebar { position: fixed; z-index: 20; inset: 0 auto 0 0; display: flex; flex-direction: column; width: 258px; padding: 24px 16px 16px; color: #d8e4ee; background: var(--navy); }
+.app-sidebar { position: fixed; z-index: 20; inset: 0 auto 0 0; display: flex; flex-direction: column; width: 258px; padding: 24px 16px 16px; overflow-y: auto; color: #d8e4ee; background: var(--navy); }
 .brand-lockup { display: flex; align-items: center; gap: 12px; min-height: 54px; margin: 0 7px 32px; color: #fff; }
 .brand-lockup:hover { color: #fff; }
 .brand-mark { display: grid; flex: 0 0 42px; width: 42px; height: 42px; place-items: center; border-radius: 13px; color: var(--navy); background: #8ce2d7; font-size: 13px; font-weight: 850; letter-spacing: -.04em; }
@@ -153,6 +153,30 @@ tbody tr:hover { background: #fbfdfe; }
 .sales-mobile-list { display: none; }
 .purchase-mobile-list, .purchase-detail-mobile { display: none; }
 .transfer-mobile-list { display: none; }
+.control-tabs { flex-wrap: wrap; }
+.product-form input[type="checkbox"] { display: inline-block; width: auto; }
+.control-section { margin-top: 20px; }
+.control-filter { flex-wrap: wrap; align-items: end; }
+.control-filter label { display: grid; gap: 5px; min-width: 0; font-size: 12px; }
+.control-form { display: grid; gap: 14px; }
+.control-form label { display: grid; gap: 5px; min-width: 0; font-size: 13px; }
+.control-form input, .control-form select, .control-form textarea { width: 100%; min-width: 0; }
+.control-form fieldset { padding: 14px; border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.control-form .unit-option { display: flex; align-items: center; gap: 8px; margin-top: 7px; overflow-wrap: anywhere; }
+.control-form .unit-option input { width: auto; }
+.control-table { width: 100%; overflow-x: auto; margin-top: 18px; }
+.control-card-list { display: grid; gap: 14px; margin-top: 18px; }
+.control-card-list p, .control-page .panel p { margin: 9px 0; font-size: 13px; overflow-wrap: anywhere; }
+.unit-picker { grid-column: 1 / -1; }
+@media (max-width: 760px) {
+ .control-filter > label, .control-filter > button { width: 100%; }
+ .control-table thead { display: none; }
+ .control-table table, .control-table tbody { display: block; }
+ .control-table tr { display: grid; gap: 7px; margin-bottom: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+ .control-table td { display: block; padding: 0; border: 0; overflow-wrap: anywhere; }
+ .control-table td[data-label]::before { content: attr(data-label) ': '; color: #64748b; font-weight: 650; }
+ .mobile-more[open] .more-menu { max-height: min(70vh, 580px); overflow-y: auto; }
+}
 .transfer-products-summary { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
 .transfer-products-summary li { color: #334155; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
 .transfer-workflow-actions { display: grid; gap: 16px; margin-top: 20px; }

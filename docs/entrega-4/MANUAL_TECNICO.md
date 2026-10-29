@@ -12,7 +12,9 @@
 
 ## Resumen y catálogo
 
-`INVENTARIO_SUCURSAL` almacena el stock por producto y sucursal. Administración consulta totales consolidados; Vendedores y Bodega quedan limitados a la sucursal de su empleado. Compras y ventas actualizan existencias en la sucursal del empleado. Los traslados se solicitan sin modificar stock; un administrador los aprueba o rechaza, Bodega de origen confirma el despacho y Bodega de destino registra cantidades recibidas. El despacho descuenta el origen y la recepción acredita solo lo recibido, con auditoría de usuarios, fechas y diferencias. `sp_registrar_traslado`, `sp_resolver_traslado`, `sp_despachar_traslado` y `sp_recibir_traslado` hacen las operaciones transaccionales.
+`INVENTARIO_SUCURSAL` conserva existencias físicas, reservas, mínimo por sucursal y una revisión que invalida conteos desactualizados. `web/inventory_control.py` procesa compras identificadas, traslados, conteos y reversos dentro de la transacción del llamador. Cada mutación valida el empleado activo, su cargo, sucursal y el estado actual; las filas de inventario y unidades se bloquean para evitar doble consumo. `sql/triggers/02_inventory_control.sql` impide ventas sobre stock reservado, vincula la unidad exacta y registra saldos e historial automáticamente. `UNIDAD_PRODUCTO`, `TRASLADO_UNIDAD`, `MOVIMIENTO_INVENTARIO`, `HISTORIAL_UNIDAD`, `CONTEO_INVENTARIO` y `REVERSO_DOCUMENTO` conservan trazabilidad. Los procedimientos de traslados de la versión 07 quedan como compatibilidad histórica y se revoca su ejecución al rol Bodega; los nuevos flujos se realizan desde la aplicación.
+
+La migración 08 es aditiva y completa las identidades de ventas históricas que ya tenían VIN y motor. No inventa datos de motocicletas existentes sin identificación. El Kardex arranca con un saldo inicial, no con una reconstrucción histórica. Las recepciones parciales de traslados son acumuladas y mantienen visibles los faltantes. Las anulaciones conservan documentos y líneas.
 
 ## Ejecución local
 
@@ -35,7 +37,7 @@ Consulta [INSTALL.md](../../INSTALL.md) para crear el entorno, inicializar MySQL
 
 ## Objetos SQL
 
-La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. La migración 07 activa el flujo de aprobaciones en bases existentes y requiere aplicar después `sql/procedures/02_transfer_workflow.sql` y `sql/security/01_roles.sql`. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
+La instalación desde cero ejecuta el DDL y los scripts de datos, vistas, triggers, procedimientos y seguridad en el orden documentado en `INSTALL.md`. Después de la migración 07, aplicar la 08, los triggers 02, vistas y los scripts de seguridad 01 y 02. Las instalaciones limpias también aplican la 08 después del DDL base. El DDL elimina y crea el esquema, por lo que no debe usarse para actualizar una base con datos que se deban conservar.
 
 ## Módulos administrativos
 
@@ -55,3 +57,8 @@ Las rutas `/categorias`, `/sucursales` y `/empleados` se limitan al cargo Admini
 ## Estado de cierre
 
 La aplicación está desplegada y accesible en Railway en https://comercialestuardobd-production.up.railway.app. El usuario confirmó el dominio, login, módulos y alta/edición de clientes; también reportó la instalación en MySQL de Railway de los tres triggers de venta requeridos. No se registran credenciales ni valores de configuración productiva en este manual. Falta registrar la aceptación de compras/ventas, instalación limpia y pruebas integrales antes de certificar la versión final.
+
+
+## Comprobación y recuperación
+
+`tests/test_inventory_control.py --isolated` crea un esquema temporal `ce_acceptance_*`, instala los objetos SQL y comprueba reservas concurrentes, permisos, seriales, recepción parcial, devoluciones, anulaciones, conteos obsoletos y las pantallas. Lo elimina al terminar. `tests/test_backup_crypto.py` valida cifrado, recuperación y rechazo de archivos alterados. El workflow diario restaura cada copia en MySQL 8.4 aislado y registra el resultado; ver `docs/operaciones/RESPALDOS.md`.
