@@ -185,7 +185,8 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 
 - **Autorización:** El usuario autorizó expresamente crear `ce_backup` y guardar su conexión y la clave de cifrado como secretos protegidos de GitHub Actions en el repositorio público.
 - **Resultado:** Se creó la cuenta dedicada y se configuraron `MYSQL_BACKUP_URL`, `BACKUP_ENCRYPTION_KEY` y la variable de activación. Se verificó la presencia de los secretos sin imprimir valores. La clave local de recuperación está en `backups/backup_recovery.env`, excluida de Git y con permisos `0600`.
-- **Pendiente:** El token Git actual carece del permiso `workflow`. El archivo `.github/workflows/daily-backup.yml` permanece preparado localmente; todavía no se publicó ni se ejecutó el primer respaldo automático. Habilitar ese permiso, publicar el archivo y comprobar la restauración de la primera ejecución.
+- **Activación:** El usuario habilitó el permiso `workflow`; se publicó el archivo en el commit `f0d4f10`. Programación diaria a las 02:00 de Guatemala, con retención de 14 días.
+- **Verificación real:** La ejecución [40946013024](https://github.com/tupipoy/comercial_estuardo_bd/actions/runs/40946013024) terminó correctamente: cifrado, descifrado, restauración en MySQL 8.4 aislado, comprobaciones de integridad y publicación del artefacto. La aplicación registró el respaldo #1 como `Completado`, con restauración verificada. El artefacto cifrado vence el 12 de noviembre de 2026.
 
 #### Unidades, Kardex, reservas, conteos y reversos
 
@@ -194,7 +195,7 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 - **Resultado:** Migración 08 aditiva; identificación de unidades por VIN/motor desde Compras; selección de unidades en Ventas y Traslados; reservas al aprobar y liberación al anular; recepción parcial acumulada; Kardex e historial por unidad; conteos con autorización y detección de cambios posteriores; mínimos por sucursal; devoluciones y anulaciones que conservan documentos e importes originales; alertas operativas. Se prepara respaldo diario cifrado con restauración aislada y registro de resultados.
 - **Validación:** 12 pruebas de integración en esquemas temporales MySQL 8.4, incluyendo aprobaciones simultáneas, reventa tras devolución, reversión de compra fallida, conteos obsoletos, redondeo de devoluciones y pantallas por rol. Una prueba de cifrado/descifrado y rechazo de archivos alterados. La migración se aplicó primero a una copia de los datos de Railway y conservó documentos y existencias; luego se aplicó a producción.
 - **Respaldo previo:** `backups/railway_pre_inventory_control_20261029T194917Z.sql.gz`, con integridad comprobada y excluido de Git.
-- **Seguimiento:** Publicar código; activación de credenciales externas de respaldo pendiente de autorización específica por revisión automática. Completar desde Unidades cualquier motocicleta con existencias anteriores sin identificación.
+- **Seguimiento:** Código publicado y respaldos automáticos activados tras autorización específica. Completar desde Unidades cualquier motocicleta futura con existencias anteriores sin identificación; la revisión posterior a la migración no encontró identificaciones pendientes ni diferencias entre Kardex y existencias.
 
 #### Aprobación, despacho y recepción de traslados
 
