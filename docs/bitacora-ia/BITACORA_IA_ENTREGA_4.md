@@ -1,29 +1,142 @@
 # Bitácora de herramientas de IA — Entrega 4
 
 **Proyecto:** Sistema de Gestión de Ventas, Compras e Inventario — Comercial Estuardo  
-**Periodo registrado:** 14 de octubre de 2026 en adelante
+**Periodo registrado:** 14 al 28 de octubre de 2026
 
-| Fecha | Herramienta | Objetivo y resumen del prompt | Resultado asistido | Estándares aplicados/revisados | Validación del equipo | Responsable |
-|---|---|---|---|---|---|
-| 14/10/2026 | OpenAI Codex | Revisar requisitos de Entrega 4 y preparar Gunicorn/Railway, además de completar CRUD administrativos y operaciones de compra/venta con varios productos. | Cambios propuestos en Flask, plantillas Jinja, procedimientos MySQL, roles y manuales de la Entrega 4. | A1, A2, A3, A4, S2 y S5 revisados en código/documentación; persistencia MySQL y despliegue final pendientes en esa fecha. | Se ejecutó compilación de Python, carga de rutas y análisis sintáctico de plantillas. En esa sesión no se desplegó a Railway; el despliegue activo fue confirmado posteriormente. Falta que el equipo pruebe las operaciones y procedimientos en un esquema MySQL temporal. | Elvin Miranda y Carlos Ochoa deben revisar y asignar quién valida cada cambio antes del commit. |
-| 14/10/2026 | OpenAI Codex | Revisar formularios, accesos y administración de cuentas antes de continuar. | Se añadió token CSRF a solicitudes POST, flags de cookies de sesión, validación de seriales de motocicleta y protección del último Administrador activo. | A2, A3 y A5 revisados; los controles requieren aceptación integrada. | Flask test client verificó rechazo HTTP 400 sin token, paso de la solicitud con token hasta la validación normal de credenciales y redirección de rutas protegidas. La conexión SQL no pudo verificarse: no había servidor MySQL disponible y `mysqld --initialize-insecure` terminó con SIGSEGV en instancia aislada. | El equipo debe repetir pruebas en MySQL 8 compatible y revisar el flujo completo. |
-| 14/10/2026 | OpenAI Codex | Cerrar el flujo de compras/ventas y preparar operación Railway. | Se agregaron páginas de detalle transaccional y ruta `/health`, más límites y validaciones de listas de líneas. | A2, A3, A4 y S5 revisados en código; integración pendiente en esa fecha. | Flask cargó las rutas y plantillas; no se validó la integración con MySQL ni el despliegue Railway durante esa sesión. El despliegue se confirmó posteriormente. | El equipo debe repetir pruebas en MySQL 8 compatible y Railway. |
-| 14/10/2026 | OpenAI Codex | Verificar configuración de producción local antes de seguir con la integración. | Se instalaron las dependencias fijadas en `web/requirements.txt` en un entorno temporal y se inició Gunicorn con `--chdir web`. | A1 y S5 revisados en entorno local. | Gunicorn 23.0.0 inició la aplicación; una petición HTTP a `/health` devolvió `{"status":"ok"}`. Es una prueba local, no acredita Railway ni conectividad a MySQL. | El equipo confirmó posteriormente que Railway está activo; aún debe registrar aceptación funcional completa. |
-| 14/10/2026 | OpenAI Codex | Revisar trazabilidad con requisitos de Entrega 1 y límites del esquema SQL. | Se confirmó el alcance de ocho entidades principales y se añadieron validaciones web para rangos INT/DECIMAL y stock máximo en compras. | A3, S7 y D4 revisados; validación MySQL pendiente. | Pendiente revisar los bordes con el equipo y probar persistencia/transacciones contra MySQL 8. | El equipo debe ejecutar los casos ampliados y revisar la matriz antes de cerrar. |
-| 14/10/2026 | OpenAI Codex | Validar el despliegue real y el flujo de clientes, después de que el usuario confirmara que el dominio Railway abre. | Se corrigió la detección de categorías de motocicleta para no confundir `Repuestos de Motor` con motos; se amplió el caso de prueba asociado. | A3 y D4 revisados; el despliegue confirmado corresponde a evidencia reportada por el usuario. | El usuario confirmó login, acceso a módulos, alta y edición de cliente en Railway. La corrección de categoría aún requiere push, redeploy y prueba; compra/venta continúan pendientes. | El equipo debe publicar el commit y continuar pruebas. |
-| 19/10/2026 | OpenAI Codex | Mejorar operación, búsqueda y cumplimiento de los criterios del PDF actualizado. | Se agregaron importes estimados y filtros a catálogos e historiales; se renombró la carpeta a `sql/procedures`, se completaron encabezados de scripts SQL, docstrings de acceso a BD, matriz de cierre y manuales. | A1–A6, R1–R7, S1–S8 y D1–D4 contrastados; S1/ER y autorización del grupo siguen pendientes de evidencia. | No se ejecutaron pruebas funcionales en esa sesión; `git diff --check` no reportó errores. Railway está desplegado; compras/ventas y los cambios locales recientes requieren aceptación en ese entorno. | El equipo debe validar el código y obtener las autorizaciones pendientes antes de certificar. |
-| 27/10/2026 | OpenAI Codex | Revisar qué falta para entregar hoy, contrastando los criterios del PDF con el estado del repositorio y Railway. | Se confirmó que los PDF adjuntos son idénticos; se precisó que Railway está activo, se actualizaron las notas de entrega y se advirtió que la instalación DDL debe ejecutarse solo en una base temporal por ser destructiva. | S5, D1, D4 y R5 revisados; tag, aceptación integral, firmas y autorizaciones aún pendientes. | Revisión documental y `git diff --check`; no se ejecutaron pruebas funcionales ni se modificó la base de Railway. | El equipo debe completar aceptación, guardar evidencia, firmar y crear el tag sobre la versión final. |
-| 27/10/2026 | OpenAI Codex | Registrar la URL Railway proporcionada por el usuario y dejar consistentes los documentos previos a subir los cambios locales. | URL pública agregada en informe, manuales y casos de prueba; se corrigió numeración del manual técnico y la declaración de integridad se dejó explícitamente pendiente de aprobación/firma. | D1, D2, D4 y S5 revisados. | Revisión documental y `git diff --check`; no se ejecutaron pruebas funcionales, no se consultó ni modificó la base productiva. | El equipo debe ejecutar aceptación funcional, confirmar el commit desplegado, completar firmas/autorizaciones y crear el tag final. |
-| 28/10/2026 | OpenAI Codex | Implementar el rediseño SaaS responsive pedido para escritorio y móvil, conservando rutas, permisos y datos reales. | Se creó `/resumen`, navegación lateral e inferior compartidas, filtros/orden/paginación de productos, tarjetas móviles, indicadores y distribución por categoría sin inventar movimientos ni costos. | A1–A5, D1 y D4 revisados en presentación y consultas. | `py_compile`, carga de 24 plantillas, redirección anónima y 403 del Vendedor en Productos. El Flask test client renderizó resumen/inventario/productos con un conector MySQL simulado; no se probó MySQL real ni inspección visual en navegador. | El equipo debe revisar la interfaz en Railway y distintos tamaños, y aceptar filtros/consultas con datos reales. |
-| 28/10/2026 | OpenAI Codex | Corregir ventas bajo costo y revisar preparación para el cierre de Entrega 4. | Se validó precio mínimo en Flask y MySQL, se impidieron descuentos bajo costo y compras que elevarían el costo vigente sobre el precio de venta; se añadió migración para bases existentes. Commit `641e1af`. | A3, S4, S6 y A5 revisados en código y SQL. | El usuario ejecutó la migración en el MySQL de Railway. La consulta inicialmente detectó Casco con costo Q100 y venta Q50; después reportó cero productos bajo costo y verificó los tres triggers de venta. No se ha documentado aún una venta funcional posterior a la migración ni las pruebas mult producto. | El equipo debe completar la aceptación funcional, guardar capturas/logs sin secretos y revisar los documentos antes de etiquetar la entrega. |
-| 28/10/2026 | OpenAI Codex | Mejorar la consulta de recibos en pantallas móviles tras detectar que la tabla obligaba a desplazarse horizontalmente. | Se añadieron tarjetas de recibo con total, fecha, cliente, empleado, sucursal, pago, estado y acceso visible a la factura; el filtro se reorganizó para pantallas estrechas y se conservó la tabla de escritorio. | A1, A2 y D4 revisados en estructura semántica, áreas táctiles y adaptación responsive. | Cambio de plantilla y CSS; la inspección visual en navegador/dispositivo y la aceptación en Railway están pendientes. | El equipo debe revisar la lista de ventas y apertura/impresión de factura en móvil antes de cerrar CP4-20. |
-| 28/10/2026 | OpenAI Codex | Endurecer el inicio de sesión ante intentos repetidos, con suspensión temporal progresiva. | Se añadió contador persistente por empleado, suspensión tras cinco fallos, demoras de 1/5/15/30 minutos, respuesta genérica y hash de relleno para identificadores inexistentes o cuentas suspendidas. Se agregó migración 05 para bases existentes. | A2 y S5 revisados en autenticación, persistencia y mensajes de error. | Revisión estática y `git diff --check`; no se ejecutaron pruebas de autenticación ni se aplicó la migración a Railway. | El equipo debe aplicar la migración 05 en Railway antes del despliegue y validar intentos fallidos, tiempos de suspensión, acceso correcto y restablecimiento del contador. |
+Esta bitácora registra el apoyo de IA, los cambios realizados y la evidencia disponible. Las validaciones pendientes se mantienen explícitas para que el equipo pueda completar el cierre con resultados verificables.
+
+## Registro de sesiones
+
+### 14 de octubre de 2026
+
+#### Revisión de requisitos y preparación de despliegue
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Revisar requisitos de Entrega 4 y preparar Gunicorn/Railway, además de completar CRUD administrativos y operaciones de compra/venta con varios productos.
+- **Resultado:** Cambios propuestos en Flask, plantillas Jinja, procedimientos MySQL, roles y manuales de la Entrega 4.
+- **Criterios revisados:** A1, A2, A3, A4, S2 y S5; persistencia MySQL y despliegue final seguían pendientes en esa fecha.
+- **Validación:** Se ejecutó compilación de Python, carga de rutas y análisis sintáctico de plantillas. No se desplegó a Railway durante esa sesión; el despliegue activo se confirmó posteriormente. Faltaba probar las operaciones y procedimientos en un esquema MySQL temporal.
+- **Seguimiento:** Elvin Miranda y Carlos Ochoa debían revisar los cambios y asignar quién los validaría antes del commit.
+
+#### Formularios, accesos y administración de cuentas
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Revisar formularios, accesos y administración de cuentas antes de continuar.
+- **Resultado:** Se añadió token CSRF a solicitudes POST, flags de cookies de sesión, validación de seriales de motocicleta y protección del último Administrador activo.
+- **Criterios revisados:** A2, A3 y A5; los controles requerían aceptación integrada.
+- **Validación:** Flask test client verificó rechazo HTTP 400 sin token, paso de la solicitud con token hasta la validación normal de credenciales y redirección de rutas protegidas. No se pudo verificar la conexión SQL: no había servidor MySQL y `mysqld --initialize-insecure` terminó con SIGSEGV en la instancia aislada.
+- **Seguimiento:** Repetir pruebas en MySQL 8 compatible y revisar el flujo completo.
+
+#### Cierre de compra/venta y operación en Railway
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Cerrar el flujo de compras/ventas y preparar la operación en Railway.
+- **Resultado:** Se agregaron páginas de detalle transaccional y ruta `/health`, además de límites y validaciones para listas de líneas.
+- **Criterios revisados:** A2, A3, A4 y S5 en código; integración pendiente en esa fecha.
+- **Validación:** Flask cargó las rutas y plantillas. No se validó la integración con MySQL ni el despliegue en esa sesión; el despliegue se confirmó posteriormente.
+- **Seguimiento:** Repetir pruebas con MySQL 8 compatible y en Railway.
+
+#### Configuración local de producción
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Revisar la configuración local de producción antes de continuar con la integración.
+- **Resultado:** Se instalaron las dependencias fijadas en `web/requirements.txt` en un entorno temporal y se inició Gunicorn con `--chdir web`.
+- **Criterios revisados:** A1 y S5 en entorno local.
+- **Validación:** Gunicorn 23.0.0 inició la aplicación; una petición HTTP a `/health` devolvió `{"status":"ok"}`. Es una prueba local, no acredita Railway ni conectividad a MySQL.
+- **Seguimiento:** El equipo confirmó después que Railway estaba activo; quedaba registrar la aceptación funcional completa.
+
+#### Trazabilidad y límites del esquema SQL
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Revisar la trazabilidad con requisitos de Entrega 1 y los límites del esquema SQL.
+- **Resultado:** Se confirmó el alcance de ocho entidades principales y se añadieron validaciones web para rangos INT/DECIMAL y stock máximo en compras.
+- **Criterios revisados:** A3, S7 y D4; validación en MySQL pendiente.
+- **Validación:** Pendiente revisar los bordes con el equipo y probar persistencia/transacciones contra MySQL 8.
+- **Seguimiento:** Ejecutar los casos ampliados y revisar la matriz antes del cierre.
+
+#### Despliegue y flujo de clientes
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Validar el despliegue real y el flujo de clientes, después de que el usuario confirmara que el dominio Railway abría.
+- **Resultado:** Se corrigió la detección de categorías de motocicleta para no confundir `Repuestos de Motor` con motos; se amplió el caso de prueba asociado.
+- **Criterios revisados:** A3 y D4. La confirmación del despliegue corresponde a evidencia reportada por el usuario.
+- **Validación:** El usuario confirmó login, acceso a módulos, alta y edición de cliente en Railway. La corrección de categoría aún requería push, redeploy y prueba; compra/venta seguían pendientes.
+- **Seguimiento:** Publicar el commit y continuar las pruebas.
+
+### 19 de octubre de 2026
+
+#### Criterios actualizados y documentación
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Mejorar la operación, búsqueda y cumplimiento de los criterios del PDF actualizado.
+- **Resultado:** Se agregaron importes estimados y filtros a catálogos e historiales; se renombró la carpeta a `sql/procedures`, se completaron encabezados de scripts SQL y docstrings de acceso a BD, y se actualizaron la matriz de cierre y los manuales.
+- **Criterios revisados:** A1–A6, R1–R7, S1–S8 y D1–D4. S1/ER y la autorización del grupo seguían pendientes de evidencia.
+- **Validación:** No se ejecutaron pruebas funcionales en esa sesión; `git diff --check` no reportó errores. Railway estaba desplegado; compras/ventas y los cambios locales recientes requerían aceptación en ese entorno.
+- **Seguimiento:** Validar el código y obtener las autorizaciones pendientes antes de certificar.
+
+### 27 de octubre de 2026
+
+#### Revisión del estado de entrega
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Revisar qué faltaba para entregar ese día, contrastando los criterios del PDF con el estado del repositorio y Railway.
+- **Resultado:** Se confirmó que los PDF adjuntos eran idénticos; se precisó que Railway estaba activo, se actualizaron las notas de entrega y se advirtió que la instalación DDL debía ejecutarse solo en una base temporal por ser destructiva.
+- **Criterios revisados:** S5, D1, D4 y R5; tag, aceptación integral, firmas y autorizaciones aún pendientes.
+- **Validación:** Revisión documental y `git diff --check`; no se ejecutaron pruebas funcionales ni se modificó la base de Railway.
+- **Seguimiento:** Completar aceptación, guardar evidencia, firmar y crear el tag sobre la versión final.
+
+#### URL de Railway y consistencia documental
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Registrar la URL Railway proporcionada por el usuario y dejar consistentes los documentos antes de subir los cambios locales.
+- **Resultado:** Se agregó la URL pública en informe, manuales y casos de prueba; se corrigió la numeración del manual técnico y la declaración de integridad quedó explícitamente pendiente de aprobación/firma.
+- **Criterios revisados:** D1, D2, D4 y S5.
+- **Validación:** Revisión documental y `git diff --check`; no se ejecutaron pruebas funcionales ni se consultó o modificó la base productiva.
+- **Seguimiento:** Ejecutar aceptación funcional, confirmar el commit desplegado, completar firmas/autorizaciones y crear el tag final.
+
+### 28 de octubre de 2026
+
+#### Rediseño SaaS responsive
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Implementar el rediseño SaaS responsive solicitado para escritorio y móvil, conservando rutas, permisos y datos reales.
+- **Resultado:** Se creó `/resumen`, navegación lateral e inferior compartidas, filtros/orden/paginación de productos, tarjetas móviles, indicadores y distribución por categoría sin inventar movimientos ni costos.
+- **Criterios revisados:** A1–A5, D1 y D4 en presentación y consultas.
+- **Validación:** `py_compile`, carga de 24 plantillas, redirección anónima y 403 del Vendedor en Productos. El Flask test client renderizó resumen/inventario/productos con un conector MySQL simulado; no se probó MySQL real ni se hizo inspección visual en navegador.
+- **Seguimiento:** Revisar la interfaz en Railway y distintos tamaños, y aceptar filtros/consultas con datos reales.
+
+#### Validación de margen en ventas y compras
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Corregir ventas bajo costo y revisar la preparación para el cierre de Entrega 4.
+- **Resultado:** Se validó el precio mínimo en Flask y MySQL; se impidieron descuentos bajo costo y compras que elevarían el costo vigente sobre el precio de venta; se añadió migración para bases existentes. Commit `641e1af`.
+- **Criterios revisados:** A3, S4, S6 y A5 en código y SQL.
+- **Validación:** El usuario ejecutó la migración en el MySQL de Railway. La consulta inicialmente detectó Casco con costo Q100 y venta Q50; luego reportó cero productos bajo costo y verificó los tres triggers de venta. No se había documentado una venta funcional posterior a la migración ni las pruebas multiproducto.
+- **Seguimiento:** Completar aceptación funcional, guardar capturas/logs sin secretos y revisar los documentos antes de etiquetar la entrega.
+
+#### Lista de recibos en móvil
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Mejorar la consulta de recibos en pantallas móviles tras detectar que la tabla obligaba a desplazarse horizontalmente.
+- **Resultado:** Se añadieron tarjetas de recibo con total, fecha, cliente, empleado, sucursal, pago, estado y acceso visible a la factura; el filtro se reorganizó para pantallas estrechas y se conservó la tabla de escritorio.
+- **Criterios revisados:** A1, A2 y D4 en estructura semántica, áreas táctiles y adaptación responsive.
+- **Validación:** Cambio de plantilla y CSS; inspección visual en navegador/dispositivo y aceptación en Railway pendientes.
+- **Seguimiento:** Revisar la lista de ventas y apertura/impresión de factura en móvil antes de cerrar CP4-20.
+
+#### Endurecimiento del inicio de sesión
+
+- **Herramienta:** OpenAI Codex.
+- **Objetivo:** Endurecer el inicio de sesión ante intentos repetidos, con suspensión temporal progresiva.
+- **Resultado:** Se añadió contador persistente por empleado, suspensión tras cinco fallos, demoras de 1/5/15/30 minutos, respuesta genérica y hash de relleno para identificadores inexistentes o cuentas suspendidas. Se agregó migración 05 para bases existentes.
+- **Criterios revisados:** A2 y S5 en autenticación, persistencia y mensajes de error.
+- **Validación:** Revisión estática y `git diff --check`; no se ejecutaron pruebas de autenticación ni se aplicó la migración 05 a Railway.
+- **Seguimiento:** Aplicar la migración 05 en Railway antes del despliegue y validar intentos fallidos, tiempos de suspensión, acceso correcto y restablecimiento del contador.
 
 ## Cambios asistidos que requieren revisión
 
 - Configuración para iniciar Flask con Gunicorn en Railway y lectura de variables de MySQL.
 - CRUD administrativo de Categorías, Sucursales y Empleados.
-- Nuevos procedimientos de compra/venta mult producto que reciben JSON.
+- Nuevos procedimientos de compra/venta multiproducto que reciben JSON.
 - Formularios con líneas agregables para compra y venta; captura opcional de VIN/chasis y motor.
 - Búsqueda en catálogos/inventario y cálculo visual estimado en formularios transaccionales; requieren aceptación funcional integrada.
 - Borradores del manual técnico, manual de usuario, informe final y matriz de cierre.
@@ -36,6 +149,6 @@
 - `git diff --check`.
 - Flask test client: login GET, CSRF faltante/válido y acceso anónimo a ruta protegida.
 - Inicio local de Gunicorn 23.0.0 con `--chdir web` y respuesta HTTP 200 de `/health`.
-- Railway MySQL: el usuario reportó aplicación de `sql/migrations/04_enforce_product_margin.sql`, consulta sin productos con precio bajo costo y presencia de `trg_validar_stock_venta`, `trg_descontar_stock_venta` y `trg_validar_margen_venta` el 28/10/2026.
+- MySQL de Railway: el usuario reportó la aplicación de `sql/migrations/04_enforce_product_margin.sql`, consulta sin productos con precio bajo costo y presencia de `trg_validar_stock_venta`, `trg_descontar_stock_venta` y `trg_validar_margen_venta` el 28/10/2026.
 
-Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunque los triggers de margen se verificaron en la base productiva, el equipo debe ejecutar instalación limpia en un esquema temporal, casos de compra/venta con varias líneas, reversión por stock insuficiente, permisos MySQL y aceptación visual en Railway, y actualizar esta bitácora con los resultados reales.
+Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunque los triggers de margen se verificaron en la base productiva, el equipo debe ejecutar una instalación limpia en un esquema temporal, probar casos de compra/venta con varias líneas, reversión por stock insuficiente, permisos MySQL y aceptación visual en Railway, y actualizar esta bitácora con los resultados reales.
