@@ -21,7 +21,7 @@
             <h2>Compras registradas</h2>
             <a href="{{ url_for('nueva_compra') }}" class="btn active">Nueva compra</a>
         </section>
-        <form class="busqueda-form" method="GET" action="{{ url_for('compras') }}">
+        <form class="busqueda-form purchase-filter" method="GET" action="{{ url_for('compras') }}">
             <label for="buscar-compra">Orden, proveedor o empleado</label>
             <input id="buscar-compra" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Número o nombre">
             <label for="compra-desde">Desde</label>
@@ -33,7 +33,7 @@
         </form>
         {% if error_fechas %}<p class="alert-danger" role="alert">{{ error_fechas }}</p>{% endif %}
 
-        <table>
+        <div class="purchase-table"><table>
             <thead>
                 <tr>
                     <th>Orden</th>
@@ -60,7 +60,17 @@
                 <tr><td colspan="7" class="text-center">Todavía no hay compras registradas.</td></tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table></div>
+        <section class="purchase-mobile-list" aria-label="Órdenes de compra">
+            {% for compra in compras %}
+            <article class="purchase-card">
+                <div class="purchase-card-heading"><div><span class="purchase-eyebrow">Orden</span><h3>{{ compra.numero_orden }}</h3></div><span class="status-badge status-ok">{{ compra.estado_recepcion }}</span></div>
+                <div class="purchase-card-total"><strong>Q {{ "%.2f"|format(compra.total_compra) }}</strong><time>{{ compra.fecha_compra }}</time></div>
+                <dl class="purchase-card-details"><div><dt>Proveedor</dt><dd>{{ compra.proveedor }}</dd></div><div><dt>Empleado</dt><dd>{{ compra.empleado }}</dd></div></dl>
+                <a class="purchase-card-action" href="{{ url_for('detalle_compra', id_compra=compra.id_compra) }}">Ver detalle de compra <span aria-hidden="true">→</span></a>
+            </article>
+            {% else %}<p class="directory-empty">Todavía no hay compras registradas.</p>{% endfor %}
+        </section>
     </main>
 </body>
 </html>
