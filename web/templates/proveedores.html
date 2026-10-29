@@ -28,7 +28,7 @@
             {% if busqueda %}<a class="btn" href="{{ url_for('proveedores') }}">Limpiar</a>{% endif %}
         </form>
 
-        <table>
+        <div class="directory-table"><table>
             <thead>
                 <tr>
                     <th>NIT</th>
@@ -64,7 +64,13 @@
                 <tr><td colspan="7" class="text-center">No hay proveedores activos.</td></tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table></div>
+        <div class="directory-list" aria-label="Lista de proveedores">
+            {% for proveedor in proveedores %}<article class="directory-card"><h3>{{ proveedor.razon_social }}</h3><dl class="directory-details">
+                <div><dt>NIT</dt><dd>{{ proveedor.nit }}</dd></div><div><dt>Contacto</dt><dd>{{ proveedor.contacto or '-' }}</dd></div><div><dt>Teléfono</dt><dd>{{ proveedor.telefono }}</dd></div><div><dt>Correo</dt><dd>{{ proveedor.correo or '-' }}</dd></div><div class="directory-wide"><dt>Dirección</dt><dd>{{ proveedor.direccion or '-' }}</dd></div>
+            </dl><div class="directory-actions"><a class="btn" href="{{ url_for('editar_proveedor', id_proveedor=proveedor.id_proveedor) }}">Editar</a><form method="POST" action="{{ url_for('desactivar_proveedor', id_proveedor=proveedor.id_proveedor) }}" onsubmit="return confirm('¿Desactivar este proveedor?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn directory-danger" type="submit">Desactivar</button></form></div></article>
+            {% else %}<p class="directory-empty">No hay proveedores activos.</p>{% endfor %}
+        </div>
     </main>
 </body>
 </html>

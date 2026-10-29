@@ -12,12 +12,21 @@
     <main>
         {% with mensajes = get_flashed_messages(with_categories=true) %}{% for categoria, mensaje in mensajes %}<div class="alert-{{ categoria }}">{{ mensaje }}</div>{% endfor %}{% endwith %}
         <section class="toolbar"><h2>Categorías activas</h2><a href="{{ url_for('nueva_categoria') }}" class="btn active">Nueva categoría</a></section>
-        <table><thead><tr><th>Nombre</th><th>Descripción</th><th>Productos activos</th><th>Acciones</th></tr></thead><tbody>
+        <div class="directory-table"><table><thead><tr><th>Nombre</th><th>Descripción</th><th>Productos activos</th><th>Acciones</th></tr></thead><tbody>
         {% for c in categorias %}<tr><td>{{ c.nombre }}</td><td>{{ c.descripcion or '-' }}</td><td>{{ c.productos }}</td><td>
             <a href="{{ url_for('editar_categoria', id_categoria=c.id_categoria) }}">Editar</a>
             <form method="POST" action="{{ url_for('desactivar_categoria', id_categoria=c.id_categoria) }}" style="display:inline" onsubmit="return confirm('¿Desactivar esta categoría?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Desactivar</button></form>
         </td></tr>{% else %}<tr><td colspan="4" class="text-center">No hay categorías activas.</td></tr>{% endfor %}
-        </tbody></table>
+        </tbody></table></div>
+        <div class="directory-list" aria-label="Lista de categorías">
+            {% for c in categorias %}<article class="directory-card">
+                <h3>{{ c.nombre }}</h3><p class="directory-description">{{ c.descripcion or 'Sin descripción' }}</p>
+                <div class="directory-count"><span>Productos activos</span><strong>{{ c.productos }}</strong></div>
+                <div class="directory-actions"><a class="btn" href="{{ url_for('editar_categoria', id_categoria=c.id_categoria) }}">Editar</a>
+                    <form method="POST" action="{{ url_for('desactivar_categoria', id_categoria=c.id_categoria) }}" onsubmit="return confirm('¿Desactivar esta categoría?');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn directory-danger" type="submit">Desactivar</button></form>
+                </div>
+            </article>{% else %}<p class="directory-empty">No hay categorías activas.</p>{% endfor %}
+        </div>
     </main>
 </body>
 </html>
