@@ -188,3 +188,11 @@ Estas comprobaciones no sustituyen la prueba integrada completa con MySQL. Aunqu
 - **Resultado:** Snapshot local `version1/` del commit `9467202`; cambios de modelo con `INVENTARIO_SUCURSAL`, compras/ventas por sucursal, traslados multiproducto y filtrado por rol. La migración propuesta asigna el stock existente a Sucursal Central, según decisión del usuario.
 - **Validación:** `py_compile`, compilación Jinja de plantillas nuevas y `git diff --check`; no se ejecutó MySQL ni se modificó Railway.
 - **Seguimiento:** Respaldar MySQL, ejecutar la migración en base temporal, probar CP4-21 a CP4-24 y aplicar objetos SQL actualizados antes de desplegar.
+
+#### Limpieza del catálogo activo y existencias en Railway
+
+- **Fecha:** 29 de octubre de 2026.
+- **Objetivo:** Empezar de nuevo con productos e inventario sin romper los detalles históricos de compras y ventas.
+- **Resultado:** Se creó y verificó el respaldo completo `backups/railway_pre_catalog_reset_20261029.sql.gz`, excluido de Git. En una transacción se eliminaron las 57 filas de `INVENTARIO_SUCURSAL` (1,791 unidades), se desactivó el único producto activo y se eliminó el único producto sin historial. Quedaron 0 productos activos y 0 filas/unidades de inventario. Se conservaron 53 productos ligados a historial, 54 detalles de venta y 54 de compra.
+- **Validación:** Conteos posteriores a la transacción confirmaron catálogo activo vacío, inventario vacío e historial de compras/ventas conservado.
+- **Seguimiento:** Registrar productos nuevos con códigos distintos a los reservados por los productos históricos inactivos; registrar existencias mediante Compras y Traslados.
