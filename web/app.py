@@ -1243,7 +1243,7 @@ def cargar_opciones_venta(cursor):
     clientes_activos = cursor.fetchall()
 
     cursor.execute("""
-        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_venta,
+        SELECT p.id_producto, p.codigo_barra, p.nombre, p.precio_costo, p.precio_venta,
                p.stock_actual, c.nombre AS categoria
         FROM PRODUCTO p
         INNER JOIN CATEGORIA c ON c.id_categoria = p.id_categoria
