@@ -2,5 +2,15 @@
   "repositorio": "https://github.com/tupipoy/comercial_estuardo_bd",
   "publico": true,
   "rama": "main",
-  "respaldo_verificado": "https://github.com/tupipoy/comercial_estuardo_bd/actions/runs/40946013024"
+  "respaldo_verificado": "https://github.com/tupipoy/comercial_estuardo_bd/actions/runs/40946013024",
+  "despliegue_verificado": {
+    "servicio": "comercial_estuardo_bd",
+    "id": "89a7318f-a346-45c5-adf3-32194bf7fdc0",
+    "estado": "SUCCESS",
+    "commit_aplicacion": "d02de6b",
+    "fecha": "2026-10-29",
+    "url": "https://comercialestuardobd-production.up.railway.app",
+    "health_http": 200,
+    "corregir_venta_sin_sesion_http": 302
+  }
 }
